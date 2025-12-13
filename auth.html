@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Whisper+me</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <h1>Whisper<span>+me</span></h1>
+            </a>
+            <div class="nav-links">
+                <a href="auth.html?type=login" class="active">Login</a>
+                <a href="auth.html?type=signup">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="form-container" style="max-width: 400px; margin: 4rem auto;">
+            <h2 id="authTitle">Login</h2>
+            <p id="authSubtitle" style="margin-bottom: 2rem;">Enter your credentials to continue</p>
+            
+            <div id="authForm">
+                <!-- Login form by default -->
+                <div class="form-group">
+                    <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="email" class="form-control" placeholder="you@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••">
+                </div>
+                
+                <button id="authBtn" class="btn btn-primary btn-block btn-large">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                
+                <p style="text-align: center; margin-top: 1.5rem;">
+                    Don't have an account? 
+                    <a href="auth.html?type=signup" id="switchLink">Sign up here</a>
+                </p>
+            </div>
+            
+            <div id="authMessage" class="alert" style="display: none; margin-top: 1rem;"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Whisper+me</h3>
+                    <p>Private voice chats with amazing people.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <a href="index.html">Home</a>
+                    <a href="auth.html?type=login">Login</a>
+                    <a href="auth.html?type=signup">Sign Up</a>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2024 Whisper+me. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple auth page switcher
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const type = urlParams.get('type') || 'login';
+            
+            if (type === 'signup') {
+                document.getElementById('authTitle').textContent = 'Sign Up';
+                document.getElementById('authSubtitle').textContent = 'Create your account to get started';
+                document.getElementById('authBtn').innerHTML = '<i class="fas fa-user-plus"></i> Sign Up';
+                document.getElementById('switchLink').textContent = 'Login here';
+                document.getElementById('switchLink').href = 'auth.html?type=login';
+            } else {
+                document.getElementById('switchLink').textContent = 'Sign up here';
+                document.getElementById('switchLink').href = 'auth.html?type=signup';
+            }
+            
+            // Simple form handler for demo
+            document.getElementById('authBtn').addEventListener('click', function() {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const messageEl = document.getElementById('authMessage');
+                
+                if (!email || !password) {
+                    messageEl.textContent = 'Please fill in all fields';
+                    messageEl.className = 'alert alert-error';
+                    messageEl.style.display = 'block';
+                    return;
+                }
+                
+                // For demo purposes, redirect to dashboard
+                messageEl.textContent = 'Success! Redirecting...';
+                messageEl.className = 'alert alert-success';
+                messageEl.style.display = 'block';
+                
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+</html>

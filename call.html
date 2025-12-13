@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Room - Whisper+me</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add call-specific styles -->
+    <style>
+        .call-room {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 2rem;
+        }
+        
+        .call-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .timer {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #7b2cbf;
+            margin-top: 1rem;
+        }
+        
+        .participants {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin: 3rem 0;
+        }
+        
+        .participant {
+            text-align: center;
+        }
+        
+        .participant-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid #7b2cbf;
+            margin-bottom: 1rem;
+        }
+        
+        .call-status {
+            text-align: center;
+            margin: 2rem 0;
+            font-size: 1.2rem;
+            color: #ccc;
+        }
+        
+        .call-controls {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            background: #333;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .control-btn.mic-toggle {
+            background: #4361ee;
+        }
+        
+        .control-btn.mic-toggle.muted {
+            background: #e63946;
+        }
+        
+        .control-btn.end-call {
+            background: #e63946;
+        }
+        
+        .call-notes {
+            text-align: center;
+            margin-top: 3rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .call-notes p {
+            margin: 0.5rem 0;
+        }
+        
+        .rating-stars {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+            font-size: 2rem;
+            color: #ffd700;
+        }
+        
+        .rating-stars i {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .rating-stars i:hover {
+            transform: scale(1.2);
+        }
+        
+        .rating-stars .fas {
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="call-room">
+        <div class="container" style="text-align: center;">
+            <div class="call-header">
+                <h2>Private Whisper Call</h2>
+                <div class="timer" id="timer">05:00</div>
+            </div>
+
+            <div class="participants">
+                <div class="participant">
+                    <img src="https://i.pravatar.cc/120?img=1" alt="You" class="participant-avatar">
+                    <h3>You</h3>
+                    <p><i class="fas fa-microphone"></i> Speaking</p>
+                </div>
+                <div style="display: flex; align-items: center; font-size: 2rem; color: #7b2cbf;">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+                <div class="participant">
+                    <img src="https://i.pravatar.cc/120?img=2" alt="Whisperer" class="participant-avatar">
+                    <h3>Alex Johnson</h3>
+                    <p><i class="fas fa-headphones"></i> Listening</p>
+                </div>
+            </div>
+
+            <div class="call-status">
+                <div id="callStatus">Connected</div>
+                <div id="participantStatus">Call in progress...</div>
+            </div>
+
+            <div class="call-controls">
+                <button class="control-btn mic-toggle" id="micToggle">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="control-btn end-call" id="endCall">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
+            </div>
+
+            <div class="call-notes">
+                <p><i class="fas fa-info-circle"></i> This is a 5-minute private call. No recording is allowed.</p>
+                <p><i class="fas fa-exclamation-triangle"></i> Refreshing the page will end the call immediately.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Modal (shown after call ends) -->
+    <div id="ratingModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h3>Rate Your Experience</h3>
+                <p>Please rate your call experience with the other participant.</p>
+                
+                <div class="rating-stars">
+                    <i class="far fa-star" data-rating="1"></i>
+                    <i class="far fa-star" data-rating="2"></i>
+                    <i class="far fa-star" data-rating="3"></i>
+                    <i class="far fa-star" data-rating="4"></i>
+                    <i class="far fa-star" data-rating="5"></i>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ratingComment">Comments (Optional)</label>
+                    <textarea id="ratingComment" class="form-control" placeholder="Share your experience..." rows="3"></textarea>
+                </div>
+                
+                <button id="submitRating" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Submit Rating
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Call room JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Call room loaded");
+            
+            let timeLeft = 300; // 5 minutes in seconds
+            let timerInterval;
+            let isMicOn = true;
+            let rating = 0;
+            
+            // Start timer
+            function startTimer() {
+                timerInterval = setInterval(function() {
+                    timeLeft--;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    document.getElementById('timer').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        endCall();
+                    }
+                }, 1000);
+            }
+            
+            // End call
+            function endCall() {
+                clearInterval(timerInterval);
+                document.getElementById('callStatus').textContent = 'Call Ended';
+                document.getElementById('participantStatus').textContent = 'Thank you for using Whisper+me!';
+                
+                // Show rating modal after 1 second
+                setTimeout(function() {
+                    showRatingModal();
+                }, 1000);
+            }
+            
+            // Show rating modal
+            function showRatingModal() {
+                const modal = document.getElementById('ratingModal');
+                modal.style.display = 'block';
+                
+                // Setup star rating
+                const stars = document.querySelectorAll('.rating-stars i');
+                stars.forEach(star => {
+                    star.addEventListener('mouseover', function() {
+                        const ratingValue = parseInt(this.getAttribute('data-rating'));
+                        highlightStars(ratingValue);
+                    });
+                    
+                    star.addEventListener('click', function() {
+                        rating = parseInt(this.getAttribute('data-rating'));
+                        highlightStars(rating);
+                    });
+                });
+                
+                // Submit rating
+                document.getElementById('submitRating').addEventListener('click', function() {
+                    const comment = document.getElementById('ratingComment').value;
+                    alert(`Thank you for your rating! You gave ${rating} stars. ${comment ? 'Comment: ' + comment : ''}`);
+                    window.location.href = 'dashboard.html';
+                });
+                
+                // Close modal when clicking outside
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                        window.location.href = 'dashboard.html';
+                    }
+                });
+            }
+            
+            // Highlight stars
+            function highlightStars(count) {
+                const stars = document.querySelectorAll('.rating-stars i');
+                stars.forEach((star, index) => {
+                    if (index < count) {
+                        star.className = 'fas fa-star';
+                    } else {
+                        star.className = 'far fa-star';
+                    }
+                });
+            }
+            
+            // Mic toggle
+            document.getElementById('micToggle').addEventListener('click', function() {
+                isMicOn = !isMicOn;
+                const icon = this.querySelector('i');
+                if (isMicOn) {
+                    icon.className = 'fas fa-microphone';
+                    this.classList.remove('muted');
+                    document.querySelector('.participant p').innerHTML = '<i class="fas fa-microphone"></i> Speaking';
+                } else {
+                    icon.className = 'fas fa-microphone-slash';
+                    this.classList.add('muted');
+                    document.querySelector('.participant p').innerHTML = '<i class="fas fa-microphone-slash"></i> Muted';
+                }
+            });
+            
+            // End call button
+            document.getElementById('endCall').addEventListener('click', function() {
+                if (confirm('Are you sure you want to end the call?')) {
+                    endCall();
+                }
+            });
+            
+            // Start the timer
+            startTimer();
+            
+            // Auto-end after 5 minutes (for demo)
+            setTimeout(function() {
+                if (timeLeft > 0) {
+                    endCall();
+                }
+            }, 305000); // 5 minutes + 5 seconds
+        });
+    </script>
+</body>
+</html>

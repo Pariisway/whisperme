@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper+me - 5-Minute Private Chats</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Remove problematic Google Ads scripts for now -->
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none;">
+                    <h1>Whisper<span>+me</span></h1>
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
+                <a href="#how-it-works"><i class="fas fa-question-circle"></i> How It Works</a>
+                <a href="auth.html?type=login" id="loginBtn"><i class="fas fa-user"></i> Login</a>
+                <a href="dashboard.html" id="dashboardBtn" style="display:none;"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="#" id="logoutBtn" style="display:none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>Connect. Whisper. Earn.</h2>
+                <p>Buy and sell 5-minute private voice chats using Whisper tokens</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <h3>1,234+</h3>
+                        <p>Active Whispers</p>
+                    </div>
+                    <div class="stat">
+                        <h3>5,678+</h3>
+                        <p>Calls Completed</p>
+                    </div>
+                    <div class="stat">
+                        <h3>$89,012+</h3>
+                        <p>Earned by Users</p>
+                    </div>
+                </div>
+                <div class="hero-buttons">
+                    <a href="auth.html?type=signup" class="btn btn-primary">Start Earning</a>
+                    <a href="#whispers" class="btn btn-secondary">Browse Whispers</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="section">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-icon">1</div>
+                    <h3>Sign Up</h3>
+                    <p>Create your profile and add your bio, social links, and profile picture</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">2</div>
+                    <h3>Buy Tokens</h3>
+                    <p>Purchase Whisper tokens ($15 each) to start calling</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">3</div>
+                    <h3>Connect</h3>
+                    <p>Browse available whispers and start 5-minute private chats</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">4</div>
+                    <h3>Earn</h3>
+                    <p>Earn $12 per call answered. We take only $3 as platform fee</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Available Whispers -->
+    <section id="whispers" class="section">
+        <div class="container">
+            <h2 class="section-title">Available Whispers</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="online">Online Now</button>
+                <button class="filter-btn" data-filter="popular">Most Popular</button>
+                <button class="filter-btn" data-filter="newest">Newest</button>
+            </div>
+            <div class="whispers-grid" id="whispersContainer">
+                <!-- Whispers will be loaded here dynamically -->
+                <div class="loading">Loading whispers...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call Modal -->
+    <div id="callModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body" id="callModalBody">
+                <!-- Call content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Whisper+me</h3>
+                    <p>Connecting people through private voice conversations</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <a href="#how-it-works">How It Works</a>
+                    <a href="#whispers">Browse Whispers</a>
+                    <a href="auth.html?type=signup">Sign Up</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Connect</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Whisper+me. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
