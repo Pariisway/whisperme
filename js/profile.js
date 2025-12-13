@@ -1,385 +1,301 @@
-// profile.js - Handles profile management
-
-// Initialize Firebase
-let currentUser = null;
-let userData = null;
-
-// DOM Elements
-const displayNameEl = document.getElementById('displayName');
-const userEmailEl = document.getElementById('userEmail');
-const profileAvatarEl = document.getElementById('profileAvatar');
-const fullNameEl = document.getElementById('fullName');
-const bioEl = document.getElementById('bio');
-const phoneEl = document.getElementById('phone');
-const hourlyRateEl = document.getElementById('hourlyRate');
-const activeToggleEl = document.getElementById('activeToggle');
-const statusTextEl = document.getElementById('statusText');
-const addSkillInputEl = document.getElementById('addSkill');
-const addSkillBtn = document.getElementById('addSkillBtn');
-const skillTagsEl = document.getElementById('skillTags');
-const totalCallsEl = document.getElementById('totalCalls');
-const avgRatingEl = document.getElementById('avgRating');
-const savePersonalBtn = document.getElementById('savePersonalBtn');
-const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const changeAvatarBtn = document.getElementById('changeAvatarBtn');
-
-// Initialize profile page
+// Profile Page JavaScript with File Upload
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("Profile page loaded");
+    
+    // Initialize Firebase services
+    let storage;
+    try {
+        if (firebase.apps.length) {
+            storage = firebase.storage();
+        }
+    } catch (e) {
+        console.log("Firebase Storage not available:", e);
+    }
+    
+    // Check authentication
     checkAuth();
+    
+    // Setup event listeners
     setupEventListeners();
+    
+    // Load existing profile data
+    loadProfileData();
 });
 
-// Check if user is logged in
+// Check authentication
 function checkAuth() {
-    firebase.auth().onAuthStateChanged(function(user) {
-        if (user) {
-            currentUser = user;
-            loadUserData();
-        } else {
-            // Redirect to login if not authenticated
+    if (typeof auth === 'undefined') return;
+    
+    auth.onAuthStateChanged(function(user) {
+        if (!user) {
             window.location.href = 'auth.html?redirect=profile';
-        }
-    });
-}
-
-// Load user data from Firestore
-async function loadUserData() {
-    try {
-        const userDoc = await firebase.firestore()
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
-        
-        if (userDoc.exists) {
-            userData = userDoc.data();
-            updateProfileUI(userData);
         } else {
-            // Create user profile if it doesn't exist
-            await createUserProfile();
+            // Store current user ID for later use
+            window.currentUserId = user.uid;
+            window.currentUserEmail = user.email;
         }
-    } catch (error) {
-        console.error('Error loading user data:', error);
-        showAlert('error', 'Failed to load profile data.');
-    }
-}
-
-// Create user profile if it doesn't exist
-async function createUserProfile() {
-    try {
-        const userProfile = {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            displayName: currentUser.displayName || currentUser.email.split('@')[0],
-            fullName: currentUser.displayName || '',
-            bio: '',
-            phone: '',
-            photoURL: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.email.split('@')[0])}&background=7b2cbf&color=fff&size=150`,
-            hourlyRate: 60,
-            isActive: true,
-            skills: ['Listening', 'Advice', 'Motivation', 'Friendship'],
-            interests: ['gaming', 'books'],
-            totalCalls: 0,
-            averageRating: 0,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await firebase.firestore()
-            .collection('users')
-            .doc(currentUser.uid)
-            .set(userProfile);
-        
-        userData = userProfile;
-        updateProfileUI(userData);
-    } catch (error) {
-        console.error('Error creating user profile:', error);
-    }
-}
-
-// Update profile UI
-function updateProfileUI(data) {
-    // Basic info
-    displayNameEl.textContent = data.displayName || 'User';
-    userEmailEl.textContent = data.email || '';
-    profileAvatarEl.src = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.displayName || 'User')}&background=7b2cbf&color=fff&size=150`;
-    
-    // Personal info form
-    fullNameEl.value = data.fullName || '';
-    bioEl.value = data.bio || '';
-    phoneEl.value = data.phone || '';
-    
-    // Whisperer settings
-    hourlyRateEl.value = data.hourlyRate || 60;
-    activeToggleEl.checked = data.isActive !== false;
-    statusTextEl.textContent = data.isActive !== false ? 'Available for calls' : 'Currently unavailable';
-    
-    // Skills
-    updateSkillsUI(data.skills || ['Listening', 'Advice', 'Motivation', 'Friendship']);
-    
-    // Interests
-    updateInterestsUI(data.interests || ['gaming', 'books']);
-    
-    // Stats
-    totalCallsEl.textContent = data.totalCalls || 0;
-    avgRatingEl.textContent = `${data.averageRating || 0.0} ★`;
-}
-
-// Update skills UI
-function updateSkillsUI(skills) {
-    skillTagsEl.innerHTML = '';
-    skills.forEach(skill => {
-        const skillTag = document.createElement('span');
-        skillTag.className = 'skill-tag';
-        skillTag.innerHTML = `
-            ${skill} <button class="remove-skill" data-skill="${skill}">×</button>
-        `;
-        skillTagsEl.appendChild(skillTag);
-    });
-    
-    // Add event listeners to remove buttons
-    document.querySelectorAll('.remove-skill').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const skill = this.getAttribute('data-skill');
-            removeSkill(skill);
-        });
     });
 }
 
-// Update interests UI
-function updateInterestsUI(interests) {
-    document.querySelectorAll('.interest-check').forEach(checkbox => {
-        checkbox.checked = interests.includes(checkbox.value);
-    });
-}
-
-// Set up event listeners
+// Setup event listeners
 function setupEventListeners() {
-    // Save personal info
-    savePersonalBtn.addEventListener('click', savePersonalInfo);
+    // Profile picture upload
+    const fileInput = document.getElementById('profilePicture');
+    const profilePreview = document.getElementById('profilePreview');
     
-    // Save settings
-    saveSettingsBtn.addEventListener('click', saveWhispererSettings);
+    if (fileInput && profilePreview) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file (JPEG, PNG, GIF)');
+                    return;
+                }
+                
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Image size should be less than 5MB');
+                    return;
+                }
+                
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
     
-    // Active toggle
-    activeToggleEl.addEventListener('change', function() {
-        statusTextEl.textContent = this.checked ? 'Available for calls' : 'Currently unavailable';
-    });
+    // Bio character counter
+    const bioInput = document.getElementById('bio');
+    const bioCounter = document.getElementById('bioCounter');
     
-    // Add skill
-    addSkillBtn.addEventListener('click', addSkill);
-    addSkillInputEl.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            addSkill();
-        }
-    });
+    if (bioInput && bioCounter) {
+        bioInput.addEventListener('input', function() {
+            const count = this.value.length;
+            bioCounter.textContent = `${count}/500 characters`;
+            
+            if (count > 490) {
+                bioCounter.style.color = 'var(--danger)';
+            } else if (count > 400) {
+                bioCounter.style.color = 'var(--warning)';
+            } else {
+                bioCounter.style.color = 'var(--gray)';
+            }
+        });
+    }
     
-    // Delete account
-    deleteAccountBtn.addEventListener('click', function() {
-        if (confirm('Are you sure you want to delete your account? This action cannot be undone!')) {
-            deleteAccount();
-        }
-    });
+    // Availability toggle
+    const availabilityToggle = document.getElementById('availabilityToggle');
+    const availabilityStatus = document.getElementById('availabilityStatus');
     
-    // Logout
+    if (availabilityToggle && availabilityStatus) {
+        availabilityToggle.addEventListener('change', function() {
+            if (this.checked) {
+                availabilityStatus.textContent = 'Available';
+                availabilityStatus.style.color = 'var(--success)';
+            } else {
+                availabilityStatus.textContent = 'Unavailable';
+                availabilityStatus.style.color = 'var(--danger)';
+            }
+        });
+    }
+    
+    // Form submission
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await saveProfile();
+        });
+    }
+    
+    // Setup logout
+    const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            firebase.auth().signOut().then(() => {
-                window.location.href = 'index.html';
-            });
-        });
-    }
-    
-    // Change avatar
-    if (changeAvatarBtn) {
-        changeAvatarBtn.addEventListener('click', function() {
-            // In a real app, you would upload an image here
-            // For now, we'll just show an alert
-            alert('In a real application, you would upload a profile picture here.');
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (typeof auth !== 'undefined') {
+                auth.signOut().then(() => {
+                    window.location.href = 'index.html';
+                });
+            }
         });
     }
 }
 
-// Save personal info
-async function savePersonalInfo() {
+// Load existing profile data
+async function loadProfileData() {
+    if (!window.currentUserId || typeof db === 'undefined') return;
+    
     try {
-        const updates = {
-            fullName: fullNameEl.value.trim(),
-            bio: bioEl.value.trim(),
-            phone: phoneEl.value.trim(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
+        const profileDoc = await db.collection('profiles').doc(window.currentUserId).get();
         
-        await firebase.firestore()
-            .collection('users')
-            .doc(currentUser.uid)
-            .update(updates);
-        
-        // Update local data
-        Object.assign(userData, updates);
-        if (updates.fullName && !updates.fullName.includes(' ')) {
-            userData.displayName = updates.fullName;
-            displayNameEl.textContent = updates.fullName;
+        if (profileDoc.exists) {
+            const data = profileDoc.data();
+            
+            // Populate form fields
+            document.getElementById('displayName').value = data.displayName || '';
+            document.getElementById('bio').value = data.bio || '';
+            
+            // Trigger bio counter update
+            const bioInput = document.getElementById('bio');
+            if (bioInput) bioInput.dispatchEvent(new Event('input'));
+            
+            // Load profile picture if exists
+            if (data.profilePicture) {
+                document.getElementById('profilePreview').src = data.profilePicture;
+            }
+            
+            // Load availability
+            if (data.available !== undefined) {
+                document.getElementById('availabilityToggle').checked = data.available;
+                document.getElementById('availabilityToggle').dispatchEvent(new Event('change'));
+            }
+            
+            console.log("Profile data loaded:", data);
         }
-        
-        showAlert('success', 'Personal information saved!');
     } catch (error) {
-        console.error('Error saving personal info:', error);
-        showAlert('error', 'Failed to save personal information.');
+        console.error("Error loading profile:", error);
     }
 }
 
-// Save whisperer settings
-async function saveWhispererSettings() {
-    try {
-        // Get selected interests
-        const interests = [];
-        document.querySelectorAll('.interest-check:checked').forEach(checkbox => {
-            interests.push(checkbox.value);
-        });
-        
-        const updates = {
-            hourlyRate: parseInt(hourlyRateEl.value) || 60,
-            isActive: activeToggleEl.checked,
-            skills: userData.skills || [],
-            interests: interests,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await firebase.firestore()
-            .collection('users')
-            .doc(currentUser.uid)
-            .update(updates);
-        
-        // Update local data
-        Object.assign(userData, updates);
-        
-        showAlert('success', 'Settings updated!');
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        showAlert('error', 'Failed to update settings.');
-    }
-}
-
-// Add a new skill
-async function addSkill() {
-    const skill = addSkillInputEl.value.trim();
-    if (!skill) return;
-    
-    if (!userData.skills) {
-        userData.skills = [];
-    }
-    
-    if (userData.skills.includes(skill)) {
-        showAlert('warning', 'Skill already exists!');
+// Save profile data
+async function saveProfile() {
+    if (!window.currentUserId) {
+        alert('Please log in to save profile');
         return;
     }
     
-    userData.skills.push(skill);
-    updateSkillsUI(userData.skills);
-    addSkillInputEl.value = '';
+    // Get form data
+    const profileData = {
+        displayName: document.getElementById('displayName').value.trim(),
+        bio: document.getElementById('bio').value.trim(),
+        available: document.getElementById('availabilityToggle').checked,
+        updatedAt: new Date().toISOString(),
+        email: window.currentUserEmail
+    };
+    
+    // Get social links
+    const socialInputs = document.querySelectorAll('.social-inputs input');
+    const socialLinks = {};
+    socialInputs.forEach(input => {
+        const platform = input.previousElementSibling.querySelector('i').className.split(' ')[1].replace('fa-', '');
+        socialLinks[platform] = input.value.trim();
+    });
+    profileData.socialLinks = socialLinks;
+    
+    // Get selected topics
+    const selectedTopics = [];
+    document.querySelectorAll('input[name="topics"]:checked').forEach(checkbox => {
+        selectedTopics.push(checkbox.value);
+    });
+    profileData.topics = selectedTopics;
+    
+    // Get preferred hours
+    const preferredHours = [];
+    const hourSelect = document.getElementById('preferredHours');
+    for (let option of hourSelect.selectedOptions) {
+        preferredHours.push(option.value);
+    }
+    profileData.preferredHours = preferredHours;
+    
+    // Upload profile picture if changed
+    const fileInput = document.getElementById('profilePicture');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        try {
+            const downloadURL = await uploadProfilePicture(file, window.currentUserId);
+            profileData.profilePicture = downloadURL;
+        } catch (error) {
+            console.error("Error uploading profile picture:", error);
+            alert('Error uploading profile picture. Please try again.');
+            return;
+        }
+    }
     
     // Save to Firestore
     try {
-        await firebase.firestore()
-            .collection('users')
-            .doc(currentUser.uid)
-            .update({
-                skills: userData.skills,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+        await db.collection('profiles').doc(window.currentUserId).set(profileData, { merge: true });
         
-        showAlert('success', 'Skill added!');
+        // Show success message
+        showMessage('Profile saved successfully!', 'success');
+        
+        // Update UI in dashboard if we're coming from there
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
+        
     } catch (error) {
-        console.error('Error adding skill:', error);
-        showAlert('error', 'Failed to add skill.');
+        console.error("Error saving profile:", error);
+        showMessage('Error saving profile: ' + error.message, 'error');
     }
 }
 
-// Remove a skill
-async function removeSkill(skill) {
-    if (!userData.skills) return;
+// Upload profile picture to Firebase Storage
+async function uploadProfilePicture(file, userId) {
+    if (typeof storage === 'undefined') {
+        throw new Error('Storage not initialized');
+    }
     
-    userData.skills = userData.skills.filter(s => s !== skill);
-    updateSkillsUI(userData.skills);
+    // Create a unique filename
+    const extension = file.name.split('.').pop();
+    const filename = `profile-pictures/${userId}/profile.${extension}`;
     
-    // Save to Firestore
-    try {
-        await firebase.firestore()
-            .collection('users')
-            .doc(currentUser.uid)
-            .update({
-                skills: userData.skills,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        
-        showAlert('success', 'Skill removed!');
-    } catch (error) {
-        console.error('Error removing skill:', error);
-        showAlert('error', 'Failed to remove skill.');
-    }
+    // Create storage reference
+    const storageRef = storage.ref(filename);
+    
+    // Upload file
+    const uploadTask = storageRef.put(file);
+    
+    // Wait for upload to complete
+    return new Promise((resolve, reject) => {
+        uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+                // Progress tracking
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                console.log('Upload progress:', progress + '%');
+            },
+            (error) => {
+                reject(error);
+            },
+            async () => {
+                // Upload complete, get download URL
+                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                resolve(downloadURL);
+            }
+        );
+    });
 }
 
-// Delete account
-async function deleteAccount() {
-    try {
-        // Show loading
-        deleteAccountBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-        deleteAccountBtn.disabled = true;
-        
-        // In a real app, you would:
-        // 1. Delete all user data from Firestore
-        // 2. Delete the user from Firebase Auth
-        // 3. Handle any other cleanup
-        
-        // For demo purposes, we'll just simulate deletion
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Sign out and redirect
-        await firebase.auth().signOut();
-        alert('Account deletion simulated. In a real app, your account would be permanently deleted.');
-        window.location.href = 'index.html';
-        
-    } catch (error) {
-        console.error('Error deleting account:', error);
-        showAlert('error', 'Failed to delete account.');
-        deleteAccountBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Account';
-        deleteAccountBtn.disabled = false;
-    }
-}
-
-// Show alert message
-function showAlert(type, message) {
-    // Create alert element
-    const alertEl = document.createElement('div');
-    alertEl.className = `alert alert-${type} fade-in`;
-    alertEl.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+// Show message
+function showMessage(message, type) {
+    // Remove existing messages
+    const existingMessages = document.querySelectorAll('.alert');
+    existingMessages.forEach(msg => msg.remove());
+    
+    // Create new message
+    const messageEl = document.createElement('div');
+    messageEl.className = `alert alert-${type}`;
+    messageEl.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
         ${message}
     `;
     
-    // Position at top
-    alertEl.style.position = 'fixed';
-    alertEl.style.top = '80px';
-    alertEl.style.left = '50%';
-    alertEl.style.transform = 'translateX(-50%)';
-    alertEl.style.zIndex = '1000';
-    alertEl.style.minWidth = '300px';
-    alertEl.style.maxWidth = '90%';
-    alertEl.style.textAlign = 'center';
-    
-    // Add to page
-    document.body.appendChild(alertEl);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        alertEl.classList.remove('fade-in');
-        alertEl.style.opacity = '0';
-        setTimeout(() => {
-            if (alertEl.parentNode) {
-                alertEl.parentNode.removeChild(alertEl);
-            }
-        }, 300);
-    }, 3000);
+    // Insert after form
+    const form = document.getElementById('profileForm');
+    if (form) {
+        form.parentNode.insertBefore(messageEl, form);
+        
+        // Auto-hide success messages
+        if (type === 'success') {
+            setTimeout(() => {
+                messageEl.remove();
+            }, 3000);
+        }
+    }
 }

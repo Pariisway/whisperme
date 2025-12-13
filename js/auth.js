@@ -1,5 +1,7 @@
 // Authentication JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("Auth.js loaded");
+    
     // Check if we're on an auth page
     if (window.location.pathname.includes('auth.html')) {
         setupAuthPage();
@@ -33,7 +35,7 @@ function setupAuthPage() {
 }
 
 // Handle authentication
-function handleAuth() {
+async function handleAuth() {
     const email = document.getElementById('email')?.value;
     const password = document.getElementById('password')?.value;
     const messageEl = document.getElementById('authMessage');
@@ -46,51 +48,64 @@ function handleAuth() {
     const urlParams = new URLSearchParams(window.location.search);
     const type = urlParams.get('type') || 'login';
     
-    if (type === 'signup') {
-        // Sign up
-        if (typeof auth !== 'undefined') {
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    showMessage('Account created successfully!', 'success', messageEl);
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
-                })
-                .catch((error) => {
-                    showMessage('Error: ' + error.message, 'error', messageEl);
-                });
-        } else {
-            // Demo mode
-            showMessage('Success! Redirecting...', 'success', messageEl);
+    try {
+        if (type === 'signup') {
+            // Sign up
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            // Create user profile in Firestore
+            await db.collection('profiles').doc(user.uid).set({
+                email: user.email,
+                displayName: user.email.split('@')[0],
+                createdAt: new Date().toISOString(),
+                available: true,
+                tokens: 0,
+                callsCompleted: 0,
+                totalEarnings: 0,
+                rating: 4.5
+            });
+            
+            showMessage('Account created successfully!', 'success', messageEl);
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
-            }, 1000);
-        }
-    } else {
-        // Login
-        if (typeof auth !== 'undefined') {
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    showMessage('Login successful!', 'success', messageEl);
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
-                })
-                .catch((error) => {
-                    showMessage('Error: ' + error.message, 'error', messageEl);
-                });
+            }, 1500);
+            
         } else {
-            // Demo mode
-            showMessage('Success! Redirecting...', 'success', messageEl);
+            // Login
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            showMessage('Login successful!', 'success', messageEl);
+            
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
-            }, 1000);
+            }, 1500);
         }
+    } catch (error) {
+        console.error("Auth error:", error);
+        
+        // Handle specific error cases
+        let errorMessage = error.message;
+        if (error.code === 'auth/user-not-found') {
+            errorMessage = 'No account found with this email';
+        } else if (error.code === 'auth/wrong-password') {
+            errorMessage = 'Incorrect password';
+        } else if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'Email already in use';
+        } else if (error.code === 'auth/weak-password') {
+            errorMessage = 'Password should be at least 6 characters';
+        }
+        
+        showMessage('Error: ' + errorMessage, 'error', messageEl);
     }
 }
 
-// Check auth state
+// Check auth state for all pages
 function checkAuthState() {
+    if (typeof auth === 'undefined') {
+        console.log("Auth not initialized");
+        return;
+    }
+    
     auth.onAuthStateChanged((user) => {
         const loginBtn = document.getElementById('loginBtn');
         const dashboardBtn = document.getElementById('dashboardBtn');
@@ -98,6 +113,7 @@ function checkAuthState() {
         
         if (user) {
             // User is signed in
+            console.log("User is signed in:", user.email);
             if (loginBtn) loginBtn.style.display = 'none';
             if (dashboardBtn) {
                 dashboardBtn.style.display = 'flex';
@@ -106,6 +122,7 @@ function checkAuthState() {
             if (logoutBtn) logoutBtn.style.display = 'flex';
         } else {
             // User is signed out
+            console.log("User is signed out");
             if (loginBtn) loginBtn.style.display = 'flex';
             if (dashboardBtn) dashboardBtn.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'none';

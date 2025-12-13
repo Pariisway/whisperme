@@ -6,7 +6,6 @@
     <title>Call Room - Whisper+me</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Add call-specific styles -->
     <style>
         .call-room {
             min-height: 100vh;
@@ -16,51 +15,127 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: white;
             padding: 2rem;
+            position: relative;
+        }
+        
+        .call-container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
         }
         
         .call-header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .timer-container {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            border-radius: var(--radius-lg);
+            margin-top: 1rem;
         }
         
         .timer {
             font-size: 3rem;
             font-weight: bold;
-            color: #7b2cbf;
-            margin-top: 1rem;
+            color: var(--primary-blue);
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        
+        .call-status-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .status-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            border-radius: var(--radius);
+            min-width: 150px;
+        }
+        
+        .status-label {
+            font-size: 0.9rem;
+            color: var(--gray-light);
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-value {
+            font-size: 1.2rem;
+            font-weight: 600;
         }
         
         .participants {
             display: flex;
-            gap: 2rem;
             justify-content: center;
+            gap: 4rem;
             margin: 3rem 0;
+            flex-wrap: wrap;
         }
         
         .participant {
             text-align: center;
+            flex: 1;
+            min-width: 250px;
         }
         
         .participant-avatar {
-            width: 120px;
-            height: 120px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
-            border: 4px solid #7b2cbf;
-            margin-bottom: 1rem;
+            border: 4px solid var(--primary-blue);
+            margin: 0 auto 1.5rem;
+            overflow: hidden;
+            background: var(--dark);
         }
         
-        .call-status {
-            text-align: center;
-            margin: 2rem 0;
-            font-size: 1.2rem;
-            color: #ccc;
+        .participant-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .participant-info {
+            margin-top: 1rem;
+        }
+        
+        .participant-name {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .participant-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .participant-status.connected {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .participant-status.disconnected {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
         }
         
         .call-controls {
             display: flex;
             justify-content: center;
             gap: 2rem;
-            margin: 3rem 0;
+            margin: 4rem 0;
         }
         
         .control-btn {
@@ -68,7 +143,7 @@
             height: 70px;
             border-radius: 50%;
             border: none;
-            background: #333;
+            background: var(--dark);
             color: white;
             font-size: 1.5rem;
             cursor: pointer;
@@ -76,33 +151,81 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
         
         .control-btn:hover {
             transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(67, 97, 238, 0.5);
         }
         
         .control-btn.mic-toggle {
-            background: #4361ee;
+            background: var(--primary-blue);
         }
         
         .control-btn.mic-toggle.muted {
-            background: #e63946;
+            background: var(--danger);
         }
         
         .control-btn.end-call {
-            background: #e63946;
+            background: var(--danger);
         }
         
         .call-notes {
             text-align: center;
             margin-top: 3rem;
-            color: #aaa;
+            color: var(--gray-light);
             font-size: 0.9rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .call-notes p {
             margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .agora-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--danger);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        .connection-quality {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .quality-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--gray);
+        }
+        
+        .quality-dot.active {
+            background: var(--success);
+        }
+        
+        /* Rating Modal */
+        .rating-modal-content {
+            background: var(--white);
+            color: var(--dark);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
         }
         
         .rating-stars {
@@ -110,51 +233,91 @@
             justify-content: center;
             gap: 0.5rem;
             margin: 2rem 0;
-            font-size: 2rem;
-            color: #ffd700;
+            font-size: 2.5rem;
+            color: var(--accent-yellow);
         }
         
         .rating-stars i {
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s;
         }
         
         .rating-stars i:hover {
             transform: scale(1.2);
         }
         
-        .rating-stars .fas {
-            color: #ffd700;
+        .rating-comment {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--light-gray);
+            border-radius: var(--radius);
+            margin: 1rem 0;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .rating-comment:focus {
+            outline: none;
+            border-color: var(--primary-blue);
         }
     </style>
 </head>
 <body>
     <div class="call-room">
-        <div class="container" style="text-align: center;">
+        <div class="call-container">
             <div class="call-header">
-                <h2>Private Whisper Call</h2>
-                <div class="timer" id="timer">05:00</div>
+                <h2 style="color: white; margin-bottom: 1rem;">Private Whisper Call</h2>
+                <div class="timer-container">
+                    <div class="timer" id="timer">05:00</div>
+                </div>
+                
+                <div class="call-status-container">
+                    <div class="status-item">
+                        <div class="status-label">Call Status</div>
+                        <div class="status-value" id="callStatus" style="color: var(--warning);">Connecting...</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Network</div>
+                        <div class="status-value" id="networkQuality">Checking...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agora Error Display -->
+            <div id="agoraError" class="agora-error" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorMessage"></span>
             </div>
 
             <div class="participants">
                 <div class="participant">
-                    <img src="https://i.pravatar.cc/120?img=1" alt="You" class="participant-avatar">
-                    <h3>You</h3>
-                    <p><i class="fas fa-microphone"></i> Speaking</p>
+                    <div class="participant-avatar" id="localAvatar">
+                        <!-- Local user avatar will be loaded here -->
+                    </div>
+                    <div class="participant-info">
+                        <div class="participant-name">You</div>
+                        <div class="participant-status connected" id="localStatus">
+                            <i class="fas fa-microphone"></i> Speaking
+                        </div>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; font-size: 2rem; color: #7b2cbf;">
+                
+                <div style="display: flex; align-items: center; font-size: 3rem; color: var(--primary-blue);">
                     <i class="fas fa-phone-alt"></i>
                 </div>
+                
                 <div class="participant">
-                    <img src="https://i.pravatar.cc/120?img=2" alt="Whisperer" class="participant-avatar">
-                    <h3>Alex Johnson</h3>
-                    <p><i class="fas fa-headphones"></i> Listening</p>
+                    <div class="participant-avatar" id="remoteAvatar">
+                        <!-- Remote user avatar will be loaded here -->
+                    </div>
+                    <div class="participant-info">
+                        <div class="participant-name" id="remoteName">Connecting...</div>
+                        <div class="participant-status disconnected" id="remoteStatus">
+                            <i class="fas fa-spinner fa-spin"></i> Connecting
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="call-status">
-                <div id="callStatus">Connected</div>
-                <div id="participantStatus">Call in progress...</div>
             </div>
 
             <div class="call-controls">
@@ -169,154 +332,166 @@
             <div class="call-notes">
                 <p><i class="fas fa-info-circle"></i> This is a 5-minute private call. No recording is allowed.</p>
                 <p><i class="fas fa-exclamation-triangle"></i> Refreshing the page will end the call immediately.</p>
+                <p><i class="fas fa-shield-alt"></i> Your conversation is encrypted and private.</p>
             </div>
         </div>
     </div>
 
-    <!-- Rating Modal (shown after call ends) -->
+    <!-- Rating Modal -->
     <div id="ratingModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-body">
-                <h3>Rate Your Experience</h3>
-                <p>Please rate your call experience with the other participant.</p>
-                
-                <div class="rating-stars">
-                    <i class="far fa-star" data-rating="1"></i>
-                    <i class="far fa-star" data-rating="2"></i>
-                    <i class="far fa-star" data-rating="3"></i>
-                    <i class="far fa-star" data-rating="4"></i>
-                    <i class="far fa-star" data-rating="5"></i>
+                <div class="rating-modal-content">
+                    <h3>Rate Your Experience</h3>
+                    <p>Please rate your call with the other participant.</p>
+                    
+                    <div class="rating-stars">
+                        <i class="far fa-star" data-rating="1"></i>
+                        <i class="far fa-star" data-rating="2"></i>
+                        <i class="far fa-star" data-rating="3"></i>
+                        <i class="far fa-star" data-rating="4"></i>
+                        <i class="far fa-star" data-rating="5"></i>
+                    </div>
+                    
+                    <textarea id="ratingComment" class="rating-comment" placeholder="Optional: Share your experience or feedback..."></textarea>
+                    
+                    <button id="submitRating" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-paper-plane"></i> Submit Rating & Finish
+                    </button>
                 </div>
-                
-                <div class="form-group">
-                    <label for="ratingComment">Comments (Optional)</label>
-                    <textarea id="ratingComment" class="form-control" placeholder="Share your experience..." rows="3"></textarea>
-                </div>
-                
-                <button id="submitRating" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">
-                    <i class="fas fa-paper-plane"></i> Submit Rating
-                </button>
             </div>
         </div>
     </div>
 
+    <!-- Agora SDK -->
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.2.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/agora.js"></script>
+    
     <script>
-        // Call room JavaScript
-        document.addEventListener('DOMContentLoaded', function() {
+        // Call room initialization
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log("Call room loaded");
             
-            let timeLeft = 300; // 5 minutes in seconds
-            let timerInterval;
-            let isMicOn = true;
-            let rating = 0;
-            
-            // Start timer
-            function startTimer() {
-                timerInterval = setInterval(function() {
-                    timeLeft--;
-                    const minutes = Math.floor(timeLeft / 60);
-                    const seconds = timeLeft % 60;
-                    document.getElementById('timer').textContent = 
-                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        endCall();
-                    }
-                }, 1000);
+            // Check authentication
+            if (typeof auth === 'undefined') {
+                window.location.href = 'auth.html';
+                return;
             }
             
-            // End call
-            function endCall() {
-                clearInterval(timerInterval);
-                document.getElementById('callStatus').textContent = 'Call Ended';
-                document.getElementById('participantStatus').textContent = 'Thank you for using Whisper+me!';
+            auth.onAuthStateChanged(async function(user) {
+                if (!user) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
                 
-                // Show rating modal after 1 second
-                setTimeout(function() {
-                    showRatingModal();
-                }, 1000);
-            }
-            
-            // Show rating modal
-            function showRatingModal() {
-                const modal = document.getElementById('ratingModal');
-                modal.style.display = 'block';
+                window.currentUserId = user.uid;
                 
-                // Setup star rating
-                const stars = document.querySelectorAll('.rating-stars i');
-                stars.forEach(star => {
-                    star.addEventListener('mouseover', function() {
-                        const ratingValue = parseInt(this.getAttribute('data-rating'));
-                        highlightStars(ratingValue);
-                    });
-                    
-                    star.addEventListener('click', function() {
-                        rating = parseInt(this.getAttribute('data-rating'));
-                        highlightStars(rating);
-                    });
-                });
+                // Get session ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('session');
                 
-                // Submit rating
-                document.getElementById('submitRating').addEventListener('click', function() {
-                    const comment = document.getElementById('ratingComment').value;
-                    alert(`Thank you for your rating! You gave ${rating} stars. ${comment ? 'Comment: ' + comment : ''}`);
+                if (!sessionId) {
+                    alert('No call session found');
                     window.location.href = 'dashboard.html';
-                });
+                    return;
+                }
                 
-                // Close modal when clicking outside
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        modal.style.display = 'none';
-                        window.location.href = 'dashboard.html';
-                    }
-                });
-            }
-            
-            // Highlight stars
-            function highlightStars(count) {
-                const stars = document.querySelectorAll('.rating-stars i');
-                stars.forEach((star, index) => {
-                    if (index < count) {
-                        star.className = 'fas fa-star';
-                    } else {
-                        star.className = 'far fa-star';
-                    }
-                });
-            }
-            
-            // Mic toggle
-            document.getElementById('micToggle').addEventListener('click', function() {
-                isMicOn = !isMicOn;
-                const icon = this.querySelector('i');
-                if (isMicOn) {
-                    icon.className = 'fas fa-microphone';
-                    this.classList.remove('muted');
-                    document.querySelector('.participant p').innerHTML = '<i class="fas fa-microphone"></i> Speaking';
-                } else {
-                    icon.className = 'fas fa-microphone-slash';
-                    this.classList.add('muted');
-                    document.querySelector('.participant p').innerHTML = '<i class="fas fa-microphone-slash"></i> Muted';
+                // Load call session data
+                await loadCallSession(sessionId, user.uid);
+                
+                // Initialize Agora call room
+                if (typeof initCallRoom === 'function') {
+                    initCallRoom();
                 }
             });
-            
-            // End call button
-            document.getElementById('endCall').addEventListener('click', function() {
-                if (confirm('Are you sure you want to end the call?')) {
-                    endCall();
-                }
-            });
-            
-            // Start the timer
-            startTimer();
-            
-            // Auto-end after 5 minutes (for demo)
-            setTimeout(function() {
-                if (timeLeft > 0) {
-                    endCall();
-                }
-            }, 305000); // 5 minutes + 5 seconds
         });
+        
+        // Load call session data
+        async function loadCallSession(sessionId, userId) {
+            try {
+                const sessionDoc = await db.collection('callSessions').doc(sessionId).get();
+                
+                if (!sessionDoc.exists) {
+                    throw new Error('Call session not found');
+                }
+                
+                const session = sessionDoc.data();
+                
+                // Check if user is part of this call
+                if (session.callerId !== userId && session.receiverId !== userId) {
+                    throw new Error('You are not part of this call');
+                }
+                
+                // Determine if user is caller or receiver
+                const isCaller = session.callerId === userId;
+                const otherUserId = isCaller ? session.receiverId : session.callerId;
+                const otherUserName = isCaller ? session.receiverName : session.callerName;
+                
+                // Load user avatars
+                await loadUserAvatars(userId, otherUserId);
+                
+                // Update remote user name
+                document.getElementById('remoteName').textContent = otherUserName;
+                
+                // Store session info for later use
+                window.callSession = session;
+                window.isCaller = isCaller;
+                window.otherUserId = otherUserId;
+                
+            } catch (error) {
+                console.error("Error loading call session:", error);
+                alert('Error loading call: ' + error.message);
+                window.location.href = 'dashboard.html';
+            }
+        }
+        
+        // Load user avatars
+        async function loadUserAvatars(localUserId, remoteUserId) {
+            try {
+                // Load local user avatar
+                const localProfile = await db.collection('profiles').doc(localUserId).get();
+                if (localProfile.exists) {
+                    const localData = localProfile.data();
+                    const localAvatar = document.getElementById('localAvatar');
+                    if (localAvatar) {
+                        localAvatar.innerHTML = `
+                            <img src="${localData.profilePicture || 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 70)}" 
+                                 alt="You">
+                        `;
+                    }
+                }
+                
+                // Load remote user avatar
+                const remoteProfile = await db.collection('profiles').doc(remoteUserId).get();
+                if (remoteProfile.exists) {
+                    const remoteData = remoteProfile.data();
+                    const remoteAvatar = document.getElementById('remoteAvatar');
+                    if (remoteAvatar) {
+                        remoteAvatar.innerHTML = `
+                            <img src="${remoteData.profilePicture || 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 70 + 30)}" 
+                                 alt="${remoteData.displayName || 'User'}">
+                        `;
+                    }
+                }
+                
+            } catch (error) {
+                console.error("Error loading avatars:", error);
+                // Use default avatars
+                document.getElementById('localAvatar').innerHTML = `
+                    <img src="https://i.pravatar.cc/150" alt="You">
+                `;
+                document.getElementById('remoteAvatar').innerHTML = `
+                    <img src="https://i.pravatar.cc/150?img=30" alt="User">
+                `;
+            }
+        }
     </script>
 </body>
 </html>

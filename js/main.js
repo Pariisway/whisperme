@@ -30,10 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get filter value
             const filter = this.getAttribute('data-filter');
-            console.log("Filtering by:", filter);
-            
-            // Here you would filter whispers based on the filter value
-            // For now, we'll just log it
+            loadWhispers(filter);
         });
     });
     
@@ -56,8 +53,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if user is logged in and update UI
     checkAuthState();
     
-    // Load whispers (demo data for now)
-    loadDemoWhispers();
+    // Load stats
+    loadStats();
+    
+    // Load whispers
+    loadWhispers('all');
 });
 
 // Check authentication state
@@ -103,113 +103,120 @@ function checkAuthState() {
     }
 }
 
-// Load demo whispers for homepage
-function loadDemoWhispers() {
+// Load stats from Firebase
+async function loadStats() {
+    try {
+        // In a real app, you would have stats collection
+        // For demo, we'll use some default values
+        document.getElementById('activeWhispers').textContent = '24';
+        document.getElementById('totalCalls').textContent = '1,234';
+        document.getElementById('totalEarned').textContent = '$18,510';
+        
+    } catch (error) {
+        console.error("Error loading stats:", error);
+    }
+}
+
+// Load whispers from Firebase
+async function loadWhispers(filter = 'all') {
     const container = document.getElementById('whispersContainer');
     if (!container) return;
     
-    // Demo whispers data
-    const demoWhispers = [
-        {
-            id: 1,
-            name: "Alex Johnson",
-            bio: "Professional listener with 5+ years experience in counseling",
-            status: "available",
-            calls: 124,
-            rating: 4.8,
-            social: {
-                twitter: "#",
-                instagram: "#"
-            }
-        },
-        {
-            id: 2,
-            name: "Sam Wilson",
-            bio: "Life coach specializing in career advice and motivation",
-            status: "available",
-            calls: 89,
-            rating: 4.9,
-            social: {
-                instagram: "#",
-                tiktok: "#"
-            }
-        },
-        {
-            id: 3,
-            name: "Taylor Swift",
-            bio: "Music therapist and conversation partner",
-            status: "unavailable",
-            calls: 256,
-            rating: 4.7,
-            social: {
-                twitter: "#",
-                instagram: "#"
-            }
-        },
-        {
-            id: 4,
-            name: "Jordan Lee",
-            bio: "Mindfulness coach and meditation guide",
-            status: "available",
-            calls: 67,
-            rating: 4.6,
-            social: {
-                twitter: "#"
-            }
+    // Show loading
+    container.innerHTML = `
+        <div class="loading" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+            <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--primary-blue);"></i>
+            <p style="margin-top: 1rem;">Loading whispers...</p>
+        </div>
+    `;
+    
+    try {
+        let query = db.collection('profiles');
+        
+        // Apply filters
+        if (filter === 'online') {
+            query = query.where('available', '==', true);
         }
-    ];
-    
-    // Clear loading message
-    container.innerHTML = '';
-    
-    // Create whisper cards
-    demoWhispers.forEach(whisper => {
-        const card = createWhisperCard(whisper);
-        container.appendChild(card);
-    });
+        
+        // Get whispers
+        const snapshot = await query.limit(12).get();
+        
+        // Clear container
+        container.innerHTML = '';
+        
+        if (snapshot.empty) {
+            container.innerHTML = `
+                <div class="no-results" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                    <i class="fas fa-users-slash fa-3x" style="color: var(--gray-light); margin-bottom: 1rem;"></i>
+                    <h3>No whispers available</h3>
+                    <p>Be the first to sign up and start whispering!</p>
+                    <a href="auth.html?type=signup" class="btn btn-primary" style="margin-top: 1rem;">
+                        <i class="fas fa-user-plus"></i> Sign Up Now
+                    </a>
+                </div>
+            `;
+            return;
+        }
+        
+        snapshot.forEach(doc => {
+            const whisper = doc.data();
+            const card = createWhisperCard(whisper, doc.id);
+            container.appendChild(card);
+        });
+        
+    } catch (error) {
+        console.error("Error loading whispers:", error);
+        container.innerHTML = `
+            <div class="error" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                <i class="fas fa-exclamation-triangle fa-3x" style="color: var(--danger); margin-bottom: 1rem;"></i>
+                <h3>Error loading whispers</h3>
+                <p>Please try again later</p>
+            </div>
+        `;
+    }
 }
 
 // Create a whisper card element
-function createWhisperCard(whisper) {
+function createWhisperCard(whisper, id) {
     const card = document.createElement('div');
     card.className = 'profile-card';
-    card.dataset.id = whisper.id;
+    card.dataset.id = id;
     
-    const statusClass = whisper.status === 'available' ? 'available' : 'unavailable';
-    const statusText = whisper.status === 'available' ? 'Available Now' : 'Currently Busy';
+    const statusClass = whisper.available ? 'available' : 'unavailable';
+    const statusText = whisper.available ? 'Available Now' : 'Currently Busy';
     
     card.innerHTML = `
         <div class="profile-header">
-            <img src="https://via.placeholder.com/300x200/7b2cbf/ffffff?text=Whisper+me" 
+            <img src="https://via.placeholder.com/400x200/4361ee/ffffff?text=Whisper+me" 
                  alt="Profile Background" 
                  class="profile-bg">
-            <img src="https://i.pravatar.cc/100?img=${whisper.id}" 
-                 alt="${whisper.name}" 
+            <img src="${whisper.profilePicture || 'https://i.pravatar.cc/120?img=' + Math.floor(Math.random() * 70)}" 
+                 alt="${whisper.displayName || 'User'}" 
                  class="profile-avatar">
         </div>
         <div class="profile-body">
-            <h3 class="profile-name">${whisper.name}</h3>
-            <div class="status ${statusClass}">${statusText}</div>
-            <p class="profile-bio">${whisper.bio}</p>
+            <h3 class="profile-name">${whisper.displayName || 'Anonymous User'}</h3>
+            <div class="status ${statusClass}">
+                <i class="fas fa-circle"></i> ${statusText}
+            </div>
+            <p class="profile-bio">${whisper.bio || 'No bio yet'}</p>
             
             <div class="profile-stats">
                 <div class="stat-item">
-                    <div class="stat-value">${whisper.calls}</div>
+                    <div class="stat-value">${whisper.callsCompleted || 0}</div>
                     <div class="stat-label">Calls</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${whisper.rating}</div>
+                    <div class="stat-value">${whisper.rating || '4.5'}</div>
                     <div class="stat-label">Rating</div>
                 </div>
             </div>
 
-            <div class="social-links">
-                ${whisper.social.twitter ? `<a href="${whisper.social.twitter}"><i class="fab fa-twitter"></i></a>` : ''}
-                ${whisper.social.instagram ? `<a href="${whisper.social.instagram}"><i class="fab fa-instagram"></i></a>` : ''}
-                ${whisper.social.tiktok ? `<a href="${whisper.social.tiktok}"><i class="fab fa-tiktok"></i></a>` : ''}
+            <div class="token-price">
+                <i class="fas fa-coins"></i> $15 per 5-minute call
             </div>
 
-            <button class="call-btn" ${whisper.status !== 'available' ? 'disabled' : ''}>
+            <button class="call-btn" ${!whisper.available ? 'disabled' : ''}>
                 <i class="fas fa-phone"></i> Start Call (1 Token)
             </button>
         </div>
@@ -235,24 +242,28 @@ function showCallModal(whisper) {
     
     modalBody.innerHTML = `
         <div class="token-modal">
-            <h3>Start Call with ${whisper.name}</h3>
+            <h3>Start Call with ${whisper.displayName || 'User'}</h3>
             <p>You need 1 Whisper token to start a 5-minute call.</p>
-            <p>Each token costs $15 and gives you one 5-minute private conversation.</p>
+            <p><strong>Each token costs $15 and gives you one 5-minute private conversation.</strong></p>
             
             <div class="profile-info" style="text-align: center; margin: 1.5rem 0;">
-                <img src="https://i.pravatar.cc/80?img=${whisper.id}" 
-                     alt="${whisper.name}" 
-                     style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 1rem;">
-                <h4>${whisper.name}</h4>
-                <p style="color: #666; font-size: 0.9rem;">${whisper.bio}</p>
-                <p><strong>Rating:</strong> ${whisper.rating} ★</p>
+                <img src="${whisper.profilePicture || 'https://i.pravatar.cc/80?img=' + Math.floor(Math.random() * 70)}" 
+                     alt="${whisper.displayName || 'User'}" 
+                     style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 1rem; border: 3px solid var(--primary-blue);">
+                <h4>${whisper.displayName || 'Anonymous User'}</h4>
+                <p style="color: var(--gray); font-size: 0.9rem;">${whisper.bio || 'No bio yet'}</p>
+                <p><strong>Rating:</strong> ${whisper.rating || '4.5'} ★</p>
+            </div>
+            
+            <div class="token-price-display" style="margin: 1.5rem 0;">
+                <i class="fas fa-coins"></i> 1 Token = $15 = 5 Minutes
             </div>
             
             <div class="modal-buttons" style="display: flex; gap: 1rem; margin-top: 2rem;">
                 <button id="buyTokensBtn" class="btn btn-primary" style="flex: 1;">
                     <i class="fas fa-coins"></i> Buy Tokens First
                 </button>
-                <button id="startCallBtn" class="btn btn-success" style="flex: 1;" ${whisper.status !== 'available' ? 'disabled' : ''}>
+                <button id="startCallBtn" class="btn btn-success" style="flex: 1;" ${!whisper.available ? 'disabled' : ''}>
                     <i class="fas fa-phone"></i> Start Call Now
                 </button>
                 <button id="cancelModalBtn" class="btn btn-secondary" style="flex: 1;">
@@ -266,14 +277,22 @@ function showCallModal(whisper) {
     
     // Add event listeners
     document.getElementById('buyTokensBtn').addEventListener('click', function() {
-        window.location.href = 'payment.html';
+        window.location.href = 'auth.html?type=login';
         modal.style.display = 'none';
     });
     
     document.getElementById('startCallBtn').addEventListener('click', function() {
-        if (whisper.status === 'available') {
-            alert('In a real app, this would start the call process. Redirecting to call interface...');
-            modal.style.display = 'none';
+        if (whisper.available) {
+            // Check if user is logged in
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    alert('Starting call...');
+                    window.location.href = 'call.html';
+                } else {
+                    alert('Please login first to start a call.');
+                    window.location.href = 'auth.html?type=login';
+                }
+            });
         }
     });
     

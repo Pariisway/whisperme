@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - Whisper+me</title>
+    <title>Edit Profile - Whisper+me</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Navigation -->
@@ -17,93 +18,151 @@
             <div class="nav-links">
                 <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="payment.html"><i class="fas fa-coins"></i> Tokens</a>
-                <a href="profile.html" class="active"><i class="fas fa-user"></i> Profile</a>
+                <a href="profile.html" class="active"><i class="fas fa-user-edit"></i> Edit Profile</a>
                 <a href="#" id="logoutBtn" class="btn btn-small btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <div class="profile-header">
-            <h1><i class="fas fa-user-circle"></i> My Profile</h1>
-            <p>Manage your personal information and settings</p>
-        </div>
-
-        <div class="form-container">
-            <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
-            
-            <div class="form-group">
-                <label for="displayName"><i class="fas fa-user"></i> Display Name</label>
-                <input type="text" id="displayName" class="form-control" placeholder="Enter your name" value="User">
-            </div>
-            
-            <div class="form-group">
-                <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
-                <input type="email" id="email" class="form-control" placeholder="your@email.com" value="user@example.com">
-            </div>
-            
-            <div class="form-group">
-                <label for="bio"><i class="fas fa-edit"></i> Bio</label>
-                <textarea id="bio" class="form-control" rows="4" placeholder="Tell others about yourself...">I love connecting with people through meaningful conversations!</textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
-                <input type="tel" id="phone" class="form-control" placeholder="+1 (555) 123-4567">
-            </div>
-            
-            <button class="btn btn-primary btn-block">
-                <i class="fas fa-save"></i> Save Changes
-            </button>
-        </div>
-
-        <div class="form-container" style="margin-top: 2rem;">
-            <h2><i class="fas fa-cog"></i> Account Settings</h2>
-            
-            <div class="form-group">
-                <label><i class="fas fa-bell"></i> Notifications</label>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <input type="checkbox" id="emailNotifications" checked>
-                    <label for="emailNotifications">Email notifications</label>
+        <div class="section">
+            <div class="dashboard-header">
+                <div class="welcome-message">
+                    <h1><i class="fas fa-user-edit"></i> Edit Profile</h1>
+                    <p>Update your profile information and settings</p>
                 </div>
             </div>
-            
-            <div class="form-group">
-                <label><i class="fas fa-globe"></i> Language</label>
-                <select class="form-control">
-                    <option>English</option>
-                    <option>Spanish</option>
-                    <option>French</option>
-                </select>
+
+            <div class="form-container" style="max-width: 800px;">
+                <!-- Profile Picture Upload -->
+                <div class="text-center mb-4">
+                    <h3>Profile Picture</h3>
+                    <p>Upload a clear photo of yourself (Recommended: 500x500px)</p>
+                    
+                    <div class="file-upload">
+                        <input type="file" id="profilePicture" class="file-upload-input" accept="image/*">
+                        <label for="profilePicture" class="file-upload-label">
+                            <img id="profilePreview" src="https://via.placeholder.com/200/4361ee/ffffff?text=Upload+Photo" 
+                                 alt="Profile Preview" class="profile-preview">
+                            <div class="upload-icon">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div class="upload-text">
+                                Click to upload
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label for="displayName"><i class="fas fa-user"></i> Display Name</label>
+                        <input type="text" id="displayName" class="form-control" placeholder="Enter your display name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio"><i class="fas fa-edit"></i> Bio</label>
+                        <textarea id="bio" class="form-control" rows="4" placeholder="Tell others about yourself..." maxlength="500"></textarea>
+                        <small class="text-muted" id="bioCounter">0/500 characters</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-link"></i> Social Links</label>
+                        <div class="social-inputs">
+                            <div class="input-group" style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="width: 40px; text-align: center;"><i class="fab fa-twitter"></i></span>
+                                <input type="url" class="form-control" placeholder="Twitter profile URL">
+                            </div>
+                            <div class="input-group" style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="width: 40px; text-align: center;"><i class="fab fa-instagram"></i></span>
+                                <input type="url" class="form-control" placeholder="Instagram profile URL">
+                            </div>
+                            <div class="input-group" style="display: flex; align-items: center;">
+                                <span style="width: 40px; text-align: center;"><i class="fab fa-tiktok"></i></span>
+                                <input type="url" class="form-control" placeholder="TikTok profile URL">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-dollar-sign"></i> Token Price</label>
+                        <div class="token-price-display" style="margin: 0;">
+                            <i class="fas fa-coins"></i> 
+                            <strong>Fixed at $15 per token</strong>
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <small class="text-muted">This is the standard price for all Whisper tokens on our platform</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-microphone"></i> Call Settings</label>
+                        <div class="availability-toggle">
+                            <span>Available for calls:</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="availabilityToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span id="availabilityStatus" style="color: var(--success); font-weight: 600;">Available</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hourlyRate"><i class="fas fa-clock"></i> Preferred Hours</label>
+                        <select id="preferredHours" class="form-control" multiple style="height: 100px;">
+                            <option value="morning">Morning (8AM - 12PM)</option>
+                            <option value="afternoon">Afternoon (12PM - 5PM)</option>
+                            <option value="evening">Evening (5PM - 9PM)</option>
+                            <option value="night">Night (9PM - 12AM)</option>
+                            <option value="late_night">Late Night (12AM - 8AM)</option>
+                        </select>
+                        <small class="text-muted">Hold Ctrl/Cmd to select multiple options</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="callTopics"><i class="fas fa-comments"></i> Topics I Can Discuss</label>
+                        <div class="topics-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; margin-top: 0.5rem;">
+                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="topics" value="career"> Career Advice
+                            </label>
+                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="topics" value="mental_health"> Mental Health
+                            </label>
+                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="topics" value="relationships"> Relationships
+                            </label>
+                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="topics" value="motivation"> Motivation
+                            </label>
+                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="topics" value="hobbies"> Hobbies
+                            </label>
+                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="topics" value="life_advice"> Life Advice
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-save"></i> Save Profile
+                        </button>
+                        <button type="button" class="btn btn-outline btn-block" onclick="window.location.href='dashboard.html'">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
             </div>
-            
-            <button class="btn btn-secondary">
-                <i class="fas fa-cog"></i> Update Settings
-            </button>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Whisper+me</h3>
-                    <p>Private voice chats with amazing people.</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <a href="dashboard.html">Dashboard</a>
-                    <a href="payment.html">Buy Tokens</a>
-                    <a href="profile.html">My Profile</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2024 Whisper+me. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/profile.js"></script>
 </body>
 </html>

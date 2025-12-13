@@ -3,9 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment & Tokens - Whisper+me</title>
+    <title>Tokens & Payment - Whisper+me</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .package-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space);
+            margin: var(--space-xl) 0;
+        }
+        
+        .package-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            text-align: center;
+            transition: all var(--transition);
+            border: 3px solid transparent;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .package-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-blue);
+        }
+        
+        .package-card.popular {
+            border-color: var(--accent-yellow);
+            background: linear-gradient(135deg, var(--white) 0%, #fff9db 100%);
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-yellow-dark));
+            color: var(--dark);
+            padding: 0.5rem 1.5rem;
+            font-weight: 700;
+            transform: rotate(45deg) translate(30%, -50%);
+            transform-origin: top right;
+            font-size: 0.8rem;
+        }
+        
+        .package-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space);
+            color: white;
+            font-size: 2rem;
+        }
+        
+        .package-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            margin: var(--space) 0;
+        }
+        
+        .package-price span {
+            font-size: 1rem;
+            color: var(--gray);
+            font-weight: normal;
+        }
+        
+        .package-tokens {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: var(--space);
+        }
+        
+        .package-features {
+            list-style: none;
+            padding: 0;
+            margin: var(--space) 0;
+            text-align: left;
+        }
+        
+        .package-features li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .package-features li i {
+            color: var(--success);
+        }
+        
+        .price-per-token {
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-yellow-light));
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            color: var(--dark);
+            display: inline-block;
+            margin: var(--space) 0;
+        }
+    </style>
+    <!-- Stripe JS -->
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -17,204 +125,211 @@
             <div class="nav-links">
                 <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="payment.html" class="active"><i class="fas fa-coins"></i> Tokens</a>
-                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+                <a href="profile.html"><i class="fas fa-user-edit"></i> Profile</a>
                 <a href="#" id="logoutBtn" class="btn btn-small btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <!-- Token Balance Header -->
-        <div class="dashboard-header" style="margin-top: 2rem;">
-            <div class="welcome-message">
-                <h1><i class="fas fa-wallet"></i> My Wallet</h1>
-                <p>Manage your Whisper tokens and earnings</p>
+        <div class="section">
+            <div class="dashboard-header">
+                <div class="welcome-message">
+                    <h1><i class="fas fa-coins"></i> Tokens & Payment</h1>
+                    <p>Purchase tokens to start calling and manage your earnings</p>
+                </div>
+                <div class="token-balance">
+                    <div class="stat-card" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%); color: white;">
+                        <div class="stat-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Token Balance</h3>
+                            <p id="tokenBalance">0 tokens</p>
+                            <div class="token-price-display" style="background: rgba(255,255,255,0.2); margin-top: 0.5rem;">
+                                $15 per token
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="token-balance">
-                <div class="stat-card" style="background: linear-gradient(135deg, #7b2cbf 0%, #9d4edd 100%); color: white;">
-                    <div class="stat-icon">
+
+            <!-- Token Packages -->
+            <div class="text-center mb-4">
+                <div class="token-price-display" style="display: inline-block;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>STANDARD PRICE:</strong> $15 per Whisper token
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <p style="color: var(--gray); margin-top: 0.5rem;">Each token gives you one 5-minute private conversation</p>
+            </div>
+
+            <div class="package-grid">
+                <!-- Package 1 -->
+                <div class="package-card">
+                    <div class="package-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3>Starter Pack</h3>
+                    <div class="package-tokens">1 Token</div>
+                    <div class="package-price">$15</div>
+                    <div class="price-per-token">$15 per token</div>
+                    <ul class="package-features">
+                        <li><i class="fas fa-check"></i> 5-minute call</li>
+                        <li><i class="fas fa-check"></i> Instant delivery</li>
+                        <li><i class="fas fa-check"></i> No expiration</li>
+                    </ul>
+                    <button class="btn btn-primary buy-btn" data-tokens="1" data-price="15" style="width: 100%;">
+                        <i class="fas fa-shopping-cart"></i> Buy Now
+                    </button>
+                </div>
+
+                <!-- Package 2 - Popular -->
+                <div class="package-card popular">
+                    <div class="popular-badge">MOST POPULAR</div>
+                    <div class="package-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Premium Pack</h3>
+                    <div class="package-tokens">10 Tokens</div>
+                    <div class="package-price">$150</div>
+                    <div class="price-per-token">$15 per token</div>
+                    <ul class="package-features">
+                        <li><i class="fas fa-check"></i> 50 minutes total</li>
+                        <li><i class="fas fa-check"></i> Best value</li>
+                        <li><i class="fas fa-check"></i> Instant delivery</li>
+                        <li><i class="fas fa-check"></i> No expiration</li>
+                        <li><i class="fas fa-check"></i> Priority support</li>
+                    </ul>
+                    <button class="btn btn-accent buy-btn" data-tokens="10" data-price="150" style="width: 100%;">
+                        <i class="fas fa-crown"></i> Buy Now
+                    </button>
+                </div>
+
+                <!-- Package 3 -->
+                <div class="package-card">
+                    <div class="package-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3>Pro Pack</h3>
+                    <div class="package-tokens">50 Tokens</div>
+                    <div class="package-price">$750</div>
+                    <div class="price-per-token">$15 per token</div>
+                    <ul class="package-features">
+                        <li><i class="fas fa-check"></i> 250 minutes total</li>
+                        <li><i class="fas fa-check"></i> For power users</li>
+                        <li><i class="fas fa-check"></i> Instant delivery</li>
+                        <li><i class="fas fa-check"></i> No expiration</li>
+                        <li><i class="fas fa-check"></i> VIP support</li>
+                        <li><i class="fas fa-check"></i> Monthly reports</li>
+                    </ul>
+                    <button class="btn btn-primary buy-btn" data-tokens="50" data-price="750" style="width: 100%;">
+                        <i class="fas fa-rocket"></i> Buy Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="form-container" style="max-width: 600px; margin: 3rem auto;">
+                <h3 class="text-center mb-3"><i class="fas fa-credit-card"></i> Payment Method</h3>
+                <div class="payment-methods" style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+                    <div class="payment-method" style="text-align: center;">
+                        <div style="width: 60px; height: 60px; background: white; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; border: 2px solid var(--primary-blue);">
+                            <i class="fab fa-cc-visa" style="font-size: 2rem; color: #1a1f71;"></i>
+                        </div>
+                        <span>Visa</span>
+                    </div>
+                    <div class="payment-method" style="text-align: center;">
+                        <div style="width: 60px; height: 60px; background: white; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; border: 2px solid var(--primary-blue);">
+                            <i class="fab fa-cc-mastercard" style="font-size: 2rem; color: #eb001b;"></i>
+                        </div>
+                        <span>Mastercard</span>
+                    </div>
+                    <div class="payment-method" style="text-align: center;">
+                        <div style="width: 60px; height: 60px; background: white; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; border: 2px solid var(--primary-blue);">
+                            <i class="fab fa-cc-paypal" style="font-size: 2rem; color: #003087;"></i>
+                        </div>
+                        <span>PayPal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Earnings & Payouts -->
+            <div class="stats-grid" style="margin: 3rem 0;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--success) 0%, #86efac 100%);">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Total Earnings</h3>
+                        <p id="totalEarnings">$0.00</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--accent-yellow) 0%, var(--accent-yellow-light) 100%);">
                         <i class="fas fa-coins"></i>
                     </div>
                     <div class="stat-content">
-                        <h3>Current Balance</h3>
-                        <p id="tokenBalance">Loading...</p>
-                        <h2 style="font-size: 2.5rem; margin: 0;">0 <small style="font-size: 1rem;">tokens</small></h2>
+                        <h3>Tokens Used</h3>
+                        <p id="tokensUsed">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--secondary) 0%, #38bdf8 100%);">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Available for Payout</h3>
+                        <p id="availableForPayout">$0.00</p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Earnings Section -->
-        <div class="stats-grid" style="margin-top: 2rem;">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #38b000 0%, #80ed99 100%);">
-                    <i class="fas fa-money-bill-wave"></i>
+            <!-- Payout Request Form -->
+            <div class="form-container" style="max-width: 600px; margin: 3rem auto;">
+                <h3 class="text-center mb-3"><i class="fas fa-money-check-alt"></i> Request Payout</h3>
+                <p class="text-center text-muted">Minimum payout amount: $20</p>
+                
+                <div class="form-group">
+                    <label for="payoutAmount"><i class="fas fa-dollar-sign"></i> Amount</label>
+                    <input type="number" id="payoutAmount" class="form-control" placeholder="Enter amount (min $20)" min="20" step="0.01">
                 </div>
-                <div class="stat-content">
-                    <h3>Total Earnings</h3>
-                    <p id="totalEarnings">$0.00</p>
+                
+                <div class="form-group">
+                    <label for="paypalEmail"><i class="fab fa-paypal"></i> PayPal Email</label>
+                    <input type="email" id="paypalEmail" class="form-control" placeholder="Enter your PayPal email">
                 </div>
+                
+                <div id="payoutMessage" class="alert" style="display: none;"></div>
+                
+                <button id="requestPayoutBtn" class="btn btn-success btn-block" disabled>
+                    <i class="fas fa-paper-plane"></i> Request Payout
+                </button>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #ff9e00 0%, #ffca3a 100%);">
-                    <i class="fas fa-phone-alt"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>Calls Completed</h3>
-                    <p id="callsCompleted">0</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #1982c4 0%, #8ac926 100%);">
-                    <i class="fas fa-star"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>Average Rating</h3>
-                    <p id="averageRating">4.5 ★</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Buy Tokens Section -->
-        <div class="form-container" style="margin-top: 3rem;">
-            <h2><i class="fas fa-shopping-cart"></i> Buy Tokens</h2>
-            <p style="margin-bottom: 2rem; color: #666;">Tokens are used to start calls with whisperers. 1 token = 1 minute of call time.</p>
-            
-            <div class="token-packages">
-                <div class="package-grid">
-                    <div class="package-card" data-tokens="10" data-price="9.99">
-                        <div class="package-header">
-                            <h3>Starter Pack</h3>
-                            <div class="package-price">$9.99</div>
-                        </div>
-                        <div class="package-body">
-                            <h4>10 Tokens</h4>
-                            <p>≈ 10 minutes of calls</p>
-                            <p><i class="fas fa-check"></i> Perfect for trying out</p>
-                            <button class="btn btn-primary btn-block buy-btn">Buy Now</button>
-                        </div>
-                    </div>
-                    
-                    <div class="package-card popular" data-tokens="30" data-price="24.99">
-                        <div class="package-badge">MOST POPULAR</div>
-                        <div class="package-header">
-                            <h3>Popular Pack</h3>
-                            <div class="package-price">$24.99</div>
-                        </div>
-                        <div class="package-body">
-                            <h4>30 Tokens</h4>
-                            <p>≈ 30 minutes of calls</p>
-                            <p><i class="fas fa-check"></i> Save 17%</p>
-                            <p><i class="fas fa-check"></i> Best value</p>
-                            <button class="btn btn-primary btn-block buy-btn">Buy Now</button>
-                        </div>
-                    </div>
-                    
-                    <div class="package-card" data-tokens="100" data-price="69.99">
-                        <div class="package-header">
-                            <h3>Pro Pack</h3>
-                            <div class="package-price">$69.99</div>
-                        </div>
-                        <div class="package-body">
-                            <h4>100 Tokens</h4>
-                            <p>≈ 100 minutes of calls</p>
-                            <p><i class="fas fa-check"></i> Save 30%</p>
-                            <p><i class="fas fa-check"></i> VIP support</p>
-                            <button class="btn btn-primary btn-block buy-btn">Buy Now</button>
-                        </div>
+            <!-- Transaction History -->
+            <div class="form-container" style="max-width: 800px; margin: 3rem auto;">
+                <h3 class="text-center mb-3"><i class="fas fa-history"></i> Transaction History</h3>
+                <div id="transactionList">
+                    <!-- Transactions will be loaded here -->
+                    <div class="text-center" style="padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary-blue);"></i>
+                        <p style="margin-top: 1rem;">Loading transactions...</p>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Payout Section -->
-        <div class="form-container" style="margin-top: 3rem;">
-            <h2><i class="fas fa-credit-card"></i> Request Payout</h2>
-            <p style="margin-bottom: 2rem; color: #666;">Withdraw your earnings to your PayPal account. Minimum payout: $20.</p>
-            
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> You earn 1 token for every minute you spend on calls as a whisperer.
-            </div>
-            
-            <div class="form-group">
-                <label for="availableEarnings"><i class="fas fa-money-bill"></i> Available for Payout</label>
-                <div class="amount-display">
-                    <h3 id="availableForPayout">$0.00</h3>
-                    <small>Minimum: $20.00</small>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="payoutAmount"><i class="fas fa-dollar-sign"></i> Payout Amount ($)</label>
-                <input type="number" id="payoutAmount" min="20" step="0.01" placeholder="20.00">
-            </div>
-            
-            <div class="form-group">
-                <label for="paypalEmail"><i class="fab fa-paypal"></i> PayPal Email</label>
-                <input type="email" id="paypalEmail" placeholder="your-email@example.com">
-            </div>
-            
-            <button id="requestPayoutBtn" class="btn btn-success btn-large" disabled>
-                <i class="fas fa-paper-plane"></i> Request Payout
-            </button>
-            
-            <div id="payoutMessage" class="alert" style="display: none; margin-top: 1rem;"></div>
-        </div>
-
-        <!-- Transaction History -->
-        <div class="form-container" style="margin-top: 3rem;">
-            <h2><i class="fas fa-history"></i> Transaction History</h2>
-            <div class="transaction-list" id="transactionList">
-                <div class="transaction-item">
-                    <div class="transaction-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="transaction-details">
-                        <h4>Token Purchase</h4>
-                        <p>10 tokens - $9.99</p>
-                        <small class="text-muted">Today, 10:30 AM</small>
-                    </div>
-                    <div class="transaction-amount negative">
-                        -$9.99
-                    </div>
-                </div>
-                <!-- More transactions will be loaded here -->
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Whisper+me</h3>
-                    <p>Private voice chats with amazing people.</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <a href="dashboard.html">Dashboard</a>
-                    <a href="payment.html">Buy Tokens</a>
-                    <a href="profile.html">My Profile</a>
-                </div>
-                <div class="footer-section">
-                    <h3>Support</h3>
-                    <a href="#">Help Center</a>
-                    <a href="#">Contact Us</a>
-                    <a href="#">Privacy Policy</a>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; 2024 Whisper+me. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- JavaScript -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/payment.js"></script>
 </body>
 </html>
+    <!-- Stripe JS -->
+    <script src="https://js.stripe.com/v3/"></script>

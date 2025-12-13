@@ -7,6 +7,7 @@ const firebaseConfig = {
   messagingSenderId: "302894848452",
   appId: "1:302894848452:web:61a7ab21a269533c426c91"
 };
+};
 
 // Initialize Firebase
 if (!firebase.apps.length) {
@@ -16,11 +17,16 @@ if (!firebase.apps.length) {
 // Initialize Firebase services
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage(); // Added storage
 
-// Initialize Analytics
-// const analytics = firebase.analytics(); // Only if you need analytics
+// Enable offline persistence for Firestore
+db.enablePersistence()
+  .catch((err) => {
+      if (err.code == 'failed-precondition') {
+          console.log("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+      } else if (err.code == 'unimplemented') {
+          console.log("The current browser doesn't support persistence.");
+      }
+  });
 
-// Note: Storage is not initialized since we're not using it in this app
-// If you need storage later, add: const storage = firebase.storage();
-
-console.log("Firebase initialized successfully!");
+console.log("Firebase initialized successfully with Storage!");
