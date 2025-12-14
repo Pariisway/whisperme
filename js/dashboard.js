@@ -1,90 +1,99 @@
 // Dashboard JavaScript for Whisper+me
 console.log("Dashboard.js loaded");
 
-// DOM Elements
-let availabilityToggle;
-let availabilityStatus;
-let tokenBalanceEl;
-let totalEarningsEl;
-let callsCompletedEl;
-let averageRatingEl;
-let activeTimeEl;
-let avgResponseTimeEl;
-let callsWaitingContainer;
-let recentActivityContainer;
-let dashboardWhispersContainer;
-
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("Dashboard loaded");
     
+    // Check if Firebase is loaded
+    if (typeof auth === 'undefined') {
+        console.error("Firebase auth not loaded. Redirecting to login.");
+        window.location.href = 'auth.html?type=login';
+        return;
+    }
+    
     // Check authentication
     auth.onAuthStateChanged(async function(user) {
         if (!user) {
+            console.log("No user found, redirecting to login");
             window.location.href = 'auth.html?type=login';
             return;
         }
         
         console.log("User logged in:", user.email);
-        window.currentUser = user;
         
-        // Get DOM elements
-        getDashboardElements();
-        
-        // Load user data
-        await loadUserDashboard(user.uid);
+        // Load dashboard content
+        await loadDashboardContent(user.uid, user.email);
         
         // Setup event listeners
-        setupDashboardListeners();
-        
-        // Load dynamic content
-        await loadCallsWaiting(user.uid);
-        await loadRecentActivity(user.uid);
-        await loadDashboardWhispers(user.uid);
+        setupDashboardListeners(user.uid);
     });
 });
 
-// Get dashboard DOM elements
-function getDashboardElements() {
-    availabilityToggle = document.getElementById('availabilityToggle');
-    availabilityStatus = document.getElementById('availabilityStatus');
-    tokenBalanceEl = document.getElementById('tokenBalance');
-    totalEarningsEl = document.getElementById('totalEarnings');
-    callsCompletedEl = document.getElementById('callsCompleted');
-    averageRatingEl = document.getElementById('averageRating');
-    activeTimeEl = document.getElementById('activeTime');
-    avgResponseTimeEl = document.getElementById('avgResponseTime');
-    callsWaitingContainer = document.getElementById('callsWaiting');
-    recentActivityContainer = document.getElementById('recentActivity');
-    dashboardWhispersContainer = document.getElementById('dashboardWhispers');
-}
-
-// Load user dashboard data
-async function loadUserDashboard(userId) {
+// Load dashboard content
+async function loadDashboardContent(userId, userEmail) {
     try {
+        // Update welcome message
+        const welcomeText = document.getElementById('welcomeText');
+        if (welcomeText) {
+            welcomeText.textContent = `Welcome back, ${userEmail.split('@')[0]}! Here's your activity overview`;
+        }
+        
         // Load user data
         const userDoc = await db.collection('users').doc(userId).get();
         if (userDoc.exists) {
             const userData = userDoc.data();
             
             // Update token balance
+            const tokenBalanceEl = document.getElementById('tokenBalance');
             if (tokenBalanceEl) {
-                tokenBalanceEl.textContent = userData.tokens + ' tokens';
-            }
-            
-            // Update welcome text
-            const welcomeText = document.getElementById('welcomeText');
-            if (welcomeText) {
-                const name = userData.displayName || userData.email.split('@')[0];
-                welcomeText.textContent = `Welcome back, ${name}! Here's your activity overview`;
+                tokenBalanceEl.textContent = (userData.tokens || 0) + ' tokens';
             }
         }
         
         // Load user stats
-        await loadUserStats(userId);
+        const statsDoc = await db.collection('userStats').doc(userId).get();
+        if (statsDoc.exists) {
+            const stats = statsDoc.data();
+            
+            // Update stats display
+            const totalEarningsEl = document.getElementById('totalEarnings');
+            const callsCompletedEl = document.getElementById('callsCompleted');
+            const averageRatingEl = document.getElementById('averageRating');
+            
+            if (totalEarningsEl) totalEarningsEl.textContent = '$' + (stats.earnings || 0).toFixed(2);
+            if (callsCompletedEl) callsCompletedEl.textContent = stats.calls || 0;
+            if (averageRatingEl) averageRatingEl.textContent = (stats.rating || 0).toFixed(1) + ' ★';
+        }
         
         // Load availability status
-        await loadAvailabilityStatus(userId);
+        const profileDoc = await db.collection('profiles').doc(userId).get();
+        if (profileDoc.exists) {
+            const profileData = profileDoc.data();
+            const isAvailable = profileData.available || false;
+            
+            // Update toggle
+            const availabilityToggle = document.getElementById('availabilityToggle');
+            if (availabilityToggle) {
+                availabilityToggle.checked = isAvailable;
+            }
+            
+            // Update status text
+            const availabilityStatus = document.getElementById('availabilityStatus');
+            if (availabilityStatus) {
+                availabilityStatus.textContent = isAvailable ? 'Available for Calls' : 'Unavailable';
+                availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
+            }
+        }
+        
+        // Load calls waiting
+        await loadCallsWaiting(userId);
+        
+        // Load whispers for dashboard
+        await loadDashboardWhispers(userId);
+        
+        // Load recent activity
+        await loadRecentActivity(userId);
         
     } catch (error) {
         console.error("Error loading dashboard:", error);
@@ -92,60 +101,13 @@ async function loadUserDashboard(userId) {
     }
 }
 
-// Load user statistics
-async function loadUserStats(userId) {
-    try {
-        const statsDoc = await db.collection('userStats').doc(userId).get();
-        if (statsDoc.exists) {
-            const stats = statsDoc.data();
-            
-            // Update stats display
-            if (totalEarningsEl) totalEarningsEl.textContent = '$' + (stats.earnings || 0).toFixed(2);
-            if (callsCompletedEl) callsCompletedEl.textContent = stats.calls || 0;
-            if (averageRatingEl) averageRatingEl.textContent = (stats.rating || 0).toFixed(1) + ' ★';
-            
-            // Calculate active time (placeholder)
-            if (activeTimeEl) {
-                const activeHours = Math.floor((stats.activeMinutes || 0) / 60);
-                const activeMinutes = (stats.activeMinutes || 0) % 60;
-                activeTimeEl.textContent = `${activeHours}h ${activeMinutes}m`;
-            }
-        }
-    } catch (error) {
-        console.error("Error loading user stats:", error);
-    }
-}
-
-// Load availability status
-async function loadAvailabilityStatus(userId) {
-    try {
-        const profileDoc = await db.collection('profiles').doc(userId).get();
-        if (profileDoc.exists) {
-            const profileData = profileDoc.data();
-            const isAvailable = profileData.available || false;
-            
-            // Update toggle
-            if (availabilityToggle) {
-                availabilityToggle.checked = isAvailable;
-            }
-            
-            // Update status text
-            if (availabilityStatus) {
-                availabilityStatus.textContent = isAvailable ? 'Available for Calls' : 'Unavailable';
-                availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
-            }
-        }
-    } catch (error) {
-        console.error("Error loading availability:", error);
-    }
-}
-
 // Setup dashboard event listeners
-function setupDashboardListeners() {
+function setupDashboardListeners(userId) {
     // Availability toggle
+    const availabilityToggle = document.getElementById('availabilityToggle');
     if (availabilityToggle) {
         availabilityToggle.addEventListener('change', async function() {
-            await updateAvailability(this.checked);
+            await updateAvailability(userId, this.checked);
         });
     }
     
@@ -189,9 +151,7 @@ function setupDashboardListeners() {
 }
 
 // Update availability status
-async function updateAvailability(isAvailable) {
-    const userId = currentUser.uid;
-    
+async function updateAvailability(userId, isAvailable) {
     try {
         // Update profile
         await db.collection('profiles').doc(userId).update({
@@ -200,6 +160,7 @@ async function updateAvailability(isAvailable) {
         });
         
         // Update status text
+        const availabilityStatus = document.getElementById('availabilityStatus');
         if (availabilityStatus) {
             availabilityStatus.textContent = isAvailable ? 'Available for Calls' : 'Unavailable';
             availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
@@ -208,17 +169,12 @@ async function updateAvailability(isAvailable) {
         // Show success message
         showAlert(`You are now ${isAvailable ? 'available' : 'unavailable'} for calls`, 'success');
         
-        // If user has more than 5 calls waiting and is setting to available,
-        // automatically accept the oldest call
-        if (isAvailable) {
-            await checkAndAcceptCalls(userId);
-        }
-        
     } catch (error) {
         console.error("Error updating availability:", error);
         showAlert('Error updating availability', 'error');
         
         // Revert toggle on error
+        const availabilityToggle = document.getElementById('availabilityToggle');
         if (availabilityToggle) {
             availabilityToggle.checked = !isAvailable;
         }
@@ -227,6 +183,7 @@ async function updateAvailability(isAvailable) {
 
 // Load calls waiting for the user
 async function loadCallsWaiting(userId) {
+    const callsWaitingContainer = document.getElementById('callsWaiting');
     if (!callsWaitingContainer) return;
     
     try {
@@ -256,30 +213,76 @@ async function loadCallsWaiting(userId) {
             callsWaitingContainer.appendChild(callCard);
         });
         
-        // Check if user has more than 5 calls waiting
-        if (callsSnapshot.size > 5) {
-            // Automatically switch user to unavailable
-            await db.collection('profiles').doc(userId).update({
-                available: false
-            });
-            
-            if (availabilityToggle) {
-                availabilityToggle.checked = false;
-            }
-            
-            if (availabilityStatus) {
-                availabilityStatus.textContent = 'Unavailable (Too many calls)';
-                availabilityStatus.style.color = 'var(--accent-red)';
-            }
-            
-            showAlert('You have too many calls waiting. Set to unavailable.', 'warning');
-        }
-        
     } catch (error) {
         console.error("Error loading calls waiting:", error);
         callsWaitingContainer.innerHTML = `
             <div class="alert alert-error">
                 <i class="fas fa-exclamation-triangle"></i> Error loading calls
+            </div>
+        `;
+    }
+}
+
+// Load whispers for dashboard
+async function loadDashboardWhispers(userId) {
+    const dashboardWhispersContainer = document.getElementById('dashboardWhispers');
+    if (!dashboardWhispersContainer) return;
+    
+    try {
+        // Get available whispers (excluding current user)
+        const whispersSnapshot = await db.collection('profiles')
+            .where('available', '==', true)
+            .where('userId', '!=', userId)
+            .limit(6)
+            .get();
+        
+        if (whispersSnapshot.empty) {
+            dashboardWhispersContainer.innerHTML = `
+                <div class="text-center" style="grid-column: 1/-1; padding: 2rem;">
+                    <i class="fas fa-users fa-2x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+                    <p>No whispers available at the moment</p>
+                </div>
+            `;
+            return;
+        }
+        
+        dashboardWhispersContainer.innerHTML = '';
+        
+        whispersSnapshot.forEach(async (doc) => {
+            const profile = doc.data();
+            const whisperCard = await createDashboardWhisperCard(doc.id, profile);
+            dashboardWhispersContainer.appendChild(whisperCard);
+        });
+        
+    } catch (error) {
+        console.error("Error loading dashboard whispers:", error);
+        dashboardWhispersContainer.innerHTML = `
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-triangle"></i> Error loading whispers
+            </div>
+        `;
+    }
+}
+
+// Load recent activity
+async function loadRecentActivity(userId) {
+    const recentActivityContainer = document.getElementById('recentActivity');
+    if (!recentActivityContainer) return;
+    
+    try {
+        // For now, show placeholder
+        recentActivityContainer.innerHTML = `
+            <div class="text-center" style="padding: 2rem;">
+                <i class="fas fa-history fa-2x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+                <p>No recent activity</p>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error("Error loading activity:", error);
+        recentActivityContainer.innerHTML = `
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-triangle"></i> Error loading activity
             </div>
         `;
     }
@@ -320,228 +323,7 @@ function createCallWaitingCard(sessionId, call) {
         </div>
     `;
     
-    // Add event listeners
-    const acceptBtn = card.querySelector('.accept-call');
-    const declineBtn = card.querySelector('.decline-call');
-    
-    acceptBtn.addEventListener('click', () => acceptCall(sessionId));
-    declineBtn.addEventListener('click', () => declineCall(sessionId));
-    
     return card;
-}
-
-// Accept a call
-async function acceptCall(sessionId) {
-    try {
-        // Update call session status
-        await db.collection('callSessions').doc(sessionId).update({
-            status: 'accepted',
-            acceptedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Redirect to call room
-        window.location.href = `call.html?session=${sessionId}&role=whisper`;
-        
-    } catch (error) {
-        console.error("Error accepting call:", error);
-        showAlert('Error accepting call', 'error');
-    }
-}
-
-// Decline a call
-async function declineCall(sessionId) {
-    if (!confirm('Are you sure you want to decline this call?')) return;
-    
-    try {
-        const sessionDoc = await db.collection('callSessions').doc(sessionId).get();
-        if (!sessionDoc.exists) return;
-        
-        const session = sessionDoc.data();
-        
-        // Refund token to caller
-        await db.collection('users').doc(session.callerId).update({
-            tokens: firebase.firestore.FieldValue.increment(1)
-        });
-        
-        // Update call session status
-        await db.collection('callSessions').doc(sessionId).update({
-            status: 'declined',
-            declinedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Remove from UI
-        const card = document.querySelector(`[data-session="${sessionId}"]`)?.closest('.profile-card');
-        if (card) {
-            card.remove();
-        }
-        
-        showAlert('Call declined. Token refunded to caller.', 'success');
-        
-        // Check if we need to reload calls
-        await loadCallsWaiting(currentUser.uid);
-        
-    } catch (error) {
-        console.error("Error declining call:", error);
-        showAlert('Error declining call', 'error');
-    }
-}
-
-// Check and accept calls if available
-async function checkAndAcceptCalls(userId) {
-    try {
-        // Get the oldest waiting call
-        const callsSnapshot = await db.collection('callSessions')
-            .where('whisperId', '==', userId)
-            .where('status', '==', 'waiting')
-            .orderBy('createdAt', 'asc')
-            .limit(1)
-            .get();
-        
-        if (!callsSnapshot.empty) {
-            const oldestCall = callsSnapshot.docs[0];
-            await acceptCall(oldestCall.id);
-        }
-    } catch (error) {
-        console.error("Error checking calls:", error);
-    }
-}
-
-// Load recent activity
-async function loadRecentActivity(userId) {
-    if (!recentActivityContainer) return;
-    
-    try {
-        // Get recent call sessions involving user
-        const callsAsCaller = await db.collection('callSessions')
-            .where('callerId', '==', userId)
-            .orderBy('createdAt', 'desc')
-            .limit(5)
-            .get();
-        
-        const callsAsWhisper = await db.collection('callSessions')
-            .where('whisperId', '==', userId)
-            .orderBy('createdAt', 'desc')
-            .limit(5)
-            .get();
-        
-        // Combine and sort
-        const allCalls = [];
-        callsAsCaller.forEach(doc => allCalls.push({ id: doc.id, ...doc.data(), role: 'caller' }));
-        callsAsWhisper.forEach(doc => allCalls.push({ id: doc.id, ...doc.data(), role: 'whisper' }));
-        
-        allCalls.sort((a, b) => {
-            const dateA = a.createdAt?.toDate() || new Date(0);
-            const dateB = b.createdAt?.toDate() || new Date(0);
-            return dateB - dateA;
-        });
-        
-        // Display activity
-        if (allCalls.length === 0) {
-            recentActivityContainer.innerHTML = `
-                <div class="text-center" style="padding: 2rem;">
-                    <i class="fas fa-history fa-2x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-                    <p>No recent activity</p>
-                </div>
-            `;
-            return;
-        }
-        
-        recentActivityContainer.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                ${allCalls.slice(0, 10).map(call => createActivityItem(call)).join('')}
-            </div>
-        `;
-        
-    } catch (error) {
-        console.error("Error loading activity:", error);
-        recentActivityContainer.innerHTML = `
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-triangle"></i> Error loading activity
-            </div>
-        `;
-    }
-}
-
-// Create activity item
-function createActivityItem(call) {
-    const timeAgo = call.createdAt ? getTimeAgo(call.createdAt.toDate()) : 'Recently';
-    const otherPerson = call.role === 'caller' ? call.whisperName : call.callerName;
-    const status = call.status || 'unknown';
-    const role = call.role === 'caller' ? 'You called' : 'You answered';
-    
-    let statusColor = 'var(--text-muted)';
-    let statusIcon = 'fas fa-clock';
-    
-    switch(status) {
-        case 'completed':
-            statusColor = 'var(--accent-green)';
-            statusIcon = 'fas fa-check-circle';
-            break;
-        case 'declined':
-            statusColor = 'var(--accent-red)';
-            statusIcon = 'fas fa-times-circle';
-            break;
-        case 'accepted':
-            statusColor = 'var(--accent-blue)';
-            statusIcon = 'fas fa-phone-alt';
-            break;
-    }
-    
-    return `
-        <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--secondary-dark); border-radius: var(--radius);">
-            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--card-dark); display: flex; align-items: center; justify-content: center; color: ${statusColor};">
-                <i class="${statusIcon}"></i>
-            </div>
-            <div style="flex: 1;">
-                <div style="font-weight: 500;">${role} ${otherPerson}</div>
-                <div style="font-size: 0.875rem; color: var(--text-muted);">
-                    ${timeAgo} • ${status.charAt(0).toUpperCase() + status.slice(1)}
-                </div>
-            </div>
-            ${call.role === 'whisper' && status === 'completed' ? 
-                '<div style="color: var(--accent-green); font-weight: 600;">+$12</div>' : ''}
-        </div>
-    `;
-}
-
-// Load whispers for dashboard
-async function loadDashboardWhispers(userId) {
-    if (!dashboardWhispersContainer) return;
-    
-    try {
-        // Get available whispers (excluding current user)
-        const whispersSnapshot = await db.collection('profiles')
-            .where('available', '==', true)
-            .where('userId', '!=', userId)
-            .limit(12)
-            .get();
-        
-        if (whispersSnapshot.empty) {
-            dashboardWhispersContainer.innerHTML = `
-                <div class="text-center" style="grid-column: 1/-1; padding: 2rem;">
-                    <i class="fas fa-users fa-2x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-                    <p>No whispers available at the moment</p>
-                </div>
-            `;
-            return;
-        }
-        
-        dashboardWhispersContainer.innerHTML = '';
-        
-        whispersSnapshot.forEach(async (doc) => {
-            const profile = doc.data();
-            const whisperCard = await createDashboardWhisperCard(doc.id, profile);
-            dashboardWhispersContainer.appendChild(whisperCard);
-        });
-        
-    } catch (error) {
-        console.error("Error loading dashboard whispers:", error);
-        dashboardWhispersContainer.innerHTML = `
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-triangle"></i> Error loading whispers
-            </div>
-        `;
-    }
 }
 
 // Create dashboard whisper card
@@ -585,42 +367,23 @@ async function createDashboardWhisperCard(userId, profile) {
                 </div>
             </div>
             
-            <button class="call-btn btn-primary">
+            <button class="call-btn btn-primary" onclick="startCallFromDashboard('${userId}', '${profile.displayName || 'User'}')">
                 <i class="fas fa-phone-alt"></i> Call Now ($15)
             </button>
         </div>
     `;
     
-    // Add event listener to call button
-    const callBtn = card.querySelector('.call-btn');
-    callBtn.addEventListener('click', () => startCallFromDashboard(userId, profile.displayName));
-    
     return card;
-}
-
-// Filter dashboard whispers
-function filterDashboardWhispers(filter) {
-    const cards = dashboardWhispersContainer.querySelectorAll('.profile-card');
-    
-    cards.forEach(card => {
-        switch(filter) {
-            case 'online':
-                // All are online in this view (filtered by available)
-                card.style.display = 'block';
-                break;
-            case 'popular':
-                // Sort by calls or rating (simplified)
-                card.style.display = 'block';
-                break;
-            default:
-                card.style.display = 'block';
-        }
-    });
 }
 
 // Start call from dashboard
 async function startCallFromDashboard(whisperId, whisperName) {
-    const user = currentUser;
+    const user = auth.currentUser;
+    if (!user) {
+        showAlert('Please login to start a call', 'warning');
+        window.location.href = 'auth.html?type=login';
+        return;
+    }
     
     // Check token balance
     const userDoc = await db.collection('users').doc(user.uid).get();
@@ -634,37 +397,8 @@ async function startCallFromDashboard(whisperId, whisperName) {
     }
     
     try {
-        // Create call session
-        const callSession = {
-            callerId: user.uid,
-            callerName: user.displayName || user.email,
-            whisperId: whisperId,
-            whisperName: whisperName,
-            status: 'waiting',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000)
-        };
-        
-        // Deduct token
-        await db.collection('users').doc(user.uid).update({
-            tokens: firebase.firestore.FieldValue.increment(-1)
-        });
-        
-        // Create call session
-        const sessionRef = await db.collection('callSessions').add(callSession);
-        
-        // Notify whisper
-        await db.collection('notifications').add({
-            userId: whisperId,
-            type: 'call_request',
-            message: `You have a new call request from ${callSession.callerName}`,
-            sessionId: sessionRef.id,
-            read: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Redirect to call room
-        window.location.href = `call.html?session=${sessionRef.id}&role=caller`;
+        showAlert('Starting call...', 'info');
+        // Note: Actual call implementation would go here
         
     } catch (error) {
         console.error("Error starting call:", error);
@@ -698,24 +432,21 @@ function showAlert(message, type = 'info') {
     // Create alert element
     const alert = document.createElement('div');
     alert.className = `alert alert-${type}`;
+    alert.style.position = 'fixed';
+    alert.style.top = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '1000';
+    alert.style.minWidth = '300px';
+    alert.style.maxWidth = '500px';
     alert.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
         ${message}
     `;
     
-    // Add to page
-    const container = document.querySelector('.container') || document.body;
-    container.insertBefore(alert, container.firstChild);
+    document.body.appendChild(alert);
     
     // Auto remove after 5 seconds
     setTimeout(() => {
         alert.remove();
     }, 5000);
 }
-
-// Export for debugging
-window.Dashboard = {
-    loadUserDashboard,
-    loadCallsWaiting,
-    loadRecentActivity
-};

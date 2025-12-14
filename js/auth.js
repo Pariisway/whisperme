@@ -2,6 +2,8 @@
 console.log("Auth.js loaded");
 
 // DOM Elements
+let authTitle;
+let authSubtitle;
 let authForm;
 let authBtn;
 let authMessage;
@@ -13,11 +15,9 @@ let switchLink;
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Auth page loaded");
     
-    // Get URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const type = urlParams.get('type') || 'login';
-    
-    // Get DOM elements
+    // Get DOM elements safely
+    authTitle = document.getElementById('authTitle');
+    authSubtitle = document.getElementById('authSubtitle');
     authForm = document.getElementById('authForm');
     authBtn = document.getElementById('authBtn');
     authMessage = document.getElementById('authMessage');
@@ -25,16 +25,23 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordInput = document.getElementById('password');
     switchLink = document.getElementById('switchLink');
     
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type') || 'login';
+    
     // Set up form based on type
     setupAuthForm(type);
     
     // Check if user is already logged in
-    auth.onAuthStateChanged(function(user) {
-        if (user && (window.location.pathname.includes('auth.html') || window.location.pathname.includes('login.html'))) {
-            // User is already logged in, redirect to dashboard
-            window.location.href = 'dashboard.html';
-        }
-    });
+    if (typeof auth !== 'undefined') {
+        auth.onAuthStateChanged(function(user) {
+            if (user && (window.location.pathname.includes('auth.html') || window.location.pathname.includes('login.html'))) {
+                // User is already logged in, redirect to dashboard
+                console.log("User already logged in, redirecting to dashboard");
+                window.location.href = 'dashboard.html';
+            }
+        });
+    }
     
     // Setup event listeners
     setupAuthListeners();
@@ -42,54 +49,64 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Setup auth form based on type (login/signup)
 function setupAuthForm(type) {
-    const authTitle = document.getElementById('authTitle');
-    const authSubtitle = document.getElementById('authSubtitle');
+    // Safety check for elements
+    if (authTitle) {
+        authTitle.textContent = type === 'signup' ? 'Sign Up' : 'Login';
+    }
     
-    if (type === 'signup') {
-        // Setup signup form
-        authTitle.textContent = 'Sign Up';
-        authSubtitle.textContent = 'Create your account to start whispering';
-        authBtn.innerHTML = '<i class="fas fa-user-plus"></i> Sign Up';
-        
-        // Update switch link
-        if (switchLink) {
+    if (authSubtitle) {
+        authSubtitle.textContent = type === 'signup' 
+            ? 'Create your account to start whispering' 
+            : 'Enter your credentials to continue';
+    }
+    
+    if (authBtn) {
+        authBtn.innerHTML = type === 'signup' 
+            ? '<i class="fas fa-user-plus"></i> Sign Up' 
+            : '<i class="fas fa-sign-in-alt"></i> Login';
+    }
+    
+    if (switchLink) {
+        if (type === 'signup') {
             switchLink.textContent = 'Already have an account? Login here';
             switchLink.href = 'auth.html?type=login';
-        }
-        
-        // Add confirm password field if not present
-        if (!document.getElementById('confirmPassword')) {
-            const confirmPasswordGroup = document.createElement('div');
-            confirmPasswordGroup.className = 'form-group';
-            confirmPasswordGroup.innerHTML = `
-                <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password</label>
-                <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••">
-            `;
-            
-            // Insert before the button
-            const authBtn = document.getElementById('authBtn');
-            if (authBtn && authBtn.parentNode) {
-                authBtn.parentNode.insertBefore(confirmPasswordGroup, authBtn);
-            }
-        }
-        
-    } else {
-        // Setup login form
-        authTitle.textContent = 'Login';
-        authSubtitle.textContent = 'Welcome back! Enter your credentials';
-        authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
-        
-        // Update switch link
-        if (switchLink) {
+        } else {
             switchLink.textContent = "Don't have an account? Sign up here";
             switchLink.href = 'auth.html?type=signup';
         }
-        
-        // Remove confirm password field if present
-        const confirmPassword = document.getElementById('confirmPassword');
-        if (confirmPassword && confirmPassword.parentNode) {
-            confirmPassword.parentNode.remove();
-        }
+    }
+    
+    // Add/remove confirm password field
+    if (type === 'signup') {
+        addConfirmPasswordField();
+    } else {
+        removeConfirmPasswordField();
+    }
+}
+
+// Add confirm password field for signup
+function addConfirmPasswordField() {
+    // Check if already exists
+    if (document.getElementById('confirmPassword')) return;
+    
+    const confirmPasswordGroup = document.createElement('div');
+    confirmPasswordGroup.className = 'form-group';
+    confirmPasswordGroup.innerHTML = `
+        <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password</label>
+        <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••">
+    `;
+    
+    // Insert before the button
+    if (authBtn && authBtn.parentNode) {
+        authBtn.parentNode.insertBefore(confirmPasswordGroup, authBtn);
+    }
+}
+
+// Remove confirm password field
+function removeConfirmPasswordField() {
+    const confirmPassword = document.getElementById('confirmPassword');
+    if (confirmPassword && confirmPassword.parentNode) {
+        confirmPassword.parentNode.remove();
     }
 }
 
@@ -116,8 +133,8 @@ async function handleAuthSubmit() {
     const type = urlParams.get('type') || 'login';
     
     // Get form values
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
+    const email = emailInput ? emailInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
     const confirmPassword = type === 'signup' ? document.getElementById('confirmPassword')?.value : null;
     
     // Validate inputs
@@ -140,10 +157,8 @@ async function handleAuthSubmit() {
         showAuthMessage('Processing...', 'info');
         
         if (type === 'signup') {
-            // Sign up user
             await handleSignUp(email, password);
         } else {
-            // Log in user
             await handleLogin(email, password);
         }
         
@@ -163,7 +178,7 @@ async function handleSignUp(email, password) {
     
     // Update user profile
     await user.updateProfile({
-        displayName: email.split('@')[0] // Use email username as display name
+        displayName: email.split('@')[0]
     });
     
     // Create user document in Firestore
@@ -181,9 +196,9 @@ async function handleSignUp(email, password) {
         email: email,
         displayName: email.split('@')[0],
         username: email.split('@')[0].toLowerCase(),
-        bio: '',
+        bio: 'Welcome to Whisper+me!',
         profilePicture: '',
-        available: false, // Default to unavailable
+        available: false,
         socialLinks: {},
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -225,7 +240,19 @@ async function handleLogin(email, password) {
 
 // Show auth message
 function showAuthMessage(message, type = 'info') {
-    if (!authMessage) return;
+    if (!authMessage) {
+        // Create a temporary message if element doesn't exist
+        const tempMsg = document.createElement('div');
+        tempMsg.className = `alert alert-${type}`;
+        tempMsg.textContent = message;
+        tempMsg.style.position = 'fixed';
+        tempMsg.style.top = '20px';
+        tempMsg.style.right = '20px';
+        tempMsg.style.zIndex = '1000';
+        document.body.appendChild(tempMsg);
+        setTimeout(() => tempMsg.remove(), 5000);
+        return;
+    }
     
     // Set message and type
     authMessage.textContent = message;
@@ -263,24 +290,3 @@ function getAuthErrorMessage(error) {
             return error.message || 'An error occurred. Please try again.';
     }
 }
-
-// Handle password reset (optional feature)
-function handlePasswordReset() {
-    const email = prompt('Enter your email address to reset password:');
-    if (!email) return;
-    
-    auth.sendPasswordResetEmail(email)
-        .then(() => {
-            alert('Password reset email sent. Check your inbox.');
-        })
-        .catch(error => {
-            alert('Error sending reset email: ' + error.message);
-        });
-}
-
-// Export functions if needed
-window.AuthHandler = {
-    showAuthMessage,
-    getAuthErrorMessage,
-    handlePasswordReset
-};

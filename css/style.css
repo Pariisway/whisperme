@@ -36,6 +36,7 @@
     --shadow-md: 0 6px 8px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.6);
     --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.7);
+    --shadow-purple: 0 10px 30px rgba(139, 92, 246, 0.3);
     
     /* Border Radius */
     --radius-sm: 8px;
@@ -90,6 +91,12 @@ body::before {
     z-index: -1;
 }
 
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space);
+}
+
 /* ============================================
    Typography
    ============================================ */
@@ -135,6 +142,34 @@ p {
     font-weight: 800;
 }
 
+.section-title {
+    text-align: center;
+    margin-bottom: var(--space-sm);
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+    border-radius: 2px;
+}
+
+.section-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 /* ============================================
    Buttons
    ============================================ */
@@ -173,16 +208,20 @@ p {
 }
 
 .btn:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
 }
 
 .btn:active {
-    transform: translateY(0);
+    transform: translateY(-1px);
 }
 
 .btn-primary {
     background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+}
+
+.btn-primary:hover {
+    box-shadow: var(--shadow-purple);
 }
 
 .btn-success {
@@ -306,11 +345,18 @@ p {
     position: relative;
     margin-bottom: var(--space-xxl);
     border-bottom: 1px solid var(--border-dark);
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .hero h2 {
     font-size: clamp(2.5rem, 6vw, 3.5rem);
     margin-bottom: var(--space);
+    animation: slideUp 0.8s ease-out 0.2s both;
 }
 
 .hero p {
@@ -320,6 +366,18 @@ p {
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+    animation: slideUp 0.8s ease-out 0.4s both;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .hero-stats {
@@ -328,6 +386,7 @@ p {
     gap: var(--space-xl);
     margin: var(--space-xl) 0;
     flex-wrap: wrap;
+    animation: slideUp 0.8s ease-out 0.6s both;
 }
 
 .stat {
@@ -337,7 +396,7 @@ p {
     border-radius: var(--radius-lg);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform var(--transition);
+    transition: all var(--transition);
     min-width: 180px;
 }
 
@@ -363,11 +422,29 @@ p {
     justify-content: center;
     margin-top: var(--space-xl);
     flex-wrap: wrap;
+    animation: slideUp 0.8s ease-out 0.8s both;
 }
 
 /* ============================================
-   Whispers Grid - Profile Cards
+   Main Content Container - REORGANIZED LAYOUT
    ============================================ */
+
+.main-content-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xxl);
+}
+
+/* ============================================
+   Whispers Grid - Profile Cards (NOW FIRST)
+   ============================================ */
+
+#whispers {
+    animation: fadeIn 0.8s ease-out 0.2s both;
+}
 
 .whispers-grid {
     display: grid;
@@ -384,6 +461,18 @@ p {
     transition: all var(--transition);
     border: 1px solid var(--border-dark);
     position: relative;
+    animation: cardAppear 0.6s ease-out;
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .profile-card:hover {
@@ -568,6 +657,243 @@ p {
 }
 
 /* ============================================
+   How It Works Section (NOW SECOND)
+   ============================================ */
+
+#how-it-works {
+    animation: fadeIn 0.8s ease-out 0.4s both;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-xl);
+    margin-top: var(--space-xl);
+}
+
+.step-card {
+    background: var(--card-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    text-align: center;
+    border: 1px solid var(--border-dark);
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.step-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--accent-purple);
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto var(--space);
+    box-shadow: var(--shadow);
+}
+
+.step-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-sm);
+}
+
+.step-content p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ============================================
+   Call to Action Section
+   ============================================ */
+
+.cta-section {
+    background: linear-gradient(135deg, var(--card-dark) 0%, var(--secondary-dark) 100%);
+    padding: var(--space-xxl) 0;
+    text-align: center;
+    border-top: 1px solid var(--border-dark);
+    border-bottom: 1px solid var(--border-dark);
+    margin-top: var(--space-xxl);
+}
+
+.cta-content h2 {
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    margin-bottom: var(--space);
+}
+
+.cta-content p {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto var(--space-xl);
+    opacity: 0.9;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: var(--space);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ============================================
+   Filter Buttons
+   ============================================ */
+
+.filter-buttons {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--card-dark);
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.filter-btn:hover {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--text-primary);
+    border-color: var(--accent-purple);
+}
+
+.filter-btn.active {
+    background: var(--accent-purple);
+    color: white;
+    border-color: var(--accent-purple);
+}
+
+/* ============================================
+   Login/Auth Page - DYNAMIC STYLES
+   ============================================ */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #0c0a1d 100%);
+}
+
+.auth-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+}
+
+.auth-form-container {
+    background: var(--card-dark);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xxl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--accent-purple);
+    width: 100%;
+    max-width: 400px;
+    animation: formAppear 0.6s ease-out;
+}
+
+@keyframes formAppear {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.auth-form-container h2 {
+    text-align: center;
+    margin-bottom: var(--space-sm);
+}
+
+.auth-form-container > p {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
+}
+
+.form-group {
+    margin-bottom: var(--space-lg);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--space-sm);
+    color: var(--text-primary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--secondary-dark);
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all var(--transition);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.form-switch {
+    text-align: center;
+    margin-top: var(--space-lg);
+    color: var(--text-secondary);
+}
+
+.form-switch a {
+    color: var(--accent-purple);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.form-switch a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
    Loading States
    ============================================ */
 
@@ -581,6 +907,12 @@ p {
     font-size: 2rem;
     margin-bottom: var(--space);
     color: var(--accent-purple);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* ============================================
@@ -592,6 +924,9 @@ p {
     border-radius: var(--radius);
     margin: var(--space) 0;
     border: 1px solid;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
 }
 
 .alert-success {
@@ -662,6 +997,40 @@ footer {
     font-size: 0.875rem;
 }
 
+.token-price-display {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    color: white;
+    display: inline-block;
+    margin-top: var(--space);
+}
+
+.social-links {
+    display: flex;
+    gap: var(--space);
+    margin-top: var(--space);
+}
+
+.social-links a {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--card-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all var(--transition);
+}
+
+.social-links a:hover {
+    background: var(--accent-purple);
+    color: white;
+    transform: translateY(-3px);
+}
+
 /* ============================================
    Responsive Design
    ============================================ */
@@ -694,13 +1063,50 @@ footer {
         gap: var(--space);
     }
     
-    .hero-buttons {
+    .hero-buttons,
+    .cta-buttons {
         flex-direction: column;
         align-items: stretch;
     }
     
+    .steps-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .whispers-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .main-content-container {
+        padding: var(--space) var(--space-sm);
+        gap: var(--space-xl);
+    }
+    
+    .auth-form-container {
+        padding: var(--space-xl);
+    }
+}
+
+@media (max-width: 480px) {
+    .hero {
+        padding: var(--space-xl) 0;
+    }
+    
+    .hero h2 {
+        font-size: 2rem;
+    }
+    
+    .stat {
+        min-width: 100%;
+    }
+    
+    .filter-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-btn {
+        width: 100%;
     }
 }
 
