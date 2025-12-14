@@ -1,54 +1,68 @@
-// Profile JavaScript - Final Fix with Error Handling
-console.log("Profile.js loaded - Final Fix");
+// Profile JavaScript - Fixed Version
+console.log("Profile.js loaded - Fixed Version");
 
 let currentUser = null;
 let userProfile = null;
+let db = null;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Profile page loaded");
-    
-    // Check Firebase initialization
-    if (typeof firebaseReady === 'undefined' || !firebaseReady) {
-        console.log("Waiting for Firebase...");
-        setTimeout(() => {
-            initializeProfile();
-        }, 2000);
-        return;
-    }
-    
     initializeProfile();
 });
 
 async function initializeProfile() {
     console.log("Initializing profile...");
     
-    // Check auth
-    auth.onAuthStateChanged(async function(user) {
-        if (!user) {
-            window.location.href = 'auth.html?type=login';
+    try {
+        // Wait for Firebase to be ready
+        if (typeof firebase === 'undefined') {
+            console.error("Firebase not loaded");
             return;
         }
         
-        currentUser = user;
-        console.log("User authenticated:", user.email);
-        
-        try {
-            await loadProfileData(user.uid);
-            setupProfileListeners();
-        } catch (error) {
-            console.error("Error initializing profile:", error);
-            showAlert('Error loading profile. Please check Firestore permissions.', 'error');
+        // Initialize Firebase if not already initialized
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized in profile.js");
         }
-    });
+        
+        // Get auth and db instances
+        const auth = firebase.auth();
+        db = firebase.firestore();
+        
+        // Enable persistence
+        await db.enablePersistence();
+        console.log("Firestore persistence enabled");
+        
+        // Check auth state
+        auth.onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = 'auth.html?type=login';
+                return;
+            }
+            
+            currentUser = user;
+            console.log("User authenticated:", user.email);
+            console.log("User UID:", user.uid);
+            
+            // Load profile data
+            await loadProfileData(user.uid);
+            setupEventListeners();
+        });
+        
+    } catch (error) {
+        console.error("Error initializing profile:", error);
+    }
 }
 
 async function loadProfileData(userId) {
-    showLoading(true);
+    console.log("Loading profile data for:", userId);
     
     try {
-        // Try to load profile
-        const profileDoc = await db.collection('profiles').doc(userId).get();
+        // Get profile document
+        const profileRef = db.collection('profiles').doc(userId);
+        const profileDoc = await profileRef.get();
         
         if (profileDoc.exists) {
             userProfile = profileDoc.data();
@@ -56,6 +70,7 @@ async function loadProfileData(userId) {
             populateProfileForm();
         } else {
             // Create default profile
+            console.log("No profile found, creating default");
             userProfile = {
                 userId: userId,
                 email: currentUser.email,
@@ -69,82 +84,107 @@ async function loadProfileData(userId) {
                 updatedAt: new Date()
             };
             
-            // Try to save default profile
-            try {
-                await db.collection('profiles').doc(userId).set(userProfile);
-                console.log("Created default profile");
-            } catch (saveError) {
-                console.warn("Could not save default profile (permissions issue):", saveError);
-                // Continue with local profile
-            }
-            
+            // Save default profile
+            await profileRef.set(userProfile);
+            console.log("Default profile created");
             populateProfileForm();
         }
         
-        // Try to load stats
-        try {
-            const statsDoc = await db.collection('userStats').doc(userId).get();
-            if (statsDoc.exists) {
-                updateStatsDisplay(statsDoc.data());
-            }
-        } catch (statsError) {
-            console.warn("Could not load stats:", statsError);
-        }
+        // Load stats
+        await loadProfileStats(userId);
         
     } catch (error) {
-        console.error("Error loading profile data:", error);
-        
-        // Check error type
-        if (error.code === 'permission-denied') {
-            showAlert('Firestore permissions denied. Please update security rules.', 'error');
-        } else {
-            showAlert('Error loading profile: ' + error.message, 'error');
-        }
-        
-    } finally {
-        showLoading(false);
+        console.error("Error loading profile:", error);
+        showMessage('Error loading profile: ' + error.message, 'error');
     }
 }
 
 function populateProfileForm() {
-    if (!userProfile) return;
+    console.log("Populating form with profile:", userProfile);
     
-    document.getElementById('displayName').value = userProfile.displayName || '';
-    document.getElementById('username').value = userProfile.username || '';
-    document.getElementById('bio').value = userProfile.bio || '';
-    document.getElementById('interests').value = (userProfile.interests || []).join(', ');
-    
+    // Get all form elements
+    const displayNameEl = document.getElementById('displayName');
+    const usernameEl = document.getElementById('username');
+    const bioEl = document.getElementById('bio');
+    const interestsEl = document.getElementById('interests');
     const availabilityToggle = document.getElementById('availabilityToggle');
+    
+    // Check if elements exist before setting values
+    if (displayNameEl) displayNameEl.value = userProfile.displayName || '';
+    if (usernameEl) usernameEl.value = userProfile.username || '';
+    if (bioEl) bioEl.value = userProfile.bio || '';
+    if (interestsEl) interestsEl.value = (userProfile.interests || []).join(', ');
     if (availabilityToggle) {
         availabilityToggle.checked = userProfile.available !== false;
     }
     
-    // Update avatar if exists
-    if (userProfile.profilePicture) {
-        document.getElementById('profilePicture').src = userProfile.profilePicture;
+    // Update profile picture if exists
+    const profilePic = document.getElementById('profilePicture');
+    if (profilePic && userProfile.profilePicture) {
+        profilePic.src = userProfile.profilePicture;
+    }
+    
+    console.log("Form populated successfully");
+}
+
+async function loadProfileStats(userId) {
+    try {
+        // Load call statistics
+        const callsQuery = await db.collection('callSessions')
+            .where('whisperId', '==', userId)
+            .get();
+        
+        const stats = {
+            totalCalls: callsQuery.size,
+            completedCalls: 0,
+            rating: 0
+        };
+        
+        // Calculate stats
+        callsQuery.forEach(doc => {
+            const data = doc.data();
+            if (data.status === 'completed') {
+                stats.completedCalls++;
+                if (data.rating) {
+                    stats.rating += data.rating;
+                }
+            }
+        });
+        
+        // Update stats display
+        updateStatsDisplay(stats);
+        
+    } catch (error) {
+        console.error("Error loading stats:", error);
     }
 }
 
 function updateStatsDisplay(stats) {
-    const container = document.getElementById('profileStats');
-    if (!container) return;
+    const statsContainer = document.getElementById('profileStats');
+    if (!statsContainer) return;
     
-    container.innerHTML = `
+    const avgRating = stats.completedCalls > 0 ? (stats.rating / stats.completedCalls).toFixed(1) : '0.0';
+    
+    statsContainer.innerHTML = `
         <div class="stats-grid">
             <div class="stat-item">
-                <div class="stat-value">${stats.calls || 0}</div>
+                <div class="stat-value">${stats.totalCalls || 0}</div>
                 <div class="stat-label">Total Calls</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value">${(stats.rating || 0).toFixed(1)}</div>
+                <div class="stat-value">${stats.completedCalls || 0}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">${avgRating}</div>
                 <div class="stat-label">Avg Rating</div>
             </div>
         </div>
     `;
 }
 
-function setupProfileListeners() {
-    // Profile form
+function setupEventListeners() {
+    // Profile form submission
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
         profileForm.addEventListener('submit', async function(e) {
@@ -172,20 +212,19 @@ function setupProfileListeners() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async function() {
             if (confirm('Are you sure you want to logout?')) {
-                await auth.signOut();
-                window.location.href = 'index.html';
+                try {
+                    await firebase.auth().signOut();
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    console.error("Logout error:", error);
+                }
             }
         });
     }
 }
 
 async function saveProfile() {
-    if (!currentUser || !userProfile) {
-        showAlert('Please wait for profile to load', 'error');
-        return;
-    }
-    
-    showLoading(true);
+    console.log("Saving profile...");
     
     try {
         // Get form values
@@ -195,74 +234,70 @@ async function saveProfile() {
         const interests = document.getElementById('interests').value
             .split(',')
             .map(i => i.trim())
-            .filter(i => i);
+            .filter(i => i.length > 0);
         
         // Validation
         if (!displayName) {
-            showAlert('Display name is required', 'error');
-            showLoading(false);
+            showMessage('Display name is required', 'error');
             return;
         }
         
         if (!username || username.length < 3) {
-            showAlert('Username must be at least 3 characters', 'error');
-            showLoading(false);
+            showMessage('Username must be at least 3 characters', 'error');
             return;
         }
         
-        // Update profile
+        // Check username uniqueness (optional - can be removed if too complex)
+        if (username !== userProfile.username) {
+            const usernameCheck = await db.collection('profiles')
+                .where('username', '==', username)
+                .limit(1)
+                .get();
+            
+            if (!usernameCheck.empty) {
+                showMessage('Username already taken', 'error');
+                return;
+            }
+        }
+        
+        // Update profile object
         const updatedProfile = {
             ...userProfile,
-            displayName,
-            username,
-            bio,
-            interests,
+            displayName: displayName,
+            username: username,
+            bio: bio,
+            interests: interests,
             updatedAt: new Date()
         };
         
         // Save to Firestore
         await db.collection('profiles').doc(currentUser.uid).set(updatedProfile, { merge: true });
         
-        // Update local copy
+        // Update local profile
         userProfile = updatedProfile;
         
-        showAlert('✅ Profile saved successfully!', 'success');
+        console.log("Profile saved successfully");
+        showMessage('✅ Profile saved successfully!', 'success');
         
     } catch (error) {
         console.error("Error saving profile:", error);
-        
-        if (error.code === 'permission-denied') {
-            showAlert('❌ Permission denied. Cannot save profile. Please update Firestore rules.', 'error');
-        } else {
-            showAlert('❌ Error saving profile: ' + error.message, 'error');
-        }
-        
-    } finally {
-        showLoading(false);
+        showMessage('❌ Error saving profile: ' + error.message, 'error');
     }
 }
 
 async function updateAvailability(isAvailable) {
     try {
-        if (!userProfile) return;
-        
         await db.collection('profiles').doc(currentUser.uid).update({
             available: isAvailable,
             updatedAt: new Date()
         });
         
         userProfile.available = isAvailable;
-        
-        showAlert(`You are now ${isAvailable ? 'available' : 'unavailable'} for calls`, 'success');
+        showMessage(`You are now ${isAvailable ? 'available' : 'unavailable'} for calls`, 'success');
         
     } catch (error) {
         console.error("Error updating availability:", error);
-        
-        if (error.code === 'permission-denied') {
-            showAlert('Cannot update availability. Firestore permissions issue.', 'error');
-        } else {
-            showAlert('Error updating availability', 'error');
-        }
+        showMessage('Error updating availability', 'error');
     }
 }
 
@@ -272,12 +307,12 @@ function handlePictureUpload(event) {
     
     // Validate file
     if (!file.type.match('image.*')) {
-        showAlert('Please select an image file', 'error');
+        showMessage('Please select an image file', 'error');
         return;
     }
     
-    if (file.size > 2 * 1024 * 1024) {
-        showAlert('Image must be less than 2MB', 'error');
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        showMessage('Image must be less than 5MB', 'error');
         return;
     }
     
@@ -288,58 +323,91 @@ function handlePictureUpload(event) {
         if (profilePic) {
             profilePic.src = e.target.result;
         }
-        showAlert('Profile picture updated (preview only)', 'info');
+        showMessage('Profile picture updated (preview)', 'info');
     };
     reader.readAsDataURL(file);
 }
 
-function showLoading(isLoading) {
-    const form = document.getElementById('profileForm');
-    const button = form ? form.querySelector('button[type="submit"]') : null;
-    
-    if (button) {
-        if (isLoading) {
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            button.disabled = true;
-        } else {
-            button.innerHTML = '<i class="fas fa-save"></i> Save Profile';
-            button.disabled = false;
-        }
-    }
-}
-
-function showAlert(message, type = 'info') {
-    // Remove existing alerts
-    const existing = document.querySelector('.alert.fixed');
+function showMessage(message, type = 'info') {
+    // Remove existing messages
+    const existing = document.querySelector('.alert-message');
     if (existing) existing.remove();
     
-    // Create alert
+    // Create message element
     const alert = document.createElement('div');
-    alert.className = `alert alert-${type} fixed`;
+    alert.className = `alert-message alert-${type}`;
     alert.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
-        ${message}
+        <div class="alert-content">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+        </div>
     `;
     
-    // Style
-    alert.style.position = 'fixed';
-    alert.style.top = '20px';
-    alert.style.right = '20px';
-    alert.style.zIndex = '10000';
-    alert.style.minWidth = '300px';
-    alert.style.maxWidth = '400px';
-    alert.style.animation = 'slideIn 0.3s ease';
+    // Add styles
+    alert.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
+        color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
+        padding: 12px 20px;
+        border-radius: 8px;
+        border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'};
+        z-index: 10000;
+        min-width: 300px;
+        max-width: 400px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+    `;
     
     document.body.appendChild(alert);
     
-    // Auto remove
+    // Auto remove after 5 seconds
     setTimeout(() => {
         if (alert.parentNode) {
-            alert.remove();
+            alert.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => alert.remove(), 300);
         }
     }, 5000);
 }
 
-// Make functions available globally
-window.handlePictureUpload = handlePictureUpload;
+// Add CSS for animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .alert-content i {
+        font-size: 1.2em;
+    }
+`;
+document.head.appendChild(style);
+
+// Make functions available globally if needed
 window.saveProfile = saveProfile;
+window.handlePictureUpload = handlePictureUpload;

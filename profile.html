@@ -3,166 +3,459 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile - Whisper+me</title>
+    <title>My Profile - WhisperMe</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Profile Page Specific Styles */
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid white;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            position: relative;
+            background: #f8f9fa;
+        }
+        
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-avatar-upload {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #007bff;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .profile-avatar-upload:hover {
+            background: #0056b3;
+            transform: scale(1.1);
+        }
+        
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 2px solid #e9ecef;
+        }
+        
+        .profile-card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .profile-card h3 i {
+            color: #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #28a745;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        .availability-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+        
+        .status-text {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .status-online {
+            color: #28a745;
+        }
+        
+        .status-offline {
+            color: #dc3545;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .btn-logout:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="logo">
-                <h1>Whisper<span>+me</span></h1>
-            </a>
-            <div class="nav-links">
-                <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
-                <a href="payment.html"><i class="fas fa-coins"></i> Tokens</a>
-                <a href="profile.html" class="active"><i class="fas fa-user-edit"></i> Edit Profile</a>
-                <a href="#" id="logoutBtn" class="btn btn-small btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <div class="nav-brand">
+                <a href="index.html">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>WhisperMe</span>
+                </a>
             </div>
-            <div class="mobile-menu">
-                <i class="fas fa-bars"></i>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="profile.html" class="nav-item active">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="calls.html" class="nav-item">
+                    <i class="fas fa-phone"></i>
+                    <span>Calls</span>
+                </a>
+                <a href="#" class="nav-item" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="section">
-            <div class="dashboard-header">
-                <div class="welcome-message">
-                    <h1><i class="fas fa-user-edit"></i> Edit Profile</h1>
-                    <p>Update your profile information and settings</p>
-                </div>
+    <!-- Main Content -->
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <img id="profilePicture" src="https://via.placeholder.com/120" alt="Profile Picture">
+                <label for="profilePictureInput" class="profile-avatar-upload">
+                    <i class="fas fa-camera"></i>
+                    <input type="file" id="profilePictureInput" accept="image/*" class="hidden" onchange="handlePictureUpload(event)">
+                </label>
             </div>
+            <h1 id="profileName">Loading...</h1>
+            <p id="profileEmail">Loading...</p>
+            <div id="profileStats" class="stats-grid">
+                <!-- Stats will be loaded here -->
+            </div>
+        </div>
 
-            <div class="form-container" style="max-width: 800px;">
-                <!-- Profile Picture Upload -->
-                <div class="text-center mb-4">
-                    <h3>Profile Picture</h3>
-                    <p>Upload a clear photo of yourself (Recommended: 500x500px)</p>
-                    
-                    <div class="file-upload">
-                        <input type="file" id="profilePicture" class="file-upload-input" accept="image/*">
-                        <label for="profilePicture" class="file-upload-label">
-                            <img id="profilePreview" src="https://via.placeholder.com/200/4361ee/ffffff?text=Upload+Photo" 
-                                 alt="Profile Preview" class="profile-preview">
-                            <div class="upload-icon">
-                                <i class="fas fa-camera"></i>
-                            </div>
-                            <div class="upload-text">
-                                Click to upload
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
+        <!-- Profile Form Grid -->
+        <div class="profile-grid">
+            <!-- Basic Info Card -->
+            <div class="profile-card">
+                <h3><i class="fas fa-user-circle"></i> Basic Information</h3>
                 <form id="profileForm">
                     <div class="form-group">
-                        <label for="displayName"><i class="fas fa-user"></i> Display Name</label>
+                        <label for="displayName">Display Name *</label>
                         <input type="text" id="displayName" class="form-control" placeholder="Enter your display name" required>
                     </div>
-
+                    
                     <div class="form-group">
-                        <label for="bio"><i class="fas fa-edit"></i> Bio</label>
-                        <textarea id="bio" class="form-control" rows="4" placeholder="Tell others about yourself..." maxlength="500"></textarea>
-                        <small class="text-muted" id="bioCounter">0/500 characters</small>
+                        <label for="username">Username *</label>
+                        <input type="text" id="username" class="form-control" placeholder="Enter username (min 3 chars)" required>
                     </div>
-
+                    
                     <div class="form-group">
-                        <label><i class="fas fa-link"></i> Social Links</label>
-                        <div class="social-inputs">
-                            <div class="input-group" style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                                <span style="width: 40px; text-align: center;"><i class="fab fa-twitter"></i></span>
-                                <input type="url" class="form-control" placeholder="Twitter profile URL">
-                            </div>
-                            <div class="input-group" style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                                <span style="width: 40px; text-align: center;"><i class="fab fa-instagram"></i></span>
-                                <input type="url" class="form-control" placeholder="Instagram profile URL">
-                            </div>
-                            <div class="input-group" style="display: flex; align-items: center;">
-                                <span style="width: 40px; text-align: center;"><i class="fab fa-tiktok"></i></span>
-                                <input type="url" class="form-control" placeholder="TikTok profile URL">
-                            </div>
-                        </div>
+                        <label for="bio">Bio</label>
+                        <textarea id="bio" class="form-control" rows="4" placeholder="Tell us about yourself..."></textarea>
                     </div>
-
+                    
                     <div class="form-group">
-                        <label><i class="fas fa-dollar-sign"></i> Token Price</label>
-                        <div class="token-price-display" style="margin: 0;">
-                            <i class="fas fa-coins"></i> 
-                            <strong>Fixed at $15 per token</strong>
-                            <i class="fas fa-coins"></i>
-                        </div>
-                        <small class="text-muted">This is the standard price for all Whisper tokens on our platform</small>
+                        <label for="interests">Interests</label>
+                        <input type="text" id="interests" class="form-control" placeholder="e.g., Music, Travel, Technology">
+                        <small style="color: #666; font-size: 12px;">Separate interests with commas</small>
                     </div>
-
-                    <div class="form-group">
-                        <label><i class="fas fa-microphone"></i> Call Settings</label>
-                        <div class="availability-toggle">
-                            <span>Available for calls:</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="availabilityToggle" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span id="availabilityStatus" style="color: var(--success); font-weight: 600;">Available</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="hourlyRate"><i class="fas fa-clock"></i> Preferred Hours</label>
-                        <select id="preferredHours" class="form-control" multiple style="height: 100px;">
-                            <option value="morning">Morning (8AM - 12PM)</option>
-                            <option value="afternoon">Afternoon (12PM - 5PM)</option>
-                            <option value="evening">Evening (5PM - 9PM)</option>
-                            <option value="night">Night (9PM - 12AM)</option>
-                            <option value="late_night">Late Night (12AM - 8AM)</option>
-                        </select>
-                        <small class="text-muted">Hold Ctrl/Cmd to select multiple options</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="callTopics"><i class="fas fa-comments"></i> Topics I Can Discuss</label>
-                        <div class="topics-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; margin-top: 0.5rem;">
-                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" name="topics" value="career"> Career Advice
-                            </label>
-                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" name="topics" value="mental_health"> Mental Health
-                            </label>
-                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" name="topics" value="relationships"> Relationships
-                            </label>
-                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" name="topics" value="motivation"> Motivation
-                            </label>
-                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" name="topics" value="hobbies"> Hobbies
-                            </label>
-                            <label class="topic-checkbox" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="checkbox" name="topics" value="life_advice"> Life Advice
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-save"></i> Save Profile
-                        </button>
-                        <button type="button" class="btn btn-outline btn-block" onclick="window.location.href='dashboard.html'">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                    </div>
+                    
+                    <button type="submit" class="btn-save">
+                        <i class="fas fa-save"></i> Save Profile
+                    </button>
                 </form>
+            </div>
+
+            <!-- Account Settings Card -->
+            <div class="profile-card">
+                <h3><i class="fas fa-cog"></i> Account Settings</h3>
+                
+                <div class="form-group">
+                    <label>Availability Status</label>
+                    <div class="availability-status">
+                        <span class="status-text">
+                            You are currently: 
+                            <span id="statusText" class="status-online">Online</span>
+                        </span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="availabilityToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <small style="color: #666; display: block; margin-top: 10px;">
+                        When online, you can receive calls. When offline, you won't appear in the whisper list.
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Account Information</label>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;">
+                        <p style="margin: 5px 0; color: #666;">
+                            <strong>Email:</strong> <span id="accountEmail">Loading...</span>
+                        </p>
+                        <p style="margin: 5px 0; color: #666;">
+                            <strong>Member Since:</strong> <span id="memberSince">Loading...</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <button class="btn-logout" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="profile-card">
+            <h3><i class="fas fa-lightbulb"></i> Profile Tips</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <strong>📱 Complete Your Profile</strong>
+                    <p style="margin: 8px 0 0; font-size: 14px; color: #555;">
+                        Complete profiles get 3x more calls. Add a bio and interests!
+                    </p>
+                </div>
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+                    <strong>🎯 Stay Available</strong>
+                    <p style="margin: 8px 0 0; font-size: 14px; color: #555;">
+                        Keep your status "Online" to receive whispers from others.
+                    </p>
+                </div>
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <strong>✨ Be Active</strong>
+                    <p style="margin: 8px 0 0; font-size: 14px; color: #555;">
+                        Active users appear higher in search results.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Firebase and Profile Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/profile.js"></script>
+    
+    <script>
+        // Update profile header with real data
+        function updateProfileHeader() {
+            if (window.userProfile) {
+                document.getElementById('profileName').textContent = window.userProfile.displayName || 'User';
+                document.getElementById('profileEmail').textContent = window.userProfile.email || '';
+                document.getElementById('accountEmail').textContent = window.userProfile.email || '';
+                
+                if (window.userProfile.createdAt) {
+                    const date = window.userProfile.createdAt.toDate ? 
+                        window.userProfile.createdAt.toDate() : 
+                        new Date(window.userProfile.createdAt);
+                    document.getElementById('memberSince').textContent = date.toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                }
+                
+                // Update status text
+                const statusText = document.getElementById('statusText');
+                if (window.userProfile.available !== false) {
+                    statusText.textContent = 'Online';
+                    statusText.className = 'status-online';
+                } else {
+                    statusText.textContent = 'Offline';
+                    statusText.className = 'status-offline';
+                }
+            }
+        }
+        
+        // Update header when profile loads
+        setTimeout(updateProfileHeader, 1000);
+        setInterval(updateProfileHeader, 5000);
+    </script>
 </body>
 </html>
