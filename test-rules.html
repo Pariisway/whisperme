@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Firestore Rules</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <h1>Firestore Rules Test</h1>
+    <button onclick="testRules()">Test Rules</button>
+    <div id="result"></div>
+    
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyALbIJSI2C-p6IyMtj_F0ZqGyN1i79jOd4",
+  authDomain: "whisper-chat-live.firebaseapp.com",
+  projectId: "whisper-chat-live",
+  storageBucket: "whisper-chat-live.firebasestorage.app",
+  messagingSenderId: "302894848452",
+  appId: "1:302894848452:web:61a7ab21a269533c426c91"
+};
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        async function testRules() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                // Sign in with test account
+                await auth.signInWithEmailAndPassword('test@test.com', 'test123');
+                
+                // Try to write to Firestore
+                await db.collection('test').add({
+                    test: 'testing rules',
+                    timestamp: new Date()
+                });
+                
+                // Try to read from Firestore
+                const snapshot = await db.collection('test').limit(1).get();
+                
+                result.innerHTML = `
+                    <p style="color: green; font-weight: bold;">✅ SUCCESS!</p>
+                    <p>Firestore rules are working correctly.</p>
+                    <p>Now test your dashboard: 
+                        <a href="https://pariisway.github.io/whisperme/dashboard.html" target="_blank">
+                            Open Dashboard
+                        </a>
+                    </p>
+                `;
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <p style="color: red; font-weight: bold;">❌ FAILED!</p>
+                    <p>Error: ${error.message}</p>
+                    <p>Error code: ${error.code}</p>
+                    <p>This means your Firestore rules are blocking access.</p>
+                    <p>Please update rules in Firebase Console:</p>
+                    <a href="https://console.firebase.google.com/project/whisper-chat-live/firestore/rules" target="_blank">
+                        Update Firestore Rules
+                    </a>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
