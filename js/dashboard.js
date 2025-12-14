@@ -1,5 +1,5 @@
-// Dashboard JavaScript for Whisper+me
-console.log("Dashboard.js loaded - Fixed version");
+// Dashboard JavaScript for Whisper+me - Fixed version
+console.log("Dashboard.js loaded - Fixed permissions version");
 
 // Store user data globally
 let currentUser = null;
@@ -70,32 +70,65 @@ function initializeDashboard() {
     });
 }
 
-// The rest of the dashboard.js remains the same...
-// Load dashboard content
+// Load dashboard content with error handling for permissions
 async function loadDashboardContent(user) {
     try {
         // Update welcome message
         updateWelcomeMessage(user);
         
-        // Load user data
-        await loadUserData(user.uid);
+        // Load user data (try/catch each to handle permissions errors)
+        try {
+            await loadUserData(user.uid);
+        } catch (error) {
+            console.warn("Could not load user data:", error.message);
+            // Use default values
+            userData = { tokens: 0 };
+            updateTokenDisplay(0);
+        }
         
         // Load user stats
-        await loadUserStats(user.uid);
+        try {
+            await loadUserStats(user.uid);
+        } catch (error) {
+            console.warn("Could not load user stats:", error.message);
+            // Use default stats
+            updateStatsDisplay({ earnings: 0, calls: 0, rating: 0, activeTime: 0 });
+        }
         
         // Load availability status
-        await loadAvailabilityStatus(user.uid);
+        try {
+            await loadAvailabilityStatus(user.uid);
+        } catch (error) {
+            console.warn("Could not load availability:", error.message);
+            // Default to available
+            updateAvailabilityDisplay(true);
+        }
         
         // Load calls waiting
-        await loadCallsWaiting(user.uid);
+        try {
+            await loadCallsWaiting(user.uid);
+        } catch (error) {
+            console.warn("Could not load calls waiting:", error.message);
+            showSampleCalls(document.getElementById('callsWaiting'));
+        }
         
         // Load available whispers
-        await loadDashboardWhispers(user.uid);
+        try {
+            await loadDashboardWhispers(user.uid);
+        } catch (error) {
+            console.warn("Could not load whispers:", error.message);
+            showSampleWhispers(document.getElementById('dashboardWhispers'));
+        }
         
         // Load recent activity
-        await loadRecentActivity(user.uid);
+        try {
+            await loadRecentActivity(user.uid);
+        } catch (error) {
+            console.warn("Could not load activity:", error.message);
+            showSampleActivity(document.getElementById('recentActivity'));
+        }
         
-        // Simulate loading completion
+        // Hide loading states
         setTimeout(() => {
             document.querySelectorAll('.loading-state').forEach(el => {
                 el.style.display = 'none';
@@ -142,14 +175,7 @@ async function loadUserData(userId) {
         const userDoc = await db.collection('users').doc(userId).get();
         if (userDoc.exists) {
             userData = userDoc.data();
-            
-            // Update token balance
-            const tokenBalanceEl = document.getElementById('tokenBalance');
-            if (tokenBalanceEl) {
-                const tokens = userData.tokens || 0;
-                tokenBalanceEl.textContent = `${tokens} ${tokens === 1 ? 'token' : 'tokens'}`;
-                tokenBalanceEl.style.color = tokens > 0 ? 'var(--primary-blue)' : 'var(--accent-red)';
-            }
+            updateTokenDisplay(userData.tokens || 0);
         } else {
             // Create user data if it doesn't exist
             await db.collection('users').doc(userId).set({
@@ -159,9 +185,19 @@ async function loadUserData(userId) {
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             userData = { tokens: 0 };
+            updateTokenDisplay(0);
         }
     } catch (error) {
         console.error("Error loading user data:", error);
+        throw error; // Re-throw to be caught by caller
+    }
+}
+
+function updateTokenDisplay(tokens) {
+    const tokenBalanceEl = document.getElementById('tokenBalance');
+    if (tokenBalanceEl) {
+        tokenBalanceEl.textContent = `${tokens} ${tokens === 1 ? 'token' : 'tokens'}`;
+        tokenBalanceEl.style.color = tokens > 0 ? 'var(--primary-blue)' : 'var(--accent-red)';
     }
 }
 
@@ -172,26 +208,39 @@ async function loadUserStats(userId) {
         
         if (statsDoc.exists) {
             stats = statsDoc.data();
+        } else {
+            // Create initial stats if they don't exist
+            await db.collection('userStats').doc(userId).set({
+                earnings: 0,
+                calls: 0,
+                rating: 0,
+                activeTime: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
         }
         
-        // Update stats display
-        const totalEarningsEl = document.getElementById('totalEarnings');
-        const callsCompletedEl = document.getElementById('callsCompleted');
-        const averageRatingEl = document.getElementById('averageRating');
-        const activeTimeEl = document.getElementById('activeTime');
-        
-        if (totalEarningsEl) totalEarningsEl.textContent = '$' + (stats.earnings || 0).toFixed(2);
-        if (callsCompletedEl) callsCompletedEl.textContent = stats.calls || 0;
-        if (averageRatingEl) averageRatingEl.textContent = (stats.rating || 0).toFixed(1) + ' ★';
-        
-        if (activeTimeEl) {
-            const hours = Math.floor((stats.activeTime || 0) / 60);
-            const minutes = (stats.activeTime || 0) % 60;
-            activeTimeEl.textContent = `${hours}h ${minutes}m`;
-        }
+        updateStatsDisplay(stats);
         
     } catch (error) {
         console.error("Error loading user stats:", error);
+        throw error;
+    }
+}
+
+function updateStatsDisplay(stats) {
+    const totalEarningsEl = document.getElementById('totalEarnings');
+    const callsCompletedEl = document.getElementById('callsCompleted');
+    const averageRatingEl = document.getElementById('averageRating');
+    const activeTimeEl = document.getElementById('activeTime');
+    
+    if (totalEarningsEl) totalEarningsEl.textContent = '$' + (stats.earnings || 0).toFixed(2);
+    if (callsCompletedEl) callsCompletedEl.textContent = stats.calls || 0;
+    if (averageRatingEl) averageRatingEl.textContent = (stats.rating || 0).toFixed(1) + ' ★';
+    
+    if (activeTimeEl) {
+        const hours = Math.floor((stats.activeTime || 0) / 60);
+        const minutes = (stats.activeTime || 0) % 60;
+        activeTimeEl.textContent = `${hours}h ${minutes}m`;
     }
 }
 
@@ -203,26 +252,46 @@ async function loadAvailabilityStatus(userId) {
         if (profileDoc.exists) {
             const profileData = profileDoc.data();
             isAvailable = profileData.available !== undefined ? profileData.available : true;
+        } else {
+            // Create initial profile if it doesn't exist
+            await db.collection('profiles').doc(userId).set({
+                userId: userId,
+                email: currentUser.email,
+                displayName: currentUser.email.split('@')[0],
+                username: currentUser.email.split('@')[0].toLowerCase(),
+                available: true,
+                bio: '',
+                profilePicture: '',
+                interests: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
         }
         
-        // Update toggle
-        const availabilityToggle = document.getElementById('availabilityToggle');
-        if (availabilityToggle) {
-            availabilityToggle.checked = isAvailable;
-        }
-        
-        // Update status text
-        const availabilityStatus = document.getElementById('availabilityStatus');
-        if (availabilityStatus) {
-            availabilityStatus.textContent = isAvailable ? 'Available for Calls' : 'Unavailable';
-            availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
-        }
+        updateAvailabilityDisplay(isAvailable);
         
     } catch (error) {
         console.error("Error loading availability:", error);
+        throw error;
     }
 }
 
+function updateAvailabilityDisplay(isAvailable) {
+    // Update toggle
+    const availabilityToggle = document.getElementById('availabilityToggle');
+    if (availabilityToggle) {
+        availabilityToggle.checked = isAvailable;
+    }
+    
+    // Update status text
+    const availabilityStatus = document.getElementById('availabilityStatus');
+    if (availabilityStatus) {
+        availabilityStatus.textContent = isAvailable ? 'Available for Calls' : 'Unavailable';
+        availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
+    }
+}
+
+// The rest of the functions remain the same as before...
 // Load calls waiting for the user
 async function loadCallsWaiting(userId) {
     const callsWaitingContainer = document.getElementById('callsWaiting');
@@ -529,6 +598,17 @@ function setupDashboardListeners() {
             }
         });
     }
+    
+    // Filter buttons
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            const filter = this.getAttribute('data-filter');
+            filterDashboardWhispers(filter);
+        });
+    });
 }
 
 // Update availability status

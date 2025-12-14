@@ -1,5 +1,5 @@
-// Authentication JavaScript for Whisper+me
-console.log("Auth.js loaded - Fixed version");
+// Authentication JavaScript for Whisper+me - Fixed auth form elements
+console.log("Auth.js loaded - Fixed auth form elements");
 
 // Initialize auth when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -21,14 +21,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Setup auth form based on type (login/signup)
 function setupAuthForm(type) {
+    console.log("Setting up auth form for type:", type);
+    
     const authTitle = document.getElementById('authTitle');
     const authSubtitle = document.getElementById('authSubtitle');
     const authBtn = document.getElementById('authBtn');
     const switchText = document.getElementById('switchText');
     const switchLink = document.getElementById('switchLink');
     
-    if (!authTitle || !authSubtitle || !authBtn) {
-        console.error("Auth form elements not found");
+    if (!authTitle || !authSubtitle || !authBtn || !switchText || !switchLink) {
+        console.error("Auth form elements not found - retrying in 500ms");
+        setTimeout(() => setupAuthForm(type), 500);
         return;
     }
     
@@ -50,7 +53,9 @@ function setupAuthForm(type) {
                 </div>
             `;
             const passwordField = document.querySelector('[for="password"]').parentElement;
-            passwordField.insertAdjacentHTML('afterend', confirmPasswordField);
+            if (passwordField) {
+                passwordField.insertAdjacentHTML('afterend', confirmPasswordField);
+            }
         }
     } else {
         // Setup login form
@@ -86,7 +91,10 @@ function setupAuthForm(type) {
 // Setup form submission
 function setupFormSubmission() {
     const authForm = document.getElementById('authForm');
-    if (!authForm) return;
+    if (!authForm) {
+        console.error("Auth form not found");
+        return;
+    }
     
     authForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -149,36 +157,41 @@ async function signUpUser(email, password) {
         
         // Create user document in Firestore
         if (typeof db !== 'undefined') {
-            await db.collection('users').doc(user.uid).set({
-                email: email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                tokens: 0,
-                role: 'user'
-            });
-            
-            // Create initial user stats
-            await db.collection('userStats').doc(user.uid).set({
-                earnings: 0,
-                calls: 0,
-                rating: 0,
-                activeTime: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            // Create initial profile
-            await db.collection('profiles').doc(user.uid).set({
-                userId: user.uid,
-                email: email,
-                displayName: email.split('@')[0],
-                username: email.split('@')[0].toLowerCase(),
-                available: true,
-                bio: '',
-                profilePicture: '',
-                interests: [],
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            try {
+                await db.collection('users').doc(user.uid).set({
+                    email: email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    tokens: 0,
+                    role: 'user'
+                });
+                
+                // Create initial user stats
+                await db.collection('userStats').doc(user.uid).set({
+                    earnings: 0,
+                    calls: 0,
+                    rating: 0,
+                    activeTime: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Create initial profile
+                await db.collection('profiles').doc(user.uid).set({
+                    userId: user.uid,
+                    email: email,
+                    displayName: email.split('@')[0],
+                    username: email.split('@')[0].toLowerCase(),
+                    available: true,
+                    bio: '',
+                    profilePicture: '',
+                    interests: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (firestoreError) {
+                console.warn("Firestore error (might be permissions):", firestoreError);
+                // Continue even if Firestore fails - user is still created
+            }
         }
         
         showAuthMessage('Account created successfully! Redirecting...', 'success');
@@ -274,7 +287,10 @@ async function logInUser(email, password) {
 // Show auth message
 function showAuthMessage(message, type = 'info') {
     const authMessage = document.getElementById('authMessage');
-    if (!authMessage) return;
+    if (!authMessage) {
+        console.error("Auth message element not found");
+        return;
+    }
     
     authMessage.textContent = message;
     authMessage.className = `alert alert-${type}`;
@@ -299,9 +315,8 @@ function checkAuthState() {
         
         // Only redirect if we're on auth page AND user is logged in
         if (user && window.location.pathname.includes('auth.html')) {
-            console.log("User already logged in, but staying on auth page for demo");
-            // For now, let's NOT auto-redirect to prevent loops
-            // window.location.href = 'dashboard.html';
+            console.log("User already logged in, redirecting to dashboard");
+            window.location.href = 'dashboard.html';
         }
     });
 }

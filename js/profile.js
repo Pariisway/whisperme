@@ -1,148 +1,175 @@
-// Profile management for Whisper+me
+// Profile JavaScript for Whisper+me
 console.log("Profile.js loaded");
 
-// DOM Elements
-let profileForm;
-let profilePictureInput;
-let profilePreview;
-let bioTextarea;
-let bioCounter;
-let availabilityToggle;
-let availabilityStatus;
-let preferredHoursSelect;
-
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     console.log("Profile page loaded");
+    
+    // First, wait for Firebase to be fully loaded
+    if (typeof waitForFirebase !== 'undefined') {
+        waitForFirebase(function(firebaseReady) {
+            if (!firebaseReady) {
+                console.error("Firebase not ready");
+                showAlert('Firebase initialization failed. Please refresh the page.', 'error');
+                return;
+            }
+            initializeProfile();
+        });
+    } else {
+        // Fallback if checker isn't available
+        setTimeout(initializeProfile, 2000);
+    }
+});
+
+function initializeProfile() {
+    console.log("Initializing profile...");
+    
+    // Check if Firebase is loaded
+    if (typeof auth === 'undefined' || typeof db === 'undefined') {
+        console.error("Firebase services not loaded.");
+        showAlert('Authentication services not available. Please refresh.', 'error');
+        return;
+    }
     
     // Check authentication
     auth.onAuthStateChanged(async function(user) {
+        console.log("Auth state changed. User:", user ? user.email : "null");
+        
         if (!user) {
+            console.log("No user found, redirecting to login");
             window.location.href = 'auth.html?type=login';
             return;
         }
         
         console.log("User logged in:", user.email);
-        window.currentUser = user;
         
-        // Get DOM elements
-        getProfileElements();
-        
-        // Load profile data
-        await loadProfileData(user.uid);
-        
-        // Setup event listeners
-        setupProfileListeners();
+        try {
+            // Load profile data
+            await loadProfileData(user.uid, user.email);
+            
+            // Setup event listeners
+            setupProfileListeners(user.uid);
+            
+        } catch (error) {
+            console.error("Error loading profile:", error);
+            showAlert('Error loading profile data', 'error');
+        }
     });
-});
-
-// Get profile DOM elements
-function getProfileElements() {
-    profileForm = document.getElementById('profileForm');
-    profilePictureInput = document.getElementById('profilePicture');
-    profilePreview = document.getElementById('profilePreview');
-    bioTextarea = document.getElementById('bio');
-    bioCounter = document.getElementById('bioCounter');
-    availabilityToggle = document.getElementById('availabilityToggle');
-    availabilityStatus = document.getElementById('availabilityStatus');
-    preferredHoursSelect = document.getElementById('preferredHours');
 }
 
 // Load profile data
-async function loadProfileData(userId) {
+async function loadProfileData(userId, userEmail) {
     try {
+        // Load user profile
         const profileDoc = await db.collection('profiles').doc(userId).get();
         
         if (profileDoc.exists) {
             const profileData = profileDoc.data();
+            populateProfileForm(profileData, userEmail);
+        } else {
+            // Create default profile if it doesn't exist
+            const defaultProfile = {
+                userId: userId,
+                email: userEmail,
+                displayName: userEmail.split('@')[0],
+                username: userEmail.split('@')[0].toLowerCase(),
+                bio: '',
+                interests: [],
+                available: true,
+                profilePicture: '',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
             
-            // Populate form fields
-            document.getElementById('displayName').value = profileData.displayName || '';
+            // Show default values
+            populateProfileForm(defaultProfile, userEmail);
             
-            if (bioTextarea) {
-                bioTextarea.value = profileData.bio || '';
-                updateBioCounter(bioTextarea.value.length);
-            }
-            
-            if (profilePreview && profileData.profilePicture) {
-                profilePreview.src = profileData.profilePicture;
-            }
-            
-            // Set availability toggle
-            if (availabilityToggle) {
-                availabilityToggle.checked = profileData.available || false;
-                updateAvailabilityStatus(profileData.available || false);
-            }
-            
-            // Set preferred hours
-            if (preferredHoursSelect && profileData.preferredHours) {
-                const hours = profileData.preferredHours;
-                Array.from(preferredHoursSelect.options).forEach(option => {
-                    option.selected = hours.includes(option.value);
-                });
-            }
-            
-            // Set topics
-            if (profileData.topics) {
-                document.querySelectorAll('input[name="topics"]').forEach(checkbox => {
-                    checkbox.checked = profileData.topics.includes(checkbox.value);
-                });
-            }
-            
-            // Set social links
-            if (profileData.socialLinks) {
-                const socialInputs = document.querySelectorAll('.social-inputs input');
-                socialInputs.forEach(input => {
-                    const platform = input.previousElementSibling.querySelector('i').className.split(' ')[1];
-                    if (platform.includes('twitter') && profileData.socialLinks.twitter) {
-                        input.value = profileData.socialLinks.twitter;
-                    } else if (platform.includes('instagram') && profileData.socialLinks.instagram) {
-                        input.value = profileData.socialLinks.instagram;
-                    } else if (platform.includes('tiktok') && profileData.socialLinks.tiktok) {
-                        input.value = profileData.socialLinks.tiktok;
-                    }
-                });
-            }
+            // Don't create automatically - let user save first
+            console.log("Profile doesn't exist yet - will create on save");
+        }
+        
+        // Load user stats
+        const statsDoc = await db.collection('userStats').doc(userId).get();
+        if (statsDoc.exists) {
+            const stats = statsDoc.data();
+            updateProfileStats(stats);
         }
         
     } catch (error) {
         console.error("Error loading profile:", error);
-        showAlert('Error loading profile data', 'error');
+        showAlert('Error loading profile data. Please refresh.', 'error');
     }
 }
 
-// Setup profile event listeners
-function setupProfileListeners() {
-    // Profile picture upload
-    if (profilePictureInput) {
-        profilePictureInput.addEventListener('change', handleProfilePictureUpload);
-    }
+// Populate profile form with data
+function populateProfileForm(profileData, userEmail) {
+    // Basic info
+    document.getElementById('profileEmail').textContent = userEmail;
+    document.getElementById('displayName').value = profileData.displayName || '';
+    document.getElementById('username').value = profileData.username || '';
+    document.getElementById('bio').value = profileData.bio || '';
     
-    // Bio character counter
-    if (bioTextarea) {
-        bioTextarea.addEventListener('input', function() {
-            updateBioCounter(this.value.length);
-        });
-    }
-    
-    // Availability toggle
+    // Availability
+    const availabilityToggle = document.getElementById('availabilityToggle');
     if (availabilityToggle) {
-        availabilityToggle.addEventListener('change', function() {
-            updateAvailabilityStatus(this.checked);
+        availabilityToggle.checked = profileData.available !== false;
+    }
+    
+    // Interests (simplified for now)
+    if (profileData.interests && Array.isArray(profileData.interests)) {
+        document.getElementById('interests').value = profileData.interests.join(', ');
+    }
+    
+    // Profile picture preview
+    const profilePicture = document.getElementById('profilePicture');
+    if (profilePicture && profileData.profilePicture) {
+        profilePicture.src = profileData.profilePicture;
+    }
+}
+
+// Update profile stats display
+function updateProfileStats(stats) {
+    const statsElement = document.getElementById('profileStats');
+    if (!statsElement) return;
+    
+    statsElement.innerHTML = `
+        <div class="profile-stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">${stats.calls || 0}</div>
+                <div class="stat-label">Total Calls</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">${(stats.rating || 0).toFixed(1)}</div>
+                <div class="stat-label">Avg Rating</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">$${(stats.earnings || 0).toFixed(2)}</div>
+                <div class="stat-label">Earnings</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">${stats.activeTime ? Math.floor(stats.activeTime / 60) : 0}h</div>
+                <div class="stat-label">Active Time</div>
+            </div>
+        </div>
+    `;
+}
+
+// Setup profile event listeners
+function setupProfileListeners(userId) {
+    // Profile form submission
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await handleProfileSubmit(userId);
         });
     }
     
-    // Form submission
-    if (profileForm) {
-        profileForm.addEventListener('submit', handleProfileSubmit);
-    }
-    
-    // Mobile menu
-    const mobileMenuBtn = document.querySelector('.mobile-menu');
-    const navLinks = document.querySelector('.nav-links');
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener('click', function() {
-            navLinks.classList.toggle('show');
+    // Profile picture upload (simplified without storage)
+    const profilePictureInput = document.getElementById('profilePictureInput');
+    if (profilePictureInput) {
+        profilePictureInput.addEventListener('change', function(e) {
+            handleProfilePictureUpload(e, userId);
         });
     }
     
@@ -160,234 +187,144 @@ function setupProfileListeners() {
             }
         });
     }
-}
-
-// Handle profile picture upload
-async function handleProfilePictureUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
     
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-        showAlert('Please select an image file', 'error');
-        return;
-    }
-    
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        showAlert('Image must be less than 5MB', 'error');
-        return;
-    }
-    
-    try {
-        // Show loading state
-        if (profilePreview) {
-            profilePreview.src = 'https://via.placeholder.com/200/e2e8f0/64748b?text=Uploading...';
-        }
-        
-        // Create a unique filename
-        const userId = currentUser.uid;
-        const fileExtension = file.name.split('.').pop();
-        const fileName = `profile_${userId}_${Date.now()}.${fileExtension}`;
-        
-        // Upload to Firebase Storage
-        const storageRef = storage.ref(`profile_pictures/${fileName}`);
-        const uploadTask = storageRef.put(file);
-        
-        // Monitor upload progress
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                // Progress tracking (optional)
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log('Upload progress: ' + progress + '%');
-            },
-            (error) => {
-                console.error("Upload error:", error);
-                showAlert('Error uploading image: ' + error.message, 'error');
-                
-                // Reset preview
-                if (profilePreview) {
-                    profilePreview.src = 'https://via.placeholder.com/200/4361ee/ffffff?text=Upload+Photo';
-                }
-            },
-            async () => {
-                // Upload completed successfully
-                try {
-                    // Get download URL
-                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                    
-                    // Update preview
-                    if (profilePreview) {
-                        profilePreview.src = downloadURL;
-                    }
-                    
-                    // Save URL to user's profile
-                    await db.collection('profiles').doc(userId).update({
-                        profilePicture: downloadURL,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    showAlert('Profile picture updated successfully!', 'success');
-                    
-                } catch (error) {
-                    console.error("Error getting download URL:", error);
-                    showAlert('Error updating profile picture', 'error');
-                }
-            }
-        );
-        
-    } catch (error) {
-        console.error("Error handling file upload:", error);
-        showAlert('Error uploading image', 'error');
-    }
-}
-
-// Update bio character counter
-function updateBioCounter(length) {
-    if (bioCounter) {
-        bioCounter.textContent = `${length}/500 characters`;
-        
-        // Change color if approaching limit
-        if (length > 450) {
-            bioCounter.style.color = 'var(--accent-red)';
-        } else if (length > 400) {
-            bioCounter.style.color = 'var(--accent-yellow)';
-        } else {
-            bioCounter.style.color = 'var(--text-muted)';
-        }
-    }
-}
-
-// Update availability status display
-function updateAvailabilityStatus(isAvailable) {
-    if (availabilityStatus) {
-        availabilityStatus.textContent = isAvailable ? 'Available' : 'Unavailable';
-        availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
+    // Mobile menu
+    const mobileMenuBtn = document.querySelector('.mobile-menu');
+    const navLinks = document.querySelector('.nav-links');
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', function() {
+            navLinks.classList.toggle('show');
+        });
     }
 }
 
 // Handle profile form submission
-async function handleProfileSubmit(event) {
-    event.preventDefault();
-    
-    const userId = currentUser.uid;
-    
-    // Get form values
-    const displayName = document.getElementById('displayName').value.trim();
-    const bio = bioTextarea ? bioTextarea.value.trim() : '';
-    const isAvailable = availabilityToggle ? availabilityToggle.checked : false;
-    
-    // Get preferred hours
-    const preferredHours = [];
-    if (preferredHoursSelect) {
-        Array.from(preferredHoursSelect.selectedOptions).forEach(option => {
-            preferredHours.push(option.value);
-        });
-    }
-    
-    // Get topics
-    const topics = [];
-    document.querySelectorAll('input[name="topics"]:checked').forEach(checkbox => {
-        topics.push(checkbox.value);
-    });
-    
-    // Get social links
-    const socialLinks = {};
-    const socialInputs = document.querySelectorAll('.social-inputs input');
-    socialInputs.forEach(input => {
-        const platform = input.previousElementSibling.querySelector('i').className.split(' ')[1];
-        const url = input.value.trim();
-        
-        if (url) {
-            if (platform.includes('twitter')) socialLinks.twitter = url;
-            else if (platform.includes('instagram')) socialLinks.instagram = url;
-            else if (platform.includes('tiktok')) socialLinks.tiktok = url;
-        }
-    });
-    
-    // Validate
-    if (!displayName) {
-        showAlert('Please enter a display name', 'error');
-        return;
-    }
-    
-    if (bio.length > 500) {
-        showAlert('Bio must be 500 characters or less', 'error');
-        return;
-    }
-    
+async function handleProfileSubmit(userId) {
     try {
-        // Show loading state
-        const submitBtn = profileForm.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-        submitBtn.disabled = true;
+        showAlert('Saving profile...', 'info');
         
-        // Update profile in Firestore
-        await db.collection('profiles').doc(userId).update({
-            displayName: displayName,
-            bio: bio,
-            available: isAvailable,
-            preferredHours: preferredHours,
-            topics: topics,
-            socialLinks: socialLinks,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        // Get form values
+        const displayName = document.getElementById('displayName').value.trim();
+        const username = document.getElementById('username').value.trim().toLowerCase();
+        const bio = document.getElementById('bio').value.trim();
+        const interests = document.getElementById('interests').value.split(',').map(i => i.trim()).filter(i => i);
+        const available = document.getElementById('availabilityToggle').checked;
         
-        // Also update user document for quick access
-        await db.collection('users').doc(userId).update({
-            displayName: displayName,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Restore button state
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        
-        // Show success message
-        showAlert('Profile updated successfully!', 'success');
-        
-        // Update UI
-        updateAvailabilityStatus(isAvailable);
-        
-        // Update username in welcome message if on dashboard
-        const welcomeElement = document.getElementById('welcomeText');
-        if (welcomeElement) {
-            welcomeElement.textContent = `Welcome back, ${displayName}!`;
+        // Basic validation
+        if (!displayName) {
+            showAlert('Display name is required', 'error');
+            return;
         }
         
-        // Redirect after delay if needed
-        setTimeout(() => {
-            // Only redirect if not on profile page
-            if (!window.location.pathname.includes('profile.html')) {
-                window.location.href = 'dashboard.html';
-            }
-        }, 1500);
+        if (!username) {
+            showAlert('Username is required', 'error');
+            return;
+        }
+        
+        // Check username uniqueness (simplified - in real app, check against other users)
+        if (username.length < 3) {
+            showAlert('Username must be at least 3 characters', 'error');
+            return;
+        }
+        
+        // Get current user
+        const user = auth.currentUser;
+        if (!user) {
+            showAlert('You must be logged in to save profile', 'error');
+            return;
+        }
+        
+        // Prepare profile data
+        const profileData = {
+            userId: userId,
+            email: user.email,
+            displayName: displayName,
+            username: username,
+            bio: bio,
+            interests: interests,
+            available: available,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        // Add createdAt if this is a new profile
+        const profileDoc = await db.collection('profiles').doc(userId).get();
+        if (!profileDoc.exists) {
+            profileData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        
+        // Save to Firestore
+        await db.collection('profiles').doc(userId).set(profileData, { merge: true });
+        
+        showAlert('Profile saved successfully!', 'success');
+        
+        // Update welcome message if on dashboard
+        if (typeof updateWelcomeMessage === 'function') {
+            updateWelcomeMessage(user);
+        }
         
     } catch (error) {
         console.error("Error updating profile:", error);
-        showAlert('Error updating profile: ' + error.message, 'error');
+        showAlert('Error saving profile: ' + error.message, 'error');
+    }
+}
+
+// Handle profile picture upload (simplified without Firebase Storage)
+function handleProfilePictureUpload(event, userId) {
+    try {
+        const file = event.target.files[0];
+        if (!file) return;
         
-        // Restore button state
-        const submitBtn = profileForm.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
-            submitBtn.disabled = false;
+        // Check file type
+        if (!file.type.match('image.*')) {
+            showAlert('Please select an image file', 'error');
+            return;
         }
+        
+        // Check file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            showAlert('Image must be less than 2MB', 'error');
+            return;
+        }
+        
+        showAlert('Uploading profile picture...', 'info');
+        
+        // Create a local URL for preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const profilePicture = document.getElementById('profilePicture');
+            if (profilePicture) {
+                profilePicture.src = e.target.result;
+            }
+            
+            // For now, we'll just store the data URL (in production, upload to storage)
+            // showAlert('Profile picture updated (locally)', 'success');
+            
+            // In a real app, you would upload to Firebase Storage here
+            // and save the download URL to the profile document
+        };
+        
+        reader.readAsDataURL(file);
+        
+    } catch (error) {
+        console.error("Error handling file upload:", error);
+        showAlert('Error uploading image: ' + error.message, 'error');
     }
 }
 
 // Utility function to show alerts
 function showAlert(message, type = 'info') {
+    // Remove existing alerts
+    document.querySelectorAll('.alert.fixed').forEach(el => el.remove());
+    
     // Create alert element
     const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
+    alert.className = `alert alert-${type} fixed`;
     alert.style.position = 'fixed';
     alert.style.top = '20px';
     alert.style.right = '20px';
-    alert.style.zIndex = '1000';
+    alert.style.zIndex = '10000';
     alert.style.minWidth = '300px';
-    alert.style.maxWidth = '500px';
+    alert.style.maxWidth = '400px';
     alert.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
         ${message}
@@ -397,12 +334,8 @@ function showAlert(message, type = 'info') {
     
     // Auto remove after 5 seconds
     setTimeout(() => {
-        alert.remove();
+        if (alert.parentNode) {
+            alert.remove();
+        }
     }, 5000);
 }
-
-// Export for debugging
-window.ProfileManager = {
-    loadProfileData,
-    updateAvailabilityStatus
-};
