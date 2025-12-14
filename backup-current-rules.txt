@@ -1,0 +1,15 @@
+// BACKUP of your current Firestore rules (if any)
+// Go to Firebase Console > Firestore > Rules to see current rules
+// If you see anything other than what's below, they're blocking access:
+
+// WRONG (blocks everything):
+// allow read, write: if false;
+
+// WRONG (blocks unauthenticated but might have syntax issues):
+// allow read, write: if request.auth.uid != null;
+
+// CORRECT (for development):
+// allow read, write: if request.auth != null;
+
+// MOST OPEN (temporary testing):
+// allow read, write: if true;
