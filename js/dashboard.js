@@ -2,43 +2,59 @@
 console.log("Dashboard.js loaded");
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     console.log("Dashboard loaded");
     
-    // Wait a moment for Firebase to initialize
-    setTimeout(async () => {
-        // Check if Firebase is loaded
-        if (typeof auth === 'undefined') {
-            console.error("Firebase auth not loaded. Redirecting to login.");
+    // First, wait for Firebase to be fully loaded
+    if (typeof waitForFirebase !== 'undefined') {
+        waitForFirebase(function(firebaseReady) {
+            if (!firebaseReady) {
+                console.error("Firebase not ready, redirecting to login");
+                window.location.href = 'auth.html?type=login';
+                return;
+            }
+            initializeDashboard();
+        });
+    } else {
+        // Fallback if checker isn't available
+        setTimeout(initializeDashboard, 2000);
+    }
+});
+
+function initializeDashboard() {
+    console.log("Initializing dashboard...");
+    
+    // Check if Firebase is loaded
+    if (typeof auth === 'undefined' || typeof db === 'undefined') {
+        console.error("Firebase services not loaded. Redirecting to login.");
+        window.location.href = 'auth.html?type=login';
+        return;
+    }
+    
+    // Check authentication
+    auth.onAuthStateChanged(async function(user) {
+        console.log("Auth state changed. User:", user ? user.email : "null");
+        
+        if (!user) {
+            console.log("No user found, redirecting to login");
             window.location.href = 'auth.html?type=login';
             return;
         }
         
-        // Check authentication
-        auth.onAuthStateChanged(async function(user) {
-            console.log("Auth state changed in dashboard. User:", user ? "exists" : "null");
+        console.log("User logged in:", user.email);
+        
+        try {
+            // Load dashboard content
+            await loadDashboardContent(user.uid, user.email);
             
-            if (!user) {
-                console.log("No user found, redirecting to login");
-                window.location.href = 'auth.html?type=login';
-                return;
-            }
-            
-            console.log("User logged in:", user.email);
-            
-            try {
-                // Load dashboard content
-                await loadDashboardContent(user.uid, user.email);
-                
-                // Setup event listeners
-                setupDashboardListeners(user.uid);
-            } catch (error) {
-                console.error("Error loading dashboard:", error);
-                showAlert('Error loading dashboard data', 'error');
-            }
-        });
-    }, 1000); // Give Firebase time to initialize
-});
+            // Setup event listeners
+            setupDashboardListeners(user.uid);
+        } catch (error) {
+            console.error("Error loading dashboard:", error);
+            showAlert('Error loading dashboard data', 'error');
+        }
+    });
+}
 
 // Load dashboard content
 async function loadDashboardContent(userId, userEmail) {
