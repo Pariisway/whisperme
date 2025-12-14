@@ -1,16 +1,20 @@
 // Dashboard JavaScript for Whisper+me
-console.log("Dashboard.js loaded");
+console.log("Dashboard.js loaded - Updated version");
+
+// Store user data globally
+let currentUser = null;
+let userData = null;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Dashboard loaded");
+    console.log("Dashboard DOM loaded");
     
     // First, wait for Firebase to be fully loaded
     if (typeof waitForFirebase !== 'undefined') {
         waitForFirebase(function(firebaseReady) {
             if (!firebaseReady) {
                 console.error("Firebase not ready, redirecting to login");
-                window.location.href = 'auth.html?type=login';
+                showErrorAlert('Firebase initialization failed. Please refresh the page.');
                 return;
             }
             initializeDashboard();
@@ -26,8 +30,8 @@ function initializeDashboard() {
     
     // Check if Firebase is loaded
     if (typeof auth === 'undefined' || typeof db === 'undefined') {
-        console.error("Firebase services not loaded. Redirecting to login.");
-        window.location.href = 'auth.html?type=login';
+        console.error("Firebase services not loaded.");
+        showErrorAlert('Authentication services not available. Please refresh.');
         return;
     }
     
@@ -41,14 +45,21 @@ function initializeDashboard() {
             return;
         }
         
+        currentUser = user;
         console.log("User logged in:", user.email);
         
         try {
             // Load dashboard content
-            await loadDashboardContent(user.uid, user.email);
+            await loadDashboardContent(user);
             
             // Setup event listeners
-            setupDashboardListeners(user.uid);
+            setupDashboardListeners();
+            
+            // Update UI to show loaded state
+            document.querySelectorAll('.loading-state').forEach(el => {
+                el.style.display = 'none';
+            });
+            
         } catch (error) {
             console.error("Error loading dashboard:", error);
             showAlert('Error loading dashboard data', 'error');
@@ -57,69 +68,35 @@ function initializeDashboard() {
 }
 
 // Load dashboard content
-async function loadDashboardContent(userId, userEmail) {
+async function loadDashboardContent(user) {
     try {
         // Update welcome message
-        const welcomeText = document.getElementById('welcomeText');
-        if (welcomeText) {
-            welcomeText.textContent = `Welcome back, ${userEmail.split('@')[0]}! Here's your activity overview`;
-        }
+        updateWelcomeMessage(user);
         
         // Load user data
-        const userDoc = await db.collection('users').doc(userId).get();
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            
-            // Update token balance
-            const tokenBalanceEl = document.getElementById('tokenBalance');
-            if (tokenBalanceEl) {
-                tokenBalanceEl.textContent = (userData.tokens || 0) + ' tokens';
-            }
-        }
+        await loadUserData(user.uid);
         
         // Load user stats
-        const statsDoc = await db.collection('userStats').doc(userId).get();
-        if (statsDoc.exists) {
-            const stats = statsDoc.data();
-            
-            // Update stats display
-            const totalEarningsEl = document.getElementById('totalEarnings');
-            const callsCompletedEl = document.getElementById('callsCompleted');
-            const averageRatingEl = document.getElementById('averageRating');
-            
-            if (totalEarningsEl) totalEarningsEl.textContent = '$' + (stats.earnings || 0).toFixed(2);
-            if (callsCompletedEl) callsCompletedEl.textContent = stats.calls || 0;
-            if (averageRatingEl) averageRatingEl.textContent = (stats.rating || 0).toFixed(1) + ' ★';
-        }
+        await loadUserStats(user.uid);
         
         // Load availability status
-        const profileDoc = await db.collection('profiles').doc(userId).get();
-        if (profileDoc.exists) {
-            const profileData = profileDoc.data();
-            const isAvailable = profileData.available || false;
-            
-            // Update toggle
-            const availabilityToggle = document.getElementById('availabilityToggle');
-            if (availabilityToggle) {
-                availabilityToggle.checked = isAvailable;
-            }
-            
-            // Update status text
-            const availabilityStatus = document.getElementById('availabilityStatus');
-            if (availabilityStatus) {
-                availabilityStatus.textContent = isAvailable ? 'Available for Calls' : 'Unavailable';
-                availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
-            }
-        }
+        await loadAvailabilityStatus(user.uid);
         
         // Load calls waiting
-        await loadCallsWaiting(userId);
+        await loadCallsWaiting(user.uid);
         
-        // Load whispers for dashboard
-        await loadDashboardWhispers(userId);
+        // Load available whispers
+        await loadDashboardWhispers(user.uid);
         
         // Load recent activity
-        await loadRecentActivity(userId);
+        await loadRecentActivity(user.uid);
+        
+        // Simulate loading completion
+        setTimeout(() => {
+            document.querySelectorAll('.loading-state').forEach(el => {
+                el.style.display = 'none';
+            });
+        }, 500);
         
     } catch (error) {
         console.error("Error loading dashboard:", error);
@@ -127,13 +104,407 @@ async function loadDashboardContent(userId, userEmail) {
     }
 }
 
+function updateWelcomeMessage(user) {
+    const welcomeTitle = document.getElementById('welcomeTitle');
+    const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+    
+    if (welcomeTitle) {
+        const name = user.email.split('@')[0];
+        const hours = new Date().getHours();
+        let greeting;
+        
+        if (hours < 12) greeting = "Good morning";
+        else if (hours < 18) greeting = "Good afternoon";
+        else greeting = "Good evening";
+        
+        welcomeTitle.textContent = `${greeting}, ${name}!`;
+    }
+    
+    if (welcomeSubtitle) {
+        const subtitles = [
+            "Ready to connect with amazing people?",
+            "Your voice matters. Share it today!",
+            "Calls are waiting. Are you ready?",
+            "Your community awaits your wisdom.",
+            "Earn while making meaningful connections."
+        ];
+        const randomSubtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
+        welcomeSubtitle.textContent = randomSubtitle;
+    }
+}
+
+async function loadUserData(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+            userData = userDoc.data();
+            
+            // Update token balance
+            const tokenBalanceEl = document.getElementById('tokenBalance');
+            if (tokenBalanceEl) {
+                const tokens = userData.tokens || 0;
+                tokenBalanceEl.textContent = `${tokens} ${tokens === 1 ? 'token' : 'tokens'}`;
+                tokenBalanceEl.style.color = tokens > 0 ? 'var(--primary-blue)' : 'var(--accent-red)';
+            }
+        } else {
+            // Create user data if it doesn't exist
+            await db.collection('users').doc(userId).set({
+                email: currentUser.email,
+                tokens: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            userData = { tokens: 0 };
+        }
+    } catch (error) {
+        console.error("Error loading user data:", error);
+    }
+}
+
+async function loadUserStats(userId) {
+    try {
+        const statsDoc = await db.collection('userStats').doc(userId).get();
+        let stats = { earnings: 0, calls: 0, rating: 0, activeTime: 0 };
+        
+        if (statsDoc.exists) {
+            stats = statsDoc.data();
+        }
+        
+        // Update stats display
+        const totalEarningsEl = document.getElementById('totalEarnings');
+        const callsCompletedEl = document.getElementById('callsCompleted');
+        const averageRatingEl = document.getElementById('averageRating');
+        const activeTimeEl = document.getElementById('activeTime');
+        
+        if (totalEarningsEl) totalEarningsEl.textContent = '$' + (stats.earnings || 0).toFixed(2);
+        if (callsCompletedEl) callsCompletedEl.textContent = stats.calls || 0;
+        if (averageRatingEl) averageRatingEl.textContent = (stats.rating || 0).toFixed(1) + ' ★';
+        
+        if (activeTimeEl) {
+            const hours = Math.floor((stats.activeTime || 0) / 60);
+            const minutes = (stats.activeTime || 0) % 60;
+            activeTimeEl.textContent = `${hours}h ${minutes}m`;
+        }
+        
+    } catch (error) {
+        console.error("Error loading user stats:", error);
+    }
+}
+
+async function loadAvailabilityStatus(userId) {
+    try {
+        const profileDoc = await db.collection('profiles').doc(userId).get();
+        let isAvailable = true;
+        
+        if (profileDoc.exists) {
+            const profileData = profileDoc.data();
+            isAvailable = profileData.available !== undefined ? profileData.available : true;
+        }
+        
+        // Update toggle
+        const availabilityToggle = document.getElementById('availabilityToggle');
+        if (availabilityToggle) {
+            availabilityToggle.checked = isAvailable;
+        }
+        
+        // Update status text
+        const availabilityStatus = document.getElementById('availabilityStatus');
+        if (availabilityStatus) {
+            availabilityStatus.textContent = isAvailable ? 'Available for Calls' : 'Unavailable';
+            availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
+        }
+        
+    } catch (error) {
+        console.error("Error loading availability:", error);
+    }
+}
+
+// Load calls waiting for the user
+async function loadCallsWaiting(userId) {
+    const callsWaitingContainer = document.getElementById('callsWaiting');
+    if (!callsWaitingContainer) return;
+    
+    try {
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // For demo purposes, show sample calls
+        showSampleCalls(callsWaitingContainer);
+        
+    } catch (error) {
+        console.error("Error loading calls waiting:", error);
+        callsWaitingContainer.innerHTML = createErrorState('Error loading calls');
+    }
+}
+
+function showSampleCalls(container) {
+    const sampleCalls = [
+        {
+            id: '1',
+            callerName: 'Alex Johnson',
+            timeAgo: '2 minutes ago',
+            message: 'Looking for advice on career transition',
+            tokenAmount: '$15'
+        },
+        {
+            id: '2',
+            callerName: 'Sam Wilson',
+            timeAgo: '15 minutes ago',
+            message: 'Need guidance on public speaking',
+            tokenAmount: '$15'
+        },
+        {
+            id: '3',
+            callerName: 'Taylor Smith',
+            timeAgo: '1 hour ago',
+            message: 'Relationship advice needed',
+            tokenAmount: '$15'
+        }
+    ];
+    
+    if (sampleCalls.length === 0) {
+        container.innerHTML = createEmptyState('No calls waiting', 'fas fa-inbox', 'When you receive calls, they will appear here.');
+        return;
+    }
+    
+    let html = '';
+    sampleCalls.forEach(call => {
+        html += `
+            <div class="call-item">
+                <div class="call-header">
+                    <div class="caller-info">
+                        <h4>${call.callerName}</h4>
+                        <p>${call.timeAgo}</p>
+                    </div>
+                    <div class="call-token">${call.tokenAmount}</div>
+                </div>
+                <div class="call-message">
+                    <i class="fas fa-comment"></i>
+                    ${call.message}
+                </div>
+                <div class="call-actions">
+                    <button class="btn btn-success btn-small accept-call" data-id="${call.id}">
+                        <i class="fas fa-phone-alt"></i> Accept Call
+                    </button>
+                    <button class="btn btn-outline btn-small decline-call" data-id="${call.id}">
+                        <i class="fas fa-times"></i> Decline
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Add event listeners to call buttons
+    container.querySelectorAll('.accept-call').forEach(button => {
+        button.addEventListener('click', function() {
+            const callId = this.getAttribute('data-id');
+            acceptCall(callId);
+        });
+    });
+    
+    container.querySelectorAll('.decline-call').forEach(button => {
+        button.addEventListener('click', function() {
+            const callId = this.getAttribute('data-id');
+            declineCall(callId);
+        });
+    });
+}
+
+// Load whispers for dashboard
+async function loadDashboardWhispers(userId) {
+    const dashboardWhispersContainer = document.getElementById('dashboardWhispers');
+    if (!dashboardWhispersContainer) return;
+    
+    try {
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // For demo purposes, show sample whispers
+        showSampleWhispers(dashboardWhispersContainer);
+        
+    } catch (error) {
+        console.error("Error loading dashboard whispers:", error);
+        dashboardWhispersContainer.innerHTML = createErrorState('Error loading whispers');
+    }
+}
+
+function showSampleWhispers(container) {
+    const sampleWhispers = [
+        {
+            id: '1',
+            name: 'Emma Watson',
+            username: 'emma_w',
+            calls: 124,
+            rating: 4.8,
+            earnings: 1860,
+            online: true
+        },
+        {
+            id: '2',
+            name: 'Michael Chen',
+            username: 'michaelc',
+            calls: 89,
+            rating: 4.9,
+            earnings: 1335,
+            online: true
+        },
+        {
+            id: '3',
+            name: 'Sarah Johnson',
+            username: 'sarahj',
+            calls: 156,
+            rating: 4.7,
+            earnings: 2340,
+            online: false
+        },
+        {
+            id: '4',
+            name: 'David Park',
+            username: 'davidp',
+            calls: 67,
+            rating: 4.6,
+            earnings: 1005,
+            online: true
+        }
+    ];
+    
+    if (sampleWhispers.length === 0) {
+        container.innerHTML = createEmptyState('No whispers available', 'fas fa-users', 'Check back later for available whispers.');
+        return;
+    }
+    
+    let html = '';
+    sampleWhispers.forEach(whisper => {
+        html += `
+            <div class="profile-card">
+                <div class="profile-header">
+                    <img src="https://images.unsplash.com/photo-${['1494790108753', '1535713875002', '1507003211169', '1500648767791'][whisper.id-1]}?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
+                         alt="${whisper.name}" class="profile-bg">
+                    <div class="profile-avatar">
+                        <img src="https://i.pravatar.cc/150?img=${whisper.id + 10}" alt="${whisper.name}">
+                    </div>
+                </div>
+                <div class="profile-body">
+                    <h3 class="profile-name">${whisper.name}</h3>
+                    <p class="profile-username">@${whisper.username}</p>
+                    <div class="status ${whisper.online ? 'available' : 'busy'}">
+                        <i class="fas fa-circle"></i> ${whisper.online ? 'Available' : 'Busy'}
+                    </div>
+                    
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">${whisper.calls}</div>
+                            <div class="stat-label">Calls</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${whisper.rating}</div>
+                            <div class="stat-label">Rating</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">$${whisper.earnings}</div>
+                            <div class="stat-label">Earned</div>
+                        </div>
+                    </div>
+                    
+                    <button class="call-btn btn btn-primary ${!whisper.online ? 'disabled' : ''}" 
+                            onclick="startCallWithWhisper('${whisper.id}', '${whisper.name}')"
+                            ${!whisper.online ? 'disabled' : ''}>
+                        <i class="fas fa-phone-alt"></i> ${whisper.online ? 'Call Now ($15)' : 'Currently Busy'}
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// Load recent activity
+async function loadRecentActivity(userId) {
+    const recentActivityContainer = document.getElementById('recentActivity');
+    if (!recentActivityContainer) return;
+    
+    try {
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        showSampleActivity(recentActivityContainer);
+        
+    } catch (error) {
+        console.error("Error loading activity:", error);
+        recentActivityContainer.innerHTML = createErrorState('Error loading activity');
+    }
+}
+
+function showSampleActivity(container) {
+    const sampleActivities = [
+        {
+            type: 'call',
+            icon: 'fa-phone-alt',
+            color: 'var(--success)',
+            title: 'Call Completed',
+            description: 'With Alex Johnson - 15 min',
+            time: '2 hours ago'
+        },
+        {
+            type: 'token',
+            icon: 'fa-coins',
+            color: 'var(--accent-yellow)',
+            title: 'Tokens Purchased',
+            description: '5 tokens - $75',
+            time: '5 hours ago'
+        },
+        {
+            type: 'rating',
+            icon: 'fa-star',
+            color: 'var(--secondary)',
+            title: 'New Rating',
+            description: 'Received 5 stars from Taylor',
+            time: '1 day ago'
+        },
+        {
+            type: 'profile',
+            icon: 'fa-user-edit',
+            color: 'var(--primary-blue)',
+            title: 'Profile Updated',
+            description: 'Updated bio and photo',
+            time: '2 days ago'
+        }
+    ];
+    
+    if (sampleActivities.length === 0) {
+        container.innerHTML = createEmptyState('No recent activity', 'fas fa-history', 'Your activity will appear here.');
+        return;
+    }
+    
+    let html = '';
+    sampleActivities.forEach(activity => {
+        html += `
+            <div class="activity-item">
+                <div class="activity-icon" style="background: ${activity.color}; color: white;">
+                    <i class="fas ${activity.icon}"></i>
+                </div>
+                <div class="activity-content">
+                    <h4>${activity.title}</h4>
+                    <p>${activity.description}</p>
+                </div>
+                <div class="activity-time">${activity.time}</div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
 // Setup dashboard event listeners
-function setupDashboardListeners(userId) {
+function setupDashboardListeners() {
     // Availability toggle
     const availabilityToggle = document.getElementById('availabilityToggle');
-    if (availabilityToggle) {
+    if (availabilityToggle && currentUser) {
         availabilityToggle.addEventListener('change', async function() {
-            await updateAvailability(userId, this.checked);
+            await updateAvailability(currentUser.uid, this.checked);
         });
     }
     
@@ -144,34 +515,14 @@ function setupDashboardListeners(userId) {
             e.preventDefault();
             try {
                 await auth.signOut();
-                window.location.href = 'index.html';
+                showAlert('Successfully logged out', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
             } catch (error) {
                 console.error("Error signing out:", error);
                 showAlert('Error signing out', 'error');
             }
-        });
-    }
-    
-    // Filter buttons
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Remove active class from all buttons
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            // Add active class to clicked button
-            this.classList.add('active');
-            
-            const filter = this.getAttribute('data-filter');
-            filterDashboardWhispers(filter);
-        });
-    });
-    
-    // Mobile menu
-    const mobileMenuBtn = document.querySelector('.mobile-menu');
-    const navLinks = document.querySelector('.nav-links');
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener('click', function() {
-            navLinks.classList.toggle('show');
         });
     }
 }
@@ -180,10 +531,10 @@ function setupDashboardListeners(userId) {
 async function updateAvailability(userId, isAvailable) {
     try {
         // Update profile
-        await db.collection('profiles').doc(userId).update({
+        await db.collection('profiles').doc(userId).set({
             available: isAvailable,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        }, { merge: true });
         
         // Update status text
         const availabilityStatus = document.getElementById('availabilityStatus');
@@ -207,224 +558,35 @@ async function updateAvailability(userId, isAvailable) {
     }
 }
 
-// Load calls waiting for the user
-async function loadCallsWaiting(userId) {
-    const callsWaitingContainer = document.getElementById('callsWaiting');
-    if (!callsWaitingContainer) return;
-    
-    try {
-        // Get pending calls where user is the whisper
-        const callsSnapshot = await db.collection('callSessions')
-            .where('whisperId', '==', userId)
-            .where('status', '==', 'waiting')
-            .orderBy('createdAt', 'desc')
-            .limit(10)
-            .get();
-        
-        if (callsSnapshot.empty) {
-            callsWaitingContainer.innerHTML = `
-                <div class="text-center" style="padding: 2rem;">
-                    <i class="fas fa-inbox fa-2x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-                    <p>No calls waiting</p>
-                </div>
-            `;
-            return;
-        }
-        
-        callsWaitingContainer.innerHTML = '';
-        
-        callsSnapshot.forEach(doc => {
-            const call = doc.data();
-            const callCard = createCallWaitingCard(doc.id, call);
-            callsWaitingContainer.appendChild(callCard);
-        });
-        
-    } catch (error) {
-        console.error("Error loading calls waiting:", error);
-        callsWaitingContainer.innerHTML = `
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-triangle"></i> Error loading calls
-            </div>
-        `;
+// Call functions
+async function acceptCall(callId) {
+    showAlert('Accepting call...', 'info');
+    // Implement call acceptance logic here
+}
+
+async function declineCall(callId) {
+    if (confirm('Are you sure you want to decline this call?')) {
+        showAlert('Call declined', 'warning');
+        // Implement call decline logic here
     }
 }
 
-// Load whispers for dashboard
-async function loadDashboardWhispers(userId) {
-    const dashboardWhispersContainer = document.getElementById('dashboardWhispers');
-    if (!dashboardWhispersContainer) return;
-    
-    try {
-        // Get available whispers (excluding current user)
-        const whispersSnapshot = await db.collection('profiles')
-            .where('available', '==', true)
-            .where('userId', '!=', userId)
-            .limit(6)
-            .get();
-        
-        if (whispersSnapshot.empty) {
-            dashboardWhispersContainer.innerHTML = `
-                <div class="text-center" style="grid-column: 1/-1; padding: 2rem;">
-                    <i class="fas fa-users fa-2x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-                    <p>No whispers available at the moment</p>
-                </div>
-            `;
-            return;
-        }
-        
-        dashboardWhispersContainer.innerHTML = '';
-        
-        whispersSnapshot.forEach(async (doc) => {
-            const profile = doc.data();
-            const whisperCard = await createDashboardWhisperCard(doc.id, profile);
-            dashboardWhispersContainer.appendChild(whisperCard);
-        });
-        
-    } catch (error) {
-        console.error("Error loading dashboard whispers:", error);
-        dashboardWhispersContainer.innerHTML = `
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-triangle"></i> Error loading whispers
-            </div>
-        `;
-    }
-}
-
-// Load recent activity
-async function loadRecentActivity(userId) {
-    const recentActivityContainer = document.getElementById('recentActivity');
-    if (!recentActivityContainer) return;
-    
-    try {
-        // For now, show placeholder
-        recentActivityContainer.innerHTML = `
-            <div class="text-center" style="padding: 2rem;">
-                <i class="fas fa-history fa-2x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-                <p>No recent activity</p>
-            </div>
-        `;
-        
-    } catch (error) {
-        console.error("Error loading activity:", error);
-        recentActivityContainer.innerHTML = `
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-triangle"></i> Error loading activity
-            </div>
-        `;
-    }
-}
-
-// Create call waiting card
-function createCallWaitingCard(sessionId, call) {
-    const card = document.createElement('div');
-    card.className = 'profile-card';
-    card.style.marginBottom = '1rem';
-    
-    const timeAgo = call.createdAt ? getTimeAgo(call.createdAt.toDate()) : 'Just now';
-    
-    card.innerHTML = `
-        <div class="profile-body">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                <div>
-                    <h4 style="margin: 0;">${call.callerName}</h4>
-                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${timeAgo}</p>
-                </div>
-                <div class="token-price" style="font-size: 0.9rem;">
-                    $15 Call
-                </div>
-            </div>
-            
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-                <i class="fas fa-clock"></i> Waiting for your response
-            </p>
-            
-            <div style="display: flex; gap: 1rem;">
-                <button class="btn btn-success btn-block accept-call" data-session="${sessionId}">
-                    <i class="fas fa-phone-alt"></i> Accept Call
-                </button>
-                <button class="btn btn-outline btn-block decline-call" data-session="${sessionId}">
-                    <i class="fas fa-times"></i> Decline
-                </button>
-            </div>
-        </div>
-    `;
-    
-    return card;
-}
-
-// Create dashboard whisper card
-async function createDashboardWhisperCard(userId, profile) {
-    const card = document.createElement('div');
-    card.className = 'profile-card';
-    
-    // Get user stats
-    const statsDoc = await db.collection('userStats').doc(userId).get();
-    const stats = statsDoc.exists ? statsDoc.data() : { calls: 0, rating: 0, earnings: 0 };
-    
-    // Create card HTML
-    card.innerHTML = `
-        <div class="profile-header">
-            <img src="${profile.profilePicture || 'https://i.pravatar.cc/400?img=' + Math.floor(Math.random() * 70)}" 
-                 alt="${profile.displayName || 'User'}" class="profile-bg">
-            <div class="profile-avatar">
-                <img src="${profile.profilePicture || 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 70)}" 
-                     alt="${profile.displayName || 'User'}">
-            </div>
-        </div>
-        <div class="profile-body">
-            <h3 class="profile-name">${profile.displayName || 'Anonymous'}</h3>
-            <p class="profile-username">@${profile.username || userId.substring(0, 8)}</p>
-            <div class="status available">
-                <i class="fas fa-circle"></i> Available
-            </div>
-            
-            <div class="profile-stats">
-                <div class="stat-item">
-                    <div class="stat-value">${stats.calls || 0}</div>
-                    <div class="stat-label">Calls</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${(stats.rating || 0).toFixed(1)}</div>
-                    <div class="stat-label">Rating</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">$${(stats.earnings || 0).toFixed(0)}</div>
-                    <div class="stat-label">Earned</div>
-                </div>
-            </div>
-            
-            <button class="call-btn btn-primary" onclick="startCallFromDashboard('${userId}', '${profile.displayName || 'User'}')">
-                <i class="fas fa-phone-alt"></i> Call Now ($15)
-            </button>
-        </div>
-    `;
-    
-    return card;
-}
-
-// Start call from dashboard
-async function startCallFromDashboard(whisperId, whisperName) {
+async function startCallWithWhisper(whisperId, whisperName) {
     const user = auth.currentUser;
     if (!user) {
         showAlert('Please login to start a call', 'warning');
-        window.location.href = 'auth.html?type=login';
         return;
     }
     
-    // Check token balance
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    const userData = userDoc.data();
-    const tokenBalance = userData?.tokens || 0;
-    
-    if (tokenBalance < 1) {
+    if (!userData || (userData.tokens || 0) < 1) {
         showAlert('Insufficient tokens. Please purchase tokens first.', 'warning');
         window.location.href = 'payment.html';
         return;
     }
     
     try {
-        showAlert('Starting call...', 'info');
-        // Note: Actual call implementation would go here
+        showAlert(`Starting call with ${whisperName}...`, 'info');
+        // Implement call starting logic here
         
     } catch (error) {
         console.error("Error starting call:", error);
@@ -433,37 +595,42 @@ async function startCallFromDashboard(whisperId, whisperName) {
 }
 
 // Utility functions
-function getTimeAgo(date) {
-    const seconds = Math.floor((new Date() - date) / 1000);
-    
-    let interval = Math.floor(seconds / 31536000);
-    if (interval >= 1) return interval + ' year' + (interval === 1 ? '' : 's') + ' ago';
-    
-    interval = Math.floor(seconds / 2592000);
-    if (interval >= 1) return interval + ' month' + (interval === 1 ? '' : 's') + ' ago';
-    
-    interval = Math.floor(seconds / 86400);
-    if (interval >= 1) return interval + ' day' + (interval === 1 ? '' : 's') + ' ago';
-    
-    interval = Math.floor(seconds / 3600);
-    if (interval >= 1) return interval + ' hour' + (interval === 1 ? '' : 's') + ' ago';
-    
-    interval = Math.floor(seconds / 60);
-    if (interval >= 1) return interval + ' minute' + (interval === 1 ? '' : 's') + ' ago';
-    
-    return 'Just now';
+function createEmptyState(title, icon, message) {
+    return `
+        <div class="empty-state">
+            <i class="${icon}"></i>
+            <h3>${title}</h3>
+            <p>${message}</p>
+        </div>
+    `;
+}
+
+function createErrorState(message) {
+    return `
+        <div class="empty-state">
+            <i class="fas fa-exclamation-triangle" style="color: var(--accent-red);"></i>
+            <h3>Something went wrong</h3>
+            <p>${message}</p>
+            <button class="btn btn-outline btn-small" onclick="location.reload()" style="margin-top: 1rem;">
+                <i class="fas fa-redo"></i> Try Again
+            </button>
+        </div>
+    `;
 }
 
 function showAlert(message, type = 'info') {
+    // Remove existing alerts
+    document.querySelectorAll('.alert.fixed').forEach(el => el.remove());
+    
     // Create alert element
     const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
+    alert.className = `alert alert-${type} fixed`;
     alert.style.position = 'fixed';
     alert.style.top = '20px';
     alert.style.right = '20px';
-    alert.style.zIndex = '1000';
+    alert.style.zIndex = '10000';
     alert.style.minWidth = '300px';
-    alert.style.maxWidth = '500px';
+    alert.style.maxWidth = '400px';
     alert.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
         ${message}
@@ -473,6 +640,21 @@ function showAlert(message, type = 'info') {
     
     // Auto remove after 5 seconds
     setTimeout(() => {
-        alert.remove();
+        if (alert.parentNode) {
+            alert.remove();
+        }
     }, 5000);
 }
+
+function showErrorAlert(message) {
+    showAlert(message, 'error');
+}
+
+// Make functions globally available
+window.startCallWithWhisper = startCallWithWhisper;
+window.acceptCall = acceptCall;
+window.declineCall = declineCall;
+window.filterDashboardWhispers = function(filter) {
+    showAlert(`Filtering whispers by: ${filter}`, 'info');
+    // Filtering logic would be implemented here
+};

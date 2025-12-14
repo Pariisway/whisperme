@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Whisper+me</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -27,35 +28,34 @@
         </div>
     </nav>
 
-    <div class="container">
-        <!-- Dashboard Header with Availability Toggle -->
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
         <div class="dashboard-header">
-            <div class="welcome-message">
-                <h1><i class="fas fa-home"></i> Dashboard</h1>
-                <p id="welcomeText">Welcome back! Here's your activity overview</p>
-                
-                <!-- Availability Toggle -->
-                <div class="availability-toggle" style="margin-top: 1rem;">
-                    <span>Availability Status:</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="availabilityToggle" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span id="availabilityStatus" style="color: var(--success); font-weight: 600;">Available for Calls</span>
-                </div>
-            </div>
-            <div class="token-balance">
-                <div class="stat-card" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%); color: white;">
-                    <div class="stat-icon">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Token Balance</h3>
-                        <p id="tokenBalance">0 tokens</p>
-                        <div class="token-price-display" style="background: rgba(255,255,255,0.2); margin-top: 0.5rem;">
-                            $15 per token
+            <div class="welcome-section">
+                <div class="welcome-text">
+                    <h1 id="welcomeTitle">Welcome back!</h1>
+                    <p id="welcomeSubtitle">Here's your activity overview</p>
+                    
+                    <div class="availability-toggle-container">
+                        <div class="toggle-label">
+                            <i class="fas fa-circle" style="color: var(--accent-green);"></i>
+                            Status:
                         </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="availabilityToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span id="availabilityStatus" style="font-weight: 600;">Available for Calls</span>
                     </div>
+                </div>
+                
+                <div class="token-balance-card">
+                    <h3><i class="fas fa-coins"></i> Token Balance</h3>
+                    <div class="token-amount" id="tokenBalance">0 tokens</div>
+                    <div class="token-rate">$15 per token</div>
+                    <a href="payment.html" class="btn btn-small btn-primary" style="margin-top: 1rem; width: 100%;">
+                        <i class="fas fa-plus"></i> Buy More Tokens
+                    </a>
                 </div>
             </div>
         </div>
@@ -63,146 +63,161 @@
         <!-- Quick Stats -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, var(--success) 0%, #86efac 100%);">
+                <div class="stat-icon" style="background: linear-gradient(135deg, var(--success) 0%, #86efac 100%); color: white;">
                     <i class="fas fa-money-bill-wave"></i>
                 </div>
                 <div class="stat-content">
                     <h3>Total Earnings</h3>
-                    <p id="totalEarnings">$0.00</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, var(--accent-yellow) 0%, var(--accent-yellow-light) 100%);">
-                    <i class="fas fa-phone-alt"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>Calls Completed</h3>
-                    <p id="callsCompleted">0</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, var(--secondary) 0%, #38bdf8 100%);">
-                    <i class="fas fa-star"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>Average Rating</h3>
-                    <p id="averageRating">4.5 ★</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #9d4edd 0%, #c77dff 100%);">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>Active Time</h3>
-                    <p id="activeTime">0h 0m</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Calls Waiting Section -->
-        <div class="section">
-            <div class="dashboard-header" style="background: linear-gradient(135deg, #fff3cd 0%, #fff 100%); border: 2px solid var(--accent-yellow);">
-                <div class="welcome-message">
-                    <h1><i class="fas fa-phone-volume"></i> Calls Waiting</h1>
-                    <p>Accept or reject incoming call requests</p>
-                </div>
-                <div class="token-balance">
-                    <div class="stat-card" style="background: linear-gradient(135deg, var(--accent-yellow) 0%, var(--accent-yellow-light) 100%); color: var(--dark);">
-                        <div class="stat-icon" style="background: var(--dark);">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>Response Time</h3>
-                            <p id="avgResponseTime">2 min avg</p>
-                        </div>
+                    <div class="stat-value" id="totalEarnings">$0.00</div>
+                    <div class="stat-trend trend-up">
+                        <i class="fas fa-arrow-up"></i> 12% this month
                     </div>
                 </div>
             </div>
             
-            <div id="callsWaiting" style="margin-top: 2rem;">
-                <!-- Calls will be loaded here -->
-                <div class="text-center" style="padding: 3rem;">
-                    <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary-blue);"></i>
-                    <p style="margin-top: 1rem;">Loading calls...</p>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, var(--accent-yellow) 0%, var(--accent-yellow-light) 100%); color: var(--dark);">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Calls Completed</h3>
+                    <div class="stat-value" id="callsCompleted">0</div>
+                    <div class="stat-trend trend-up">
+                        <i class="fas fa-arrow-up"></i> 3 today
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, var(--secondary) 0%, #38bdf8 100%); color: white;">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Average Rating</h3>
+                    <div class="stat-value" id="averageRating">4.5 ★</div>
+                    <div class="stat-trend trend-up">
+                        <i class="fas fa-arrow-up"></i> +0.2 this week
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #9d4edd 0%, #c77dff 100%); color: white;">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Active Time</h3>
+                    <div class="stat-value" id="activeTime">0h 0m</div>
+                    <div class="stat-trend trend-up">
+                        <i class="fas fa-arrow-up"></i> 2h today
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="section">
-            <h2 class="section-title">Quick Actions</h2>
-            <div class="quick-actions" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-                <a href="payment.html" class="action-card" style="text-decoration: none; color: inherit;">
-                    <div style="background: white; padding: 2rem; border-radius: var(--radius-lg); text-align: center; transition: all var(--transition); border: 2px solid transparent; box-shadow: var(--shadow);">
-                        <div style="width: 70px; height: 70px; background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem;">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                        <h3 style="margin-bottom: 0.5rem;">Buy Tokens</h3>
-                        <p style="color: var(--gray); margin: 0;">Purchase tokens to start calling</p>
-                        <div class="token-price-display" style="margin-top: 1rem; font-size: 0.9rem;">
-                            $15 per token
+        <!-- Main Content Grid -->
+        <div class="dashboard-content">
+            <!-- Left Column -->
+            <div class="left-column">
+                <!-- Calls Waiting -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-phone-volume"></i> Calls Waiting</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-small btn-outline">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
                         </div>
                     </div>
-                </a>
-                
-                <a href="profile.html" class="action-card" style="text-decoration: none; color: inherit;">
-                    <div style="background: white; padding: 2rem; border-radius: var(--radius-lg); text-align: center; transition: all var(--transition); border: 2px solid transparent; box-shadow: var(--shadow);">
-                        <div style="width: 70px; height: 70px; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-yellow-light)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: var(--dark); font-size: 1.5rem;">
-                            <i class="fas fa-user-edit"></i>
+                    
+                    <div id="callsWaiting" class="calls-list">
+                        <!-- Calls will be loaded here -->
+                        <div class="loading-state">
+                            <i class="fas fa-spinner"></i>
+                            <p>Loading calls...</p>
                         </div>
-                        <h3 style="margin-bottom: 0.5rem;">Edit Profile</h3>
-                        <p style="color: var(--gray); margin: 0;">Update your bio and settings</p>
                     </div>
-                </a>
-                
-                <a href="#start-call" class="action-card" style="text-decoration: none; color: inherit;">
-                    <div style="background: white; padding: 2rem; border-radius: var(--radius-lg); text-align: center; transition: all var(--transition); border: 2px solid transparent; box-shadow: var(--shadow);">
-                        <div style="width: 70px; height: 70px; background: linear-gradient(135deg, var(--success), #86efac); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem;">
-                            <i class="fas fa-phone-alt"></i>
-                        </div>
-                        <h3 style="margin-bottom: 0.5rem;">Start a Call</h3>
-                        <p style="color: var(--gray); margin: 0;">Connect with a whisperer</p>
-                    </div>
-                </a>
-                
-                <a href="#earnings" class="action-card" style="text-decoration: none; color: inherit;">
-                    <div style="background: white; padding: 2rem; border-radius: var(--radius-lg); text-align: center; transition: all var(--transition); border: 2px solid transparent; box-shadow: var(--shadow);">
-                        <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #9d4edd, #c77dff); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-size: 1.5rem;">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h3 style="margin-bottom: 0.5rem;">View Earnings</h3>
-                        <p style="color: var(--gray); margin: 0;">Check your payout status</p>
-                    </div>
-                </a>
-            </div>
-        </div>
+                </div>
 
-        <!-- Recent Activity -->
-        <div class="section">
-            <h2 class="section-title">Recent Activity</h2>
-            <div id="recentActivity" class="activity-list" style="background: white; border-radius: var(--radius-lg); padding: 2rem; margin-top: 1rem; box-shadow: var(--shadow);">
-                <!-- Activity will be loaded here -->
-                <div class="text-center" style="padding: 3rem;">
-                    <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary-blue);"></i>
-                    <p style="margin-top: 1rem;">Loading activity...</p>
+                <!-- Available Whispers -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Available Whispers</h2>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="online">Online Now</button>
+                            <button class="filter-btn" data-filter="popular">Most Popular</button>
+                            <button class="filter-btn" data-filter="new">New</button>
+                        </div>
+                    </div>
+                    
+                    <div class="whispers-grid" id="dashboardWhispers">
+                        <!-- Whispers will be loaded here -->
+                        <div class="loading-state">
+                            <i class="fas fa-spinner"></i>
+                            <p>Loading whispers...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Available Whispers -->
-        <div class="section">
-            <h2 class="section-title">Available Whispers</h2>
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="online">Online Now</button>
-                <button class="filter-btn" data-filter="popular">Most Popular</button>
-            </div>
-            <div class="whispers-grid" id="dashboardWhispers" style="margin-top: 2rem;">
-                <!-- Whispers will be loaded here -->
-                <div class="text-center" style="grid-column: 1/-1; padding: 3rem;">
-                    <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary-blue);"></i>
-                    <p style="margin-top: 1rem;">Loading whispers...</p>
+            <!-- Right Column -->
+            <div class="right-column">
+                <!-- Quick Actions -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+                    </div>
+                    
+                    <div class="quick-actions-grid">
+                        <a href="payment.html" class="action-card">
+                            <div class="action-icon" style="background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light)); color: white;">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <h3>Buy Tokens</h3>
+                            <p>Purchase tokens to start calling</p>
+                        </a>
+                        
+                        <a href="profile.html" class="action-card">
+                            <div class="action-icon" style="background: linear-gradient(135deg, var(--accent-yellow), var(--accent-yellow-light)); color: var(--dark);">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <h3>Edit Profile</h3>
+                            <p>Update your bio and settings</p>
+                        </a>
+                        
+                        <a href="#start-call" class="action-card" onclick="startQuickCall()">
+                            <div class="action-icon" style="background: linear-gradient(135deg, var(--success), #86efac); color: white;">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <h3>Start a Call</h3>
+                            <p>Connect with a whisperer</p>
+                        </a>
+                        
+                        <a href="#earnings" class="action-card">
+                            <div class="action-icon" style="background: linear-gradient(135deg, #9d4edd, #c77dff); color: white;">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3>View Earnings</h3>
+                            <p>Check your payout status</p>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-history"></i> Recent Activity</h2>
+                        <button class="btn btn-small btn-text">View All</button>
+                    </div>
+                    
+                    <div id="recentActivity" class="activity-list">
+                        <!-- Activity will be loaded here -->
+                        <div class="loading-state">
+                            <i class="fas fa-spinner"></i>
+                            <p>Loading activity...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -259,5 +274,66 @@
     <script src="js/check-firebase.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/dashboard.js"></script>
+    
+    <script>
+        function startQuickCall() {
+            showAlert('Starting quick call feature...', 'info');
+            // This would open the call interface
+        }
+        
+        // Mobile menu handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.querySelector('.mobile-menu');
+            const navLinks = document.querySelector('.nav-links');
+            
+            if (mobileMenuBtn && navLinks) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    navLinks.classList.toggle('show');
+                });
+                
+                // Close menu when clicking a link
+                navLinks.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        navLinks.classList.remove('show');
+                    });
+                });
+            }
+            
+            // Filter buttons functionality
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    const filter = this.getAttribute('data-filter');
+                    filterDashboardWhispers(filter);
+                });
+            });
+        });
+        
+        function filterDashboardWhispers(filter) {
+            showAlert(`Filtering whispers by: ${filter}`, 'info');
+            // Filtering logic would go here
+        }
+        
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.style.position = 'fixed';
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '1000';
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
