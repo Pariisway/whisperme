@@ -3,10 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whisper+me - 5-Minute Private Chats</title>
+    <title>Whisper+me - 5-Minute Private Voice Chats</title>
+    <meta name="description" content="Connect through private 5-minute voice conversations. Buy tokens, earn money, and meet interesting people.">
+    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
+    
+    <!-- Open Graph for Social Sharing -->
+    <meta property="og:title" content="Whisper+me - Private Voice Chats">
+    <meta property="og:description" content="Earn $12 per 5-minute call. Connect through private voice conversations.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=1200">
+    <meta property="og:url" content="https://yourdomain.com">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Whisper+me - Private Voice Chats">
+    <meta name="twitter:description" content="Earn $12 per 5-minute call. Connect through private voice conversations.">
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=1200">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Remove problematic Google Ads scripts for now -->
+    
+    <!-- Google Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1184595877548269" crossorigin="anonymous"></script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4QYRJLTXTT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-4QYRJLTXTT');
+    </script>
 </head>
 <body>
     <!-- Navigation -->
@@ -14,13 +42,14 @@
         <div class="nav-container">
             <div class="logo">
                 <a href="index.html" style="text-decoration: none;">
-                    <h1>Whisper<span>+me</span></h1>
+                    <h1>Whisper<span style="color: var(--accent-purple);">+me</span></h1>
                 </a>
             </div>
             <div class="nav-links">
                 <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
                 <a href="#how-it-works"><i class="fas fa-question-circle"></i> How It Works</a>
-                <a href="auth.html?type=login" id="loginBtn"><i class="fas fa-user"></i> Login</a>
+                <a href="auth.html?type=login" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="auth.html?type=signup" id="signupBtn"><i class="fas fa-user-plus"></i> Sign Up</a>
                 <a href="dashboard.html" id="dashboardBtn" style="display:none;"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="#" id="logoutBtn" style="display:none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
@@ -34,8 +63,8 @@
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <h2>Connect. Whisper. Earn.</h2>
-                <p>Buy and sell 5-minute private voice chats using Whisper tokens</p>
+                <h2>Connect Through Voice</h2>
+                <p>Get paid $12 for 5-minute voice conversations. Share your wisdom, connect with interesting people, and earn instantly.</p>
                 <div class="hero-stats">
                     <div class="stat">
                         <h3>1,234+</h3>
@@ -51,8 +80,12 @@
                     </div>
                 </div>
                 <div class="hero-buttons">
-                    <a href="auth.html?type=signup" class="btn btn-primary">Start Earning</a>
-                    <a href="#whispers" class="btn btn-secondary">Browse Whispers</a>
+                    <a href="auth.html?type=signup" class="btn btn-primary btn-large">
+                        <i class="fas fa-user-plus"></i> Start Earning
+                    </a>
+                    <a href="#whispers" class="btn btn-outline btn-large">
+                        <i class="fas fa-search"></i> Browse Whispers
+                    </a>
                 </div>
             </div>
         </div>
@@ -65,23 +98,23 @@
             <div class="steps">
                 <div class="step">
                     <div class="step-icon">1</div>
-                    <h3>Sign Up</h3>
-                    <p>Create your profile and add your bio, social links, and profile picture</p>
+                    <h3>Create Profile</h3>
+                    <p>Sign up and create your profile with a bio, social links, and profile picture</p>
                 </div>
                 <div class="step">
                     <div class="step-icon">2</div>
                     <h3>Buy Tokens</h3>
-                    <p>Purchase Whisper tokens ($15 each) to start calling</p>
+                    <p>Purchase Whisper tokens ($15 each) to start calling interesting people</p>
                 </div>
                 <div class="step">
                     <div class="step-icon">3</div>
-                    <h3>Connect</h3>
-                    <p>Browse available whispers and start 5-minute private chats</p>
+                    <h3>Start Calling</h3>
+                    <p>Browse available whispers and start 5-minute private voice conversations</p>
                 </div>
                 <div class="step">
                     <div class="step-icon">4</div>
-                    <h3>Earn</h3>
-                    <p>Earn $12 per call answered. We take only $3 as platform fee</p>
+                    <h3>Earn Money</h3>
+                    <p>Earn $12 for every call you answer. We only take $3 as platform fee</p>
                 </div>
             </div>
         </div>
@@ -95,24 +128,33 @@
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="online">Online Now</button>
                 <button class="filter-btn" data-filter="popular">Most Popular</button>
-                <button class="filter-btn" data-filter="newest">Newest</button>
+                <button class="filter-btn" data-filter="new">New Users</button>
             </div>
             <div class="whispers-grid" id="whispersContainer">
-                <!-- Whispers will be loaded here dynamically -->
-                <div class="loading">Loading whispers...</div>
+                <!-- Whispers loaded by JavaScript -->
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading whispers...</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Call Modal -->
-    <div id="callModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="modal-body" id="callModalBody">
-                <!-- Call content will be loaded here -->
+    <!-- Call to Action -->
+    <section class="section" style="background: var(--card-dark); padding: var(--space-xxl) 0; text-align: center;">
+        <div class="container">
+            <h2>Ready to Start Earning?</h2>
+            <p style="max-width: 600px; margin: 0 auto var(--space-xl);">Join thousands of users who are already making money by sharing their wisdom and connecting with interesting people.</p>
+            <div class="hero-buttons">
+                <a href="auth.html?type=signup" class="btn btn-primary btn-large">
+                    <i class="fas fa-user-plus"></i> Sign Up Now
+                </a>
+                <a href="#how-it-works" class="btn btn-outline btn-large">
+                    <i class="fas fa-play-circle"></i> See How It Works
+                </a>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Footer -->
     <footer>
@@ -120,34 +162,66 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h3>Whisper+me</h3>
-                    <p>Connecting people through private voice conversations</p>
+                    <p>Private voice chats with amazing people. Earn money by sharing your wisdom.</p>
+                    <div class="token-price-display" style="margin-top: 1rem;">
+                        <i class="fas fa-coins"></i> $15 per token
+                    </div>
                 </div>
                 <div class="footer-section">
                     <h3>Quick Links</h3>
+                    <a href="index.html">Home</a>
                     <a href="#how-it-works">How It Works</a>
                     <a href="#whispers">Browse Whispers</a>
+                    <a href="auth.html?type=login">Login</a>
                     <a href="auth.html?type=signup">Sign Up</a>
                 </div>
                 <div class="footer-section">
                     <h3>Connect</h3>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" title="Discord"><i class="fab fa-discord"></i></a>
+                        <a href="#" title="Facebook"><i class="fab fa-facebook"></i></a>
                     </div>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Whisper+me. All rights reserved.</p>
+                <p>&copy; 2024 Whisper+me. All rights reserved. | $15 per Whisper token</p>
+                <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    By using this site, you agree to our <a href="#" style="color: var(--accent-purple);">Terms</a> and <a href="#" style="color: var(--accent-purple);">Privacy Policy</a>
+                </p>
             </div>
         </div>
     </footer>
 
+    <!-- JavaScript -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
+    
+    <!-- Mobile menu handler -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.querySelector('.mobile-menu');
+            const navLinks = document.querySelector('.nav-links');
+            
+            if (mobileMenuBtn && navLinks) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    navLinks.classList.toggle('show');
+                });
+                
+                // Close menu when clicking a link
+                navLinks.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        navLinks.classList.remove('show');
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>

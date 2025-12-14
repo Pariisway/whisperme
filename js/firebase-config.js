@@ -2,11 +2,11 @@
 const firebaseConfig = {
   apiKey: "AIzaSyALbIJSI2C-p6IyMtj_F0ZqGyN1i79jOd4",
   authDomain: "whisper-chat-live.firebaseapp.com",
+  databaseURL: "https://whisper-chat-live-default-rtdb.firebaseio.com",
   projectId: "whisper-chat-live",
   storageBucket: "whisper-chat-live.firebasestorage.app",
   messagingSenderId: "302894848452",
   appId: "1:302894848452:web:61a7ab21a269533c426c91"
-};
 };
 
 // Initialize Firebase
@@ -17,7 +17,7 @@ if (!firebase.apps.length) {
 // Initialize Firebase services
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage(); // Added storage
+const storage = firebase.storage();
 
 // Enable offline persistence for Firestore
 db.enablePersistence()
@@ -28,5 +28,10 @@ db.enablePersistence()
           console.log("The current browser doesn't support persistence.");
       }
   });
+
+// Export for use in other modules
+window.auth = auth;
+window.db = db;
+window.storage = storage;
 
 console.log("Firebase initialized successfully with Storage!");

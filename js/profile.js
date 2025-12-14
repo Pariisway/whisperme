@@ -1,301 +1,408 @@
-// Profile Page JavaScript with File Upload
-document.addEventListener('DOMContentLoaded', function() {
+// Profile management for Whisper+me
+console.log("Profile.js loaded");
+
+// DOM Elements
+let profileForm;
+let profilePictureInput;
+let profilePreview;
+let bioTextarea;
+let bioCounter;
+let availabilityToggle;
+let availabilityStatus;
+let preferredHoursSelect;
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', async function() {
     console.log("Profile page loaded");
     
-    // Initialize Firebase services
-    let storage;
-    try {
-        if (firebase.apps.length) {
-            storage = firebase.storage();
-        }
-    } catch (e) {
-        console.log("Firebase Storage not available:", e);
-    }
-    
     // Check authentication
-    checkAuth();
-    
-    // Setup event listeners
-    setupEventListeners();
-    
-    // Load existing profile data
-    loadProfileData();
+    auth.onAuthStateChanged(async function(user) {
+        if (!user) {
+            window.location.href = 'auth.html?type=login';
+            return;
+        }
+        
+        console.log("User logged in:", user.email);
+        window.currentUser = user;
+        
+        // Get DOM elements
+        getProfileElements();
+        
+        // Load profile data
+        await loadProfileData(user.uid);
+        
+        // Setup event listeners
+        setupProfileListeners();
+    });
 });
 
-// Check authentication
-function checkAuth() {
-    if (typeof auth === 'undefined') return;
-    
-    auth.onAuthStateChanged(function(user) {
-        if (!user) {
-            window.location.href = 'auth.html?redirect=profile';
-        } else {
-            // Store current user ID for later use
-            window.currentUserId = user.uid;
-            window.currentUserEmail = user.email;
-        }
-    });
+// Get profile DOM elements
+function getProfileElements() {
+    profileForm = document.getElementById('profileForm');
+    profilePictureInput = document.getElementById('profilePicture');
+    profilePreview = document.getElementById('profilePreview');
+    bioTextarea = document.getElementById('bio');
+    bioCounter = document.getElementById('bioCounter');
+    availabilityToggle = document.getElementById('availabilityToggle');
+    availabilityStatus = document.getElementById('availabilityStatus');
+    preferredHoursSelect = document.getElementById('preferredHours');
 }
 
-// Setup event listeners
-function setupEventListeners() {
-    // Profile picture upload
-    const fileInput = document.getElementById('profilePicture');
-    const profilePreview = document.getElementById('profilePreview');
-    
-    if (fileInput && profilePreview) {
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Validate file type
-                if (!file.type.match('image.*')) {
-                    alert('Please select an image file (JPEG, PNG, GIF)');
-                    return;
-                }
-                
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('Image size should be less than 5MB');
-                    return;
-                }
-                
-                // Preview image
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profilePreview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+// Load profile data
+async function loadProfileData(userId) {
+    try {
+        const profileDoc = await db.collection('profiles').doc(userId).get();
+        
+        if (profileDoc.exists) {
+            const profileData = profileDoc.data();
+            
+            // Populate form fields
+            document.getElementById('displayName').value = profileData.displayName || '';
+            
+            if (bioTextarea) {
+                bioTextarea.value = profileData.bio || '';
+                updateBioCounter(bioTextarea.value.length);
             }
-        });
+            
+            if (profilePreview && profileData.profilePicture) {
+                profilePreview.src = profileData.profilePicture;
+            }
+            
+            // Set availability toggle
+            if (availabilityToggle) {
+                availabilityToggle.checked = profileData.available || false;
+                updateAvailabilityStatus(profileData.available || false);
+            }
+            
+            // Set preferred hours
+            if (preferredHoursSelect && profileData.preferredHours) {
+                const hours = profileData.preferredHours;
+                Array.from(preferredHoursSelect.options).forEach(option => {
+                    option.selected = hours.includes(option.value);
+                });
+            }
+            
+            // Set topics
+            if (profileData.topics) {
+                document.querySelectorAll('input[name="topics"]').forEach(checkbox => {
+                    checkbox.checked = profileData.topics.includes(checkbox.value);
+                });
+            }
+            
+            // Set social links
+            if (profileData.socialLinks) {
+                const socialInputs = document.querySelectorAll('.social-inputs input');
+                socialInputs.forEach(input => {
+                    const platform = input.previousElementSibling.querySelector('i').className.split(' ')[1];
+                    if (platform.includes('twitter') && profileData.socialLinks.twitter) {
+                        input.value = profileData.socialLinks.twitter;
+                    } else if (platform.includes('instagram') && profileData.socialLinks.instagram) {
+                        input.value = profileData.socialLinks.instagram;
+                    } else if (platform.includes('tiktok') && profileData.socialLinks.tiktok) {
+                        input.value = profileData.socialLinks.tiktok;
+                    }
+                });
+            }
+        }
+        
+    } catch (error) {
+        console.error("Error loading profile:", error);
+        showAlert('Error loading profile data', 'error');
+    }
+}
+
+// Setup profile event listeners
+function setupProfileListeners() {
+    // Profile picture upload
+    if (profilePictureInput) {
+        profilePictureInput.addEventListener('change', handleProfilePictureUpload);
     }
     
     // Bio character counter
-    const bioInput = document.getElementById('bio');
-    const bioCounter = document.getElementById('bioCounter');
-    
-    if (bioInput && bioCounter) {
-        bioInput.addEventListener('input', function() {
-            const count = this.value.length;
-            bioCounter.textContent = `${count}/500 characters`;
-            
-            if (count > 490) {
-                bioCounter.style.color = 'var(--danger)';
-            } else if (count > 400) {
-                bioCounter.style.color = 'var(--warning)';
-            } else {
-                bioCounter.style.color = 'var(--gray)';
-            }
+    if (bioTextarea) {
+        bioTextarea.addEventListener('input', function() {
+            updateBioCounter(this.value.length);
         });
     }
     
     // Availability toggle
-    const availabilityToggle = document.getElementById('availabilityToggle');
-    const availabilityStatus = document.getElementById('availabilityStatus');
-    
-    if (availabilityToggle && availabilityStatus) {
+    if (availabilityToggle) {
         availabilityToggle.addEventListener('change', function() {
-            if (this.checked) {
-                availabilityStatus.textContent = 'Available';
-                availabilityStatus.style.color = 'var(--success)';
-            } else {
-                availabilityStatus.textContent = 'Unavailable';
-                availabilityStatus.style.color = 'var(--danger)';
-            }
+            updateAvailabilityStatus(this.checked);
         });
     }
     
     // Form submission
-    const profileForm = document.getElementById('profileForm');
     if (profileForm) {
-        profileForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await saveProfile();
+        profileForm.addEventListener('submit', handleProfileSubmit);
+    }
+    
+    // Mobile menu
+    const mobileMenuBtn = document.querySelector('.mobile-menu');
+    const navLinks = document.querySelector('.nav-links');
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', function() {
+            navLinks.classList.toggle('show');
         });
     }
     
-    // Setup logout
+    // Logout button
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
+        logoutBtn.addEventListener('click', async function(e) {
             e.preventDefault();
-            if (typeof auth !== 'undefined') {
-                auth.signOut().then(() => {
-                    window.location.href = 'index.html';
-                });
+            try {
+                await auth.signOut();
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error("Error signing out:", error);
+                showAlert('Error signing out', 'error');
             }
         });
     }
 }
 
-// Load existing profile data
-async function loadProfileData() {
-    if (!window.currentUserId || typeof db === 'undefined') return;
+// Handle profile picture upload
+async function handleProfilePictureUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
     
-    try {
-        const profileDoc = await db.collection('profiles').doc(window.currentUserId).get();
-        
-        if (profileDoc.exists) {
-            const data = profileDoc.data();
-            
-            // Populate form fields
-            document.getElementById('displayName').value = data.displayName || '';
-            document.getElementById('bio').value = data.bio || '';
-            
-            // Trigger bio counter update
-            const bioInput = document.getElementById('bio');
-            if (bioInput) bioInput.dispatchEvent(new Event('input'));
-            
-            // Load profile picture if exists
-            if (data.profilePicture) {
-                document.getElementById('profilePreview').src = data.profilePicture;
-            }
-            
-            // Load availability
-            if (data.available !== undefined) {
-                document.getElementById('availabilityToggle').checked = data.available;
-                document.getElementById('availabilityToggle').dispatchEvent(new Event('change'));
-            }
-            
-            console.log("Profile data loaded:", data);
-        }
-    } catch (error) {
-        console.error("Error loading profile:", error);
-    }
-}
-
-// Save profile data
-async function saveProfile() {
-    if (!window.currentUserId) {
-        alert('Please log in to save profile');
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        showAlert('Please select an image file', 'error');
         return;
     }
     
-    // Get form data
-    const profileData = {
-        displayName: document.getElementById('displayName').value.trim(),
-        bio: document.getElementById('bio').value.trim(),
-        available: document.getElementById('availabilityToggle').checked,
-        updatedAt: new Date().toISOString(),
-        email: window.currentUserEmail
-    };
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showAlert('Image must be less than 5MB', 'error');
+        return;
+    }
     
-    // Get social links
-    const socialInputs = document.querySelectorAll('.social-inputs input');
-    const socialLinks = {};
-    socialInputs.forEach(input => {
-        const platform = input.previousElementSibling.querySelector('i').className.split(' ')[1].replace('fa-', '');
-        socialLinks[platform] = input.value.trim();
-    });
-    profileData.socialLinks = socialLinks;
+    try {
+        // Show loading state
+        if (profilePreview) {
+            profilePreview.src = 'https://via.placeholder.com/200/e2e8f0/64748b?text=Uploading...';
+        }
+        
+        // Create a unique filename
+        const userId = currentUser.uid;
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `profile_${userId}_${Date.now()}.${fileExtension}`;
+        
+        // Upload to Firebase Storage
+        const storageRef = storage.ref(`profile_pictures/${fileName}`);
+        const uploadTask = storageRef.put(file);
+        
+        // Monitor upload progress
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                // Progress tracking (optional)
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                console.log('Upload progress: ' + progress + '%');
+            },
+            (error) => {
+                console.error("Upload error:", error);
+                showAlert('Error uploading image: ' + error.message, 'error');
+                
+                // Reset preview
+                if (profilePreview) {
+                    profilePreview.src = 'https://via.placeholder.com/200/4361ee/ffffff?text=Upload+Photo';
+                }
+            },
+            async () => {
+                // Upload completed successfully
+                try {
+                    // Get download URL
+                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                    
+                    // Update preview
+                    if (profilePreview) {
+                        profilePreview.src = downloadURL;
+                    }
+                    
+                    // Save URL to user's profile
+                    await db.collection('profiles').doc(userId).update({
+                        profilePicture: downloadURL,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showAlert('Profile picture updated successfully!', 'success');
+                    
+                } catch (error) {
+                    console.error("Error getting download URL:", error);
+                    showAlert('Error updating profile picture', 'error');
+                }
+            }
+        );
+        
+    } catch (error) {
+        console.error("Error handling file upload:", error);
+        showAlert('Error uploading image', 'error');
+    }
+}
+
+// Update bio character counter
+function updateBioCounter(length) {
+    if (bioCounter) {
+        bioCounter.textContent = `${length}/500 characters`;
+        
+        // Change color if approaching limit
+        if (length > 450) {
+            bioCounter.style.color = 'var(--accent-red)';
+        } else if (length > 400) {
+            bioCounter.style.color = 'var(--accent-yellow)';
+        } else {
+            bioCounter.style.color = 'var(--text-muted)';
+        }
+    }
+}
+
+// Update availability status display
+function updateAvailabilityStatus(isAvailable) {
+    if (availabilityStatus) {
+        availabilityStatus.textContent = isAvailable ? 'Available' : 'Unavailable';
+        availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
+    }
+}
+
+// Handle profile form submission
+async function handleProfileSubmit(event) {
+    event.preventDefault();
     
-    // Get selected topics
-    const selectedTopics = [];
-    document.querySelectorAll('input[name="topics"]:checked').forEach(checkbox => {
-        selectedTopics.push(checkbox.value);
-    });
-    profileData.topics = selectedTopics;
+    const userId = currentUser.uid;
+    
+    // Get form values
+    const displayName = document.getElementById('displayName').value.trim();
+    const bio = bioTextarea ? bioTextarea.value.trim() : '';
+    const isAvailable = availabilityToggle ? availabilityToggle.checked : false;
     
     // Get preferred hours
     const preferredHours = [];
-    const hourSelect = document.getElementById('preferredHours');
-    for (let option of hourSelect.selectedOptions) {
-        preferredHours.push(option.value);
+    if (preferredHoursSelect) {
+        Array.from(preferredHoursSelect.selectedOptions).forEach(option => {
+            preferredHours.push(option.value);
+        });
     }
-    profileData.preferredHours = preferredHours;
     
-    // Upload profile picture if changed
-    const fileInput = document.getElementById('profilePicture');
-    if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        try {
-            const downloadURL = await uploadProfilePicture(file, window.currentUserId);
-            profileData.profilePicture = downloadURL;
-        } catch (error) {
-            console.error("Error uploading profile picture:", error);
-            alert('Error uploading profile picture. Please try again.');
-            return;
+    // Get topics
+    const topics = [];
+    document.querySelectorAll('input[name="topics"]:checked').forEach(checkbox => {
+        topics.push(checkbox.value);
+    });
+    
+    // Get social links
+    const socialLinks = {};
+    const socialInputs = document.querySelectorAll('.social-inputs input');
+    socialInputs.forEach(input => {
+        const platform = input.previousElementSibling.querySelector('i').className.split(' ')[1];
+        const url = input.value.trim();
+        
+        if (url) {
+            if (platform.includes('twitter')) socialLinks.twitter = url;
+            else if (platform.includes('instagram')) socialLinks.instagram = url;
+            else if (platform.includes('tiktok')) socialLinks.tiktok = url;
         }
+    });
+    
+    // Validate
+    if (!displayName) {
+        showAlert('Please enter a display name', 'error');
+        return;
     }
     
-    // Save to Firestore
+    if (bio.length > 500) {
+        showAlert('Bio must be 500 characters or less', 'error');
+        return;
+    }
+    
     try {
-        await db.collection('profiles').doc(window.currentUserId).set(profileData, { merge: true });
+        // Show loading state
+        const submitBtn = profileForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        submitBtn.disabled = true;
+        
+        // Update profile in Firestore
+        await db.collection('profiles').doc(userId).update({
+            displayName: displayName,
+            bio: bio,
+            available: isAvailable,
+            preferredHours: preferredHours,
+            topics: topics,
+            socialLinks: socialLinks,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Also update user document for quick access
+        await db.collection('users').doc(userId).update({
+            displayName: displayName,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
         
         // Show success message
-        showMessage('Profile saved successfully!', 'success');
+        showAlert('Profile updated successfully!', 'success');
         
-        // Update UI in dashboard if we're coming from there
+        // Update UI
+        updateAvailabilityStatus(isAvailable);
+        
+        // Update username in welcome message if on dashboard
+        const welcomeElement = document.getElementById('welcomeText');
+        if (welcomeElement) {
+            welcomeElement.textContent = `Welcome back, ${displayName}!`;
+        }
+        
+        // Redirect after delay if needed
         setTimeout(() => {
-            window.location.href = 'dashboard.html';
+            // Only redirect if not on profile page
+            if (!window.location.pathname.includes('profile.html')) {
+                window.location.href = 'dashboard.html';
+            }
         }, 1500);
         
     } catch (error) {
-        console.error("Error saving profile:", error);
-        showMessage('Error saving profile: ' + error.message, 'error');
-    }
-}
-
-// Upload profile picture to Firebase Storage
-async function uploadProfilePicture(file, userId) {
-    if (typeof storage === 'undefined') {
-        throw new Error('Storage not initialized');
-    }
-    
-    // Create a unique filename
-    const extension = file.name.split('.').pop();
-    const filename = `profile-pictures/${userId}/profile.${extension}`;
-    
-    // Create storage reference
-    const storageRef = storage.ref(filename);
-    
-    // Upload file
-    const uploadTask = storageRef.put(file);
-    
-    // Wait for upload to complete
-    return new Promise((resolve, reject) => {
-        uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-                // Progress tracking
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log('Upload progress:', progress + '%');
-            },
-            (error) => {
-                reject(error);
-            },
-            async () => {
-                // Upload complete, get download URL
-                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                resolve(downloadURL);
-            }
-        );
-    });
-}
-
-// Show message
-function showMessage(message, type) {
-    // Remove existing messages
-    const existingMessages = document.querySelectorAll('.alert');
-    existingMessages.forEach(msg => msg.remove());
-    
-    // Create new message
-    const messageEl = document.createElement('div');
-    messageEl.className = `alert alert-${type}`;
-    messageEl.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-        ${message}
-    `;
-    
-    // Insert after form
-    const form = document.getElementById('profileForm');
-    if (form) {
-        form.parentNode.insertBefore(messageEl, form);
+        console.error("Error updating profile:", error);
+        showAlert('Error updating profile: ' + error.message, 'error');
         
-        // Auto-hide success messages
-        if (type === 'success') {
-            setTimeout(() => {
-                messageEl.remove();
-            }, 3000);
+        // Restore button state
+        const submitBtn = profileForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
+            submitBtn.disabled = false;
         }
     }
 }
+
+// Utility function to show alerts
+function showAlert(message, type = 'info') {
+    // Create alert element
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    alert.style.position = 'fixed';
+    alert.style.top = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '1000';
+    alert.style.minWidth = '300px';
+    alert.style.maxWidth = '500px';
+    alert.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(alert);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
+}
+
+// Export for debugging
+window.ProfileManager = {
+    loadProfileData,
+    updateAvailabilityStatus
+};
