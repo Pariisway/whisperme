@@ -489,7 +489,7 @@
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="index.html#whisperers" class="nav-item">
+                <a href="whispers.html" class="nav-item">
                     <i class="fas fa-users"></i>
                     <span>Find Whispers</span>
                 </a>
