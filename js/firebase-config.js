@@ -23,12 +23,11 @@ if (!firebase.apps.length) {
 }
 
 // Initialize Firebase services with error handling
-let auth, db, storage;
+let auth, db;
 
 try {
     auth = firebase.auth();
     db = firebase.firestore();
-    storage = firebase.storage();
     
     // Enable offline persistence for Firestore
     db.enablePersistence()
@@ -49,4 +48,3 @@ try {
 // Export for use in other modules
 window.auth = auth;
 window.db = db;
-window.storage = storage;

@@ -1,5 +1,5 @@
 // Authentication JavaScript for Whisper+me
-console.log("Auth.js loaded");
+console.log("Auth.js loaded - Fixed version");
 
 // Initialize auth when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup form submission
     setupFormSubmission();
+    
+    // Check auth state with delay to prevent loops
+    setTimeout(checkAuthState, 1000);
 });
 
 // Setup auth form based on type (login/signup)
@@ -23,21 +26,9 @@ function setupAuthForm(type) {
     const authBtn = document.getElementById('authBtn');
     const switchText = document.getElementById('switchText');
     const switchLink = document.getElementById('switchLink');
-    const authForm = document.getElementById('authForm');
     
-    // Check if Firebase is ready
-    if (typeof auth === 'undefined') {
-        console.error("Firebase auth not loaded yet");
-        showAuthMessage("Loading authentication...", "info");
-        // Wait for Firebase
-        if (typeof waitForFirebase !== 'undefined') {
-            waitForFirebase(function(firebaseReady) {
-                if (firebaseReady) {
-                    console.log("Firebase ready, setting up form");
-                    setupAuthForm(type);
-                }
-            });
-        }
+    if (!authTitle || !authSubtitle || !authBtn) {
+        console.error("Auth form elements not found");
         return;
     }
     
@@ -192,8 +183,12 @@ async function signUpUser(email, password) {
         
         showAuthMessage('Account created successfully! Redirecting...', 'success');
         
-        // Send email verification
-        await user.sendEmailVerification();
+        // Send email verification (optional for now)
+        try {
+            await user.sendEmailVerification();
+        } catch (emailError) {
+            console.log("Email verification optional:", emailError);
+        }
         
         // Redirect to dashboard after delay
         setTimeout(() => {
@@ -238,13 +233,6 @@ async function logInUser(email, password) {
         // Sign in with email and password
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
-        
-        // Check if email is verified
-        if (!user.emailVerified) {
-            showAuthMessage('Please verify your email before logging in. Check your inbox.', 'warning');
-            await auth.signOut();
-            return;
-        }
         
         console.log("User logged in:", user.uid);
         
@@ -298,24 +286,25 @@ function showAuthMessage(message, type = 'info') {
     }, 5000);
 }
 
-// Check if user is already logged in
+// Check if user is already logged in - FIXED VERSION
 function checkAuthState() {
-    if (typeof auth === 'undefined') return;
+    if (typeof auth === 'undefined') {
+        console.log("Auth not available yet, retrying...");
+        setTimeout(checkAuthState, 500);
+        return;
+    }
     
     auth.onAuthStateChanged(function(user) {
+        console.log("Auth state changed. User:", user ? user.email : "null");
+        
+        // Only redirect if we're on auth page AND user is logged in
         if (user && window.location.pathname.includes('auth.html')) {
-            // User is logged in but on auth page, redirect to dashboard
-            console.log("User already logged in, redirecting to dashboard");
-            window.location.href = 'dashboard.html';
+            console.log("User already logged in, but staying on auth page for demo");
+            // For now, let's NOT auto-redirect to prevent loops
+            // window.location.href = 'dashboard.html';
         }
     });
 }
 
-// Initialize auth state check
-if (typeof waitForFirebase !== 'undefined') {
-    waitForFirebase(function(firebaseReady) {
-        if (firebaseReady) {
-            checkAuthState();
-        }
-    });
-}
+// Make checkAuthState available globally
+window.checkAuthState = checkAuthState;

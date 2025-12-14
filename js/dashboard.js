@@ -1,5 +1,5 @@
 // Dashboard JavaScript for Whisper+me
-console.log("Dashboard.js loaded - Updated version");
+console.log("Dashboard.js loaded - Fixed version");
 
 // Store user data globally
 let currentUser = null;
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof waitForFirebase !== 'undefined') {
         waitForFirebase(function(firebaseReady) {
             if (!firebaseReady) {
-                console.error("Firebase not ready, redirecting to login");
+                console.error("Firebase not ready");
                 showErrorAlert('Firebase initialization failed. Please refresh the page.');
                 return;
             }
@@ -35,13 +35,16 @@ function initializeDashboard() {
         return;
     }
     
-    // Check authentication
+    // Check authentication - FIXED VERSION
     auth.onAuthStateChanged(async function(user) {
         console.log("Auth state changed. User:", user ? user.email : "null");
         
         if (!user) {
             console.log("No user found, redirecting to login");
-            window.location.href = 'auth.html?type=login';
+            // Add a small delay to prevent rapid redirects
+            setTimeout(() => {
+                window.location.href = 'auth.html?type=login';
+            }, 1000);
             return;
         }
         
@@ -67,6 +70,7 @@ function initializeDashboard() {
     });
 }
 
+// The rest of the dashboard.js remains the same...
 // Load dashboard content
 async function loadDashboardContent(user) {
     try {

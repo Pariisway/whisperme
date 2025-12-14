@@ -8,8 +8,16 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/check-firebase.js"></script>
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4QYRJLTXTT"></script>
@@ -63,12 +71,75 @@
         </div>
     </section>
 
+    <!-- Available Whisperers Section -->
+    <section id="whisperers" class="section" style="background: var(--background-light);">
+        <div class="container">
+            <h2 class="section-title">Meet Our Whisperers</h2>
+            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
+                Connect with verified experts ready to share their wisdom. Each call is a meaningful conversation.
+            </p>
+            
+            <div class="whispers-grid" id="homepageWhispers">
+                <!-- Whisperers will be loaded here -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading whisperers...</p>
+                </div>
+            </div>
+            
+            <div class="text-center" style="margin-top: 3rem;">
+                <a href="auth.html?type=signup" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Join as a Whisperer
+                </a>
+                <p class="text-muted" style="margin-top: 1rem; font-size: 0.9rem;">
+                    <i class="fas fa-shield-alt"></i> All whisperers are verified and reviewed
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="section">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
+                Getting started is simple. Whether you want to listen or share, our platform makes it easy to connect.
+            </p>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Create Your Profile</h3>
+                    <p>Sign up in seconds and create your profile. Add your interests, expertise, and a profile picture to help others connect with you.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Get Verified</h3>
+                    <p>Complete our quick verification process to ensure safety and build trust within our community.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Set Availability</h3>
+                    <p>Choose when you're available to receive calls. Set your schedule or go live instantly when you're ready.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Start Earning</h3>
+                    <p>Receive calls, share your wisdom, and earn $15 per 15-minute session. Get paid weekly via your preferred method.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Features Section -->
-    <section id="features" class="section">
+    <section id="features" class="section" style="background: linear-gradient(135deg, var(--background-light) 0%, white 100%);">
         <div class="container">
             <h2 class="section-title">Why Choose Whisper+me?</h2>
             <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
-                We've created the perfect platform for meaningful voice connections. Whether you want to share your expertise or seek guidance, we make it simple and rewarding.
+                We've created the perfect platform for meaningful voice connections.
             </p>
             
             <div class="features-grid">
@@ -103,124 +174,6 @@
                     <h3>Instant Connections</h3>
                     <p>No scheduling needed. Find available whisperers or get matched instantly based on your interests and needs.</p>
                 </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3>Safe & Secure</h3>
-                    <p>Verified profiles, secure payments, and 24/7 moderation. Your safety and satisfaction are guaranteed.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-headphones"></i>
-                    </div>
-                    <h3>HD Audio Quality</h3>
-                    <p>Crystal clear voice calls with noise cancellation. Focus on the conversation, not the technology.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works Section -->
-    <section id="how-it-works" class="section" style="background: linear-gradient(135deg, var(--background-light) 0%, white 100%);">
-        <div class="container">
-            <h2 class="section-title">How It Works</h2>
-            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
-                Getting started is simple. Whether you want to listen or share, our platform makes it easy to connect.
-            </p>
-            
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Create Your Profile</h3>
-                    <p>Sign up in seconds and create your profile. Add your interests, expertise, and a profile picture to help others connect with you.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Get Verified</h3>
-                    <p>Complete our quick verification process to ensure safety and build trust within our community.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Set Availability</h3>
-                    <p>Choose when you're available to receive calls. Set your schedule or go live instantly when you're ready.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <h3>Start Earning</h3>
-                    <p>Receive calls, share your wisdom, and earn $15 per 15-minute session. Get paid weekly via your preferred method.</p>
-                </div>
-            </div>
-            
-            <div class="cta-buttons" style="margin-top: 4rem;">
-                <a href="auth.html?type=signup" class="btn btn-primary btn-large">
-                    <i class="fas fa-user-plus"></i> Start as a Whisperer
-                </a>
-                <a href="#testimonials" class="btn btn-outline">
-                    <i class="fas fa-play-circle"></i> See Success Stories
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section id="testimonials" class="section testimonials">
-        <div class="container">
-            <h2 class="section-title">Success Stories</h2>
-            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
-                Join thousands of people who have found meaningful connections and earnings on Whisper+me
-            </p>
-            
-            <div class="testimonial-grid">
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        <p>"I've made over $2,000 in my first month just by sharing my career coaching experience. The connections I've made are priceless."</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <img src="https://i.pravatar.cc/150?img=1" alt="Sarah Chen">
-                            </div>
-                            <div class="author-info">
-                                <h4>Sarah Chen</h4>
-                                <p>Career Coach • 124 calls</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        <p>"As a college student, this has been life-changing. I can earn money while helping others with academic advice. Perfect flexibility!"</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <img src="https://i.pravatar.cc/150?img=5" alt="Marcus Johnson">
-                            </div>
-                            <div class="author-info">
-                                <h4>Marcus Johnson</h4>
-                                <p>Student • 89 calls</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        <p>"I was nervous at first, but the community is so supportive. I've gained confidence and meaningful friendships through this platform."</p>
-                        <div class="testimonial-author">
-                            <div class="author-avatar">
-                                <img src="https://i.pravatar.cc/150?img=8" alt="Priya Patel">
-                            </div>
-                            <div class="author-info">
-                                <h4>Priya Patel</h4>
-                                <p>Life Coach • 156 calls</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </section>
@@ -237,8 +190,8 @@
                         <a href="auth.html?type=signup" class="btn btn-primary" style="background: white; color: var(--primary-blue);">
                             <i class="fas fa-user-plus"></i> Sign Up Free
                         </a>
-                        <a href="#features" class="btn btn-outline" style="color: white; border-color: white;">
-                            <i class="fas fa-question-circle"></i> Learn More
+                        <a href="auth.html?type=login" class="btn btn-outline" style="color: white; border-color: white;">
+                            <i class="fas fa-sign-in-alt"></i> Login
                         </a>
                     </div>
                     
@@ -264,9 +217,9 @@
                 <div class="footer-section">
                     <h3>Quick Links</h3>
                     <a href="index.html">Home</a>
-                    <a href="#features">Features</a>
+                    <a href="#whisperers">Whisperers</a>
                     <a href="#how-it-works">How It Works</a>
-                    <a href="#testimonials">Testimonials</a>
+                    <a href="#features">Features</a>
                 </div>
                 <div class="footer-section">
                     <h3>Account</h3>
@@ -291,7 +244,9 @@
         </div>
     </footer>
 
-    <!-- JavaScript -->
+    <!-- JavaScript for Homepage -->
+    <script src="js/homepage.js"></script>
+    
     <script>
         // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
