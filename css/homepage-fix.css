@@ -1,0 +1,95 @@
+/* Homepage Centering Fix */
+
+/* Center everything */
+body {
+    text-align: center !important;
+}
+
+.container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    padding: 0 20px !important;
+}
+
+/* Center hero section */
+.hero {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 60px 20px !important;
+}
+
+.hero-content {
+    max-width: 800px !important;
+    margin: 0 auto !important;
+}
+
+/* Center section titles */
+.section {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.section-title {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Center the whispers grid */
+#homepageWhispers {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 30px !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+}
+
+/* Center features and steps */
+.features-grid, .steps {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 30px !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+}
+
+/* Center CTA section */
+.cta-section {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+/* Center navigation */
+.navbar .nav-container {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+}
+
+/* Center hero buttons */
+.hero-buttons {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 15px !important;
+    flex-wrap: wrap !important;
+}
+
+/* Ensure all text is centered */
+h1, h2, h3, h4, h5, h6, p {
+    text-align: center !important;
+}

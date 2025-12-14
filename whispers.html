@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Whispers - Whisper+me</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/homepage-fix.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .whispers-page {
+            padding: 60px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .page-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .page-description {
+            text-align: center;
+            color: #666;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+        
+        .whispers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .whisper-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .whisper-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="index.html">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>WhisperMe</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="whispers.html" class="nav-item active">
+                    <i class="fas fa-users"></i>
+                    <span>Find Whispers</span>
+                </a>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="payment.html" class="nav-item">
+                    <i class="fas fa-crown"></i>
+                    <span>Go Premium</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="whispers-page">
+        <h1 class="page-title">Find Whispers</h1>
+        <p class="page-description">Connect with amazing people ready for meaningful 5-minute conversations</p>
+        
+        <div class="whispers-grid" id="whispersGrid">
+            <!-- Whispers will load here -->
+            <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
+                <i class="fas fa-spinner fa-spin fa-2x" style="color: #667eea;"></i>
+                <p style="margin-top: 15px; color: #666;">Loading whispers...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/firebase-config.js"></script>
+    <script>
+        // Load whispers when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(loadWhispersPage, 1000);
+        });
+        
+        async function loadWhispersPage() {
+            const container = document.getElementById('whispersGrid');
+            
+            try {
+                // Initialize Firebase
+                if (typeof firebase === 'undefined') {
+                    throw new Error("Firebase not loaded");
+                }
+                
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                
+                const db = firebase.firestore();
+                
+                // Try to load whispers
+                let snapshot;
+                try {
+                    snapshot = await db.collection('whispers')
+                        .where('available', '==', true)
+                        .get();
+                } catch (error) {
+                    try {
+                        snapshot = await db.collection('Whisper')
+                            .where('available', '==', true)
+                            .get();
+                    } catch (error2) {
+                        throw new Error("No whispers collection found");
+                    }
+                }
+                
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
+                            <i class="fas fa-users" style="font-size: 3rem; color: #667eea; opacity: 0.5;"></i>
+                            <h3 style="margin-top: 15px; color: #666;">No whispers available</h3>
+                            <p style="color: #999;">Be the first to join!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Display whispers
+                let html = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    html += `
+                        <div class="whisper-card">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 2rem;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <h3 style="color: #333; margin-bottom: 5px;">${data.displayName || data.name || 'Whisper User'}</h3>
+                            <p style="color: #667eea; font-weight: 600; margin-bottom: 10px;">${data.title || 'Available to chat'}</p>
+                            <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.4;">
+                                ${(data.description || data.bio || 'Ready for meaningful conversation').substring(0, 100)}...
+                            </p>
+                            <button onclick="connectToWhisper()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; width: 100%; font-weight: 600;">
+                                <i class="fas fa-comment"></i> Start Conversation
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error("Error loading whispers:", error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff6b6b;"></i>
+                        <h3 style="margin-top: 15px; color: #666;">Error loading whispers</h3>
+                        <p style="color: #999;">${error.message}</p>
+                        <button onclick="location.reload()" style="margin-top: 20px; background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer;">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function connectToWhisper() {
+            if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'auth.html?type=login';
+            }
+        }
+    </script>
+</body>
+</html>

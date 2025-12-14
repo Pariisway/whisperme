@@ -807,3 +807,56 @@ window.addEventListener('load', function() {
         initializeDashboard();
     }
 });
+// Add this to your existing dashboard.js file
+// Find where you initialize the dashboard and add this code
+
+function setupWhisperButton() {
+    const whisperBtn = document.querySelector('.whisper-button, #whisperButton, .start-whisper-btn');
+    if (whisperBtn) {
+        whisperBtn.addEventListener('click', async function() {
+            console.log("Whisper button clicked");
+            
+            try {
+                // Check if user has a profile
+                const user = auth.currentUser;
+                if (!user) {
+                    alert('Please login first');
+                    window.location.href = 'auth.html?type=login';
+                    return;
+                }
+                
+                // Check availability
+                const profileDoc = await db.collection('profiles').doc(user.uid).get();
+                if (!profileDoc.exists || profileDoc.data().available === false) {
+                    alert('Please set your status to "Available" in your profile first');
+                    window.location.href = 'profile.html';
+                    return;
+                }
+                
+                // Create a new call session
+                const callData = {
+                    callerId: user.uid,
+                    callerName: profileDoc.data().displayName || user.email,
+                    status: 'waiting',
+                    createdAt: new Date(),
+                    type: 'whisper'
+                };
+                
+                // Save to Firestore
+                const callRef = await db.collection('callSessions').add(callData);
+                
+                // Redirect to call page
+                window.location.href = `call.html?sessionId=${callRef.id}`;
+                
+            } catch (error) {
+                console.error("Error starting whisper:", error);
+                alert('Error starting whisper: ' + error.message);
+            }
+        });
+    }
+}
+
+// Call this function after dashboard loads
+// Add this to your loadDashboardData function or after auth state change
+// For example, add this line at the end of your initializeDashboard function:
+// setupWhisperButton();
