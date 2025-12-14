@@ -1,30 +1,23 @@
-// Authentication JavaScript for Whisper+me - Enhanced with Page Detection
-console.log("Auth.js loaded - Enhanced version");
+// Authentication JavaScript for Whisper+me - Fixed auth form elements
+console.log("Auth.js loaded - Fixed auth form elements");
 
-// Check if we're on auth page
-const isAuthPage = window.location.pathname.includes('auth.html') || 
-                   window.location.pathname.includes('auth.html') ||
-                   document.getElementById('authForm') !== null;
-
-// Initialize only on auth page
-if (isAuthPage) {
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("Auth page loaded, initializing auth form...");
-        
-        // Check URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const type = urlParams.get('type') || 'login';
-        
-        // Setup auth form based on type
-        setupAuthForm(type);
-        
-        // Setup form submission
-        setupFormSubmission();
-        
-        // Check auth state with delay to prevent loops
-        setTimeout(checkAuthState, 1000);
-    });
-}
+// Initialize auth when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Auth page loaded");
+    
+    // Check URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type') || 'login';
+    
+    // Setup auth form based on type
+    setupAuthForm(type);
+    
+    // Setup form submission
+    setupFormSubmission();
+    
+    // Check auth state with delay to prevent loops
+    setTimeout(checkAuthState, 1000);
+});
 
 // Setup auth form based on type (login/signup)
 function setupAuthForm(type) {
@@ -35,23 +28,20 @@ function setupAuthForm(type) {
     const authBtn = document.getElementById('authBtn');
     const switchText = document.getElementById('switchText');
     const switchLink = document.getElementById('switchLink');
-    const authForm = document.getElementById('authForm');
     
-    if (!authTitle || !authSubtitle || !authBtn || !switchText || !switchLink || !authForm) {
-        console.log("Not on auth page or elements not found yet, retrying...");
+    if (!authTitle || !authSubtitle || !authBtn || !switchText || !switchLink) {
+        console.error("Auth form elements not found - retrying in 500ms");
         setTimeout(() => setupAuthForm(type), 500);
         return;
     }
     
-    console.log("Auth form elements found, proceeding with setup...");
-    
     if (type === 'signup') {
         // Setup signup form
-        authTitle.textContent = 'Create Your Whisper Account';
-        authSubtitle.textContent = 'Join our community and start meaningful conversations today';
-        authBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
-        switchText.innerHTML = 'Already part of our community? ';
-        switchLink.textContent = 'Sign in here';
+        authTitle.textContent = 'Create Account';
+        authSubtitle.textContent = 'Join Whisper+me and start earning today';
+        authBtn.innerHTML = '<i class="fas fa-user-plus"></i> Sign Up';
+        switchText.innerHTML = 'Already have an account? ';
+        switchLink.textContent = 'Login here';
         switchLink.href = 'auth.html?type=login';
         
         // Add confirm password field if it doesn't exist
@@ -59,8 +49,7 @@ function setupAuthForm(type) {
             const confirmPasswordField = `
                 <div class="form-group">
                     <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password</label>
-                    <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
-                    <small class="form-text">For your security, please confirm your password</small>
+                    <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••" required>
                 </div>
             `;
             const passwordField = document.querySelector('[for="password"]').parentElement;
@@ -70,11 +59,11 @@ function setupAuthForm(type) {
         }
     } else {
         // Setup login form
-        authTitle.textContent = 'Welcome Back to Whisper';
-        authSubtitle.textContent = 'Continue your journey of meaningful connections';
-        authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In to Your Account';
-        switchText.innerHTML = 'New to Whisper? ';
-        switchLink.textContent = 'Join our community';
+        authTitle.textContent = 'Login';
+        authSubtitle.textContent = 'Welcome back to Whisper+me';
+        authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+        switchText.innerHTML = 'Don\'t have an account? ';
+        switchLink.textContent = 'Sign up here';
         switchLink.href = 'auth.html?type=signup';
         
         // Remove confirm password field if it exists
@@ -121,7 +110,7 @@ function setupFormSubmission() {
         
         // Validate form
         if (!email || !password) {
-            showAuthMessage('Please fill in all required fields', 'error');
+            showAuthMessage('Please fill in all fields', 'error');
             return;
         }
         
@@ -132,12 +121,12 @@ function setupFormSubmission() {
             }
             
             if (password !== confirmPassword) {
-                showAuthMessage('Passwords do not match. Please try again', 'error');
+                showAuthMessage('Passwords do not match', 'error');
                 return;
             }
             
             if (password.length < 6) {
-                showAuthMessage('Password must be at least 6 characters long', 'error');
+                showAuthMessage('Password must be at least 6 characters', 'error');
                 return;
             }
             
@@ -153,7 +142,7 @@ function setupFormSubmission() {
 // Sign up user
 async function signUpUser(email, password) {
     try {
-        showAuthMessage('Creating your secure account...', 'info');
+        showAuthMessage('Creating your account...', 'info');
         
         // Check if Firebase auth is available
         if (typeof auth === 'undefined') {
@@ -169,12 +158,11 @@ async function signUpUser(email, password) {
         // Create user document in Firestore
         if (typeof db !== 'undefined') {
             try {
-                // Create user document
                 await db.collection('users').doc(user.uid).set({
                     email: email,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    tokens: 5, // Give 5 free tokens for new users
+                    tokens: 0,
                     role: 'user'
                 });
                 
@@ -183,7 +171,6 @@ async function signUpUser(email, password) {
                     earnings: 0,
                     calls: 0,
                     rating: 0,
-                    totalRatingCount: 0,
                     activeTime: 0,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -193,38 +180,25 @@ async function signUpUser(email, password) {
                     userId: user.uid,
                     email: email,
                     displayName: email.split('@')[0],
-                    username: email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, ''),
+                    username: email.split('@')[0].toLowerCase(),
                     available: true,
-                    bio: 'Just joined Whisper! Ready for meaningful conversations.',
+                    bio: '',
                     profilePicture: '',
-                    interests: ['conversation', 'listening', 'connection'],
+                    interests: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                
-                // Create welcome transaction
-                await db.collection('transactions').add({
-                    userId: user.uid,
-                    type: 'welcome',
-                    amount: 0,
-                    tokens: 5,
-                    description: 'Welcome bonus tokens',
-                    status: 'completed',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
             } catch (firestoreError) {
-                console.warn("Firestore setup warning:", firestoreError);
-                // Continue even if Firestore has issues
+                console.warn("Firestore error (might be permissions):", firestoreError);
+                // Continue even if Firestore fails - user is still created
             }
         }
         
-        showAuthMessage('🎉 Account created successfully! Welcome to Whisper!', 'success');
+        showAuthMessage('Account created successfully! Redirecting...', 'success');
         
-        // Send email verification
+        // Send email verification (optional for now)
         try {
             await user.sendEmailVerification();
-            showAuthMessage('📧 Verification email sent. Please check your inbox.', 'info');
         } catch (emailError) {
             console.log("Email verification optional:", emailError);
         }
@@ -232,27 +206,24 @@ async function signUpUser(email, password) {
         // Redirect to dashboard after delay
         setTimeout(() => {
             window.location.href = 'dashboard.html';
-        }, 2500);
+        }, 2000);
         
     } catch (error) {
         console.error("Sign up error:", error);
         
-        let errorMessage = 'Unable to create account: ';
+        let errorMessage = 'Error creating account: ';
         switch (error.code) {
             case 'auth/email-already-in-use':
-                errorMessage = 'This email is already registered. Try signing in instead.';
+                errorMessage = 'Email already in use. Try logging in instead.';
                 break;
             case 'auth/invalid-email':
-                errorMessage = 'Please enter a valid email address.';
+                errorMessage = 'Invalid email address.';
                 break;
             case 'auth/operation-not-allowed':
                 errorMessage = 'Email/password accounts are not enabled.';
                 break;
             case 'auth/weak-password':
                 errorMessage = 'Password is too weak. Use at least 6 characters.';
-                break;
-            case 'auth/network-request-failed':
-                errorMessage = 'Network error. Please check your connection.';
                 break;
             default:
                 errorMessage += error.message;
@@ -265,7 +236,7 @@ async function signUpUser(email, password) {
 // Log in user
 async function logInUser(email, password) {
     try {
-        showAuthMessage('Signing you in...', 'info');
+        showAuthMessage('Logging in...', 'info');
         
         // Check if Firebase auth is available
         if (typeof auth === 'undefined') {
@@ -278,7 +249,7 @@ async function logInUser(email, password) {
         
         console.log("User logged in:", user.uid);
         
-        showAuthMessage('✅ Welcome back! Redirecting to your dashboard...', 'success');
+        showAuthMessage('Login successful! Redirecting...', 'success');
         
         // Redirect to dashboard after delay
         setTimeout(() => {
@@ -288,25 +259,22 @@ async function logInUser(email, password) {
     } catch (error) {
         console.error("Login error:", error);
         
-        let errorMessage = 'Unable to sign in: ';
+        let errorMessage = 'Error logging in: ';
         switch (error.code) {
             case 'auth/invalid-email':
-                errorMessage = 'Please enter a valid email address.';
+                errorMessage = 'Invalid email address.';
                 break;
             case 'auth/user-disabled':
                 errorMessage = 'This account has been disabled.';
                 break;
             case 'auth/user-not-found':
-                errorMessage = 'No account found with this email. Please sign up first.';
+                errorMessage = 'No account found with this email.';
                 break;
             case 'auth/wrong-password':
-                errorMessage = 'Incorrect password. Please try again.';
+                errorMessage = 'Incorrect password.';
                 break;
             case 'auth/too-many-requests':
-                errorMessage = 'Too many login attempts. Please try again later.';
-                break;
-            case 'auth/network-request-failed':
-                errorMessage = 'Network error. Please check your connection.';
+                errorMessage = 'Too many login attempts. Try again later.';
                 break;
             default:
                 errorMessage += error.message;
@@ -320,24 +288,21 @@ async function logInUser(email, password) {
 function showAuthMessage(message, type = 'info') {
     const authMessage = document.getElementById('authMessage');
     if (!authMessage) {
-        console.log("Auth message element not found on this page");
+        console.error("Auth message element not found");
         return;
     }
     
     authMessage.textContent = message;
     authMessage.className = `alert alert-${type}`;
     authMessage.style.display = 'flex';
-    authMessage.style.animation = 'slideIn 0.3s ease';
     
     // Auto hide after 5 seconds
     setTimeout(() => {
-        if (authMessage) {
-            authMessage.style.display = 'none';
-        }
+        authMessage.style.display = 'none';
     }, 5000);
 }
 
-// Check if user is already logged in
+// Check if user is already logged in - FIXED VERSION
 function checkAuthState() {
     if (typeof auth === 'undefined') {
         console.log("Auth not available yet, retrying...");
@@ -346,22 +311,15 @@ function checkAuthState() {
     }
     
     auth.onAuthStateChanged(function(user) {
-        if (!user) {
-            // No user, stay on auth page
-            return;
-        }
+        console.log("Auth state changed. User:", user ? user.email : "null");
         
-        // User is logged in, check if we're on auth page
-        if (window.location.pathname.includes('auth.html')) {
+        // Only redirect if we're on auth page AND user is logged in
+        if (user && window.location.pathname.includes('auth.html')) {
             console.log("User already logged in, redirecting to dashboard");
-            showAuthMessage('Already signed in. Redirecting...', 'info');
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
+            window.location.href = 'dashboard.html';
         }
     });
 }
 
-// Make functions available globally
-window.showAuthMessage = showAuthMessage;
+// Make checkAuthState available globally
 window.checkAuthState = checkAuthState;

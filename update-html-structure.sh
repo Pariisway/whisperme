@@ -1,3 +1,9 @@
+#!/bin/bash
+
+echo "🔄 Updating HTML structure with dynamic content..."
+
+# Update dashboard.html with better structure
+cat > dashboard-enhanced.html << 'HTML'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -679,3 +685,20 @@
     </script>
 </body>
 </html>
+HTML
+
+# Replace dashboard.html
+mv dashboard-enhanced.html dashboard.html
+
+echo "✅ Updated dashboard with dynamic structure"
+echo ""
+echo "🎯 Next steps:"
+echo "1. Update Firestore rules in Firebase Console"
+echo "2. Test with two accounts (caller and whisper)"
+echo "3. Verify Agora call functionality"
+echo ""
+echo "📝 The site is now:"
+echo "   • Dynamic with real data"
+echo "   • Dark theme throughout"
+echo "   • Ready for Agora testing"
+echo "   • Professional wording and structure"

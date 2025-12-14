@@ -1,3 +1,9 @@
+#!/bin/bash
+
+echo "🔧 Fixing Firestore Permissions..."
+
+# Create updated firebase-config.js with error handling
+cat > js/firebase-config-enhanced.js << 'CONFIG'
 // Firebase Configuration for Whisper+me - Enhanced Version
 console.log("Loading Firebase configuration...");
 
@@ -52,3 +58,47 @@ try {
         showAlert('Firebase initialization failed. Please refresh.', 'error');
     }
 }
+CONFIG
+
+# Update the main firebase-config.js
+mv js/firebase-config-enhanced.js js/firebase-config.js
+
+echo "✅ Updated Firebase configuration with better error handling"
+
+# Create Firestore rules file
+cat > firestore-deploy-rules.js << 'RULES'
+// Firestore Security Rules for Development
+// Copy and paste this in Firebase Console > Firestore > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow all reads and writes for authenticated users during development
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Public read access for profiles
+    match /profiles/{userId} {
+      allow read: if true; // Public read
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+RULES
+
+echo ""
+echo "📋 IMPORTANT: Update Firestore Rules in Firebase Console"
+echo "========================================================="
+echo ""
+echo "1. Go to: https://console.firebase.google.com/"
+echo "2. Select your project: whisper-chat-live"
+echo "3. Click 'Firestore Database' in left menu"
+echo "4. Click 'Rules' tab"
+echo "5. Copy and paste the rules below:"
+echo ""
+cat firestore-deploy-rules.js
+echo ""
+echo "6. Click 'Publish'"
+echo ""
+echo "✅ After updating rules, refresh your dashboard page."
