@@ -1,341 +1,307 @@
-// Profile JavaScript for Whisper+me
-console.log("Profile.js loaded");
+// Profile JavaScript for Whisper+me - Real Data Only
+console.log("Profile.js loaded - Real Data Version");
+
+let currentUser = null;
+let userProfile = null;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Profile page loaded");
     
-    // First, wait for Firebase to be fully loaded
-    if (typeof waitForFirebase !== 'undefined') {
-        waitForFirebase(function(firebaseReady) {
-            if (!firebaseReady) {
-                console.error("Firebase not ready");
-                showAlert('Firebase initialization failed. Please refresh the page.', 'error');
-                return;
-            }
-            initializeProfile();
-        });
-    } else {
-        // Fallback if checker isn't available
-        setTimeout(initializeProfile, 2000);
-    }
-});
-
-function initializeProfile() {
-    console.log("Initializing profile...");
-    
-    // Check if Firebase is loaded
-    if (typeof auth === 'undefined' || typeof db === 'undefined') {
-        console.error("Firebase services not loaded.");
-        showAlert('Authentication services not available. Please refresh.', 'error');
-        return;
-    }
-    
-    // Check authentication
+    // Check auth state
     auth.onAuthStateChanged(async function(user) {
-        console.log("Auth state changed. User:", user ? user.email : "null");
-        
         if (!user) {
-            console.log("No user found, redirecting to login");
             window.location.href = 'auth.html?type=login';
             return;
         }
         
+        currentUser = user;
         console.log("User logged in:", user.email);
         
         try {
-            // Load profile data
-            await loadProfileData(user.uid, user.email);
-            
-            // Setup event listeners
-            setupProfileListeners(user.uid);
-            
+            await loadProfileData(user.uid);
+            setupProfileListeners();
         } catch (error) {
             console.error("Error loading profile:", error);
             showAlert('Error loading profile data', 'error');
         }
     });
-}
+});
 
 // Load profile data
-async function loadProfileData(userId, userEmail) {
+async function loadProfileData(userId) {
     try {
-        // Load user profile
+        showLoading(true);
+        
+        // Load profile from Firestore
         const profileDoc = await db.collection('profiles').doc(userId).get();
         
-        if (profileDoc.exists) {
-            const profileData = profileDoc.data();
-            populateProfileForm(profileData, userEmail);
-        } else {
-            // Create default profile if it doesn't exist
+        if (!profileDoc.exists) {
+            // Create default profile
             const defaultProfile = {
                 userId: userId,
-                email: userEmail,
-                displayName: userEmail.split('@')[0],
-                username: userEmail.split('@')[0].toLowerCase(),
+                email: currentUser.email,
+                displayName: currentUser.email.split('@')[0],
+                username: currentUser.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, ''),
                 bio: '',
-                interests: [],
                 available: true,
+                interests: [],
                 profilePicture: '',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            // Show default values
-            populateProfileForm(defaultProfile, userEmail);
-            
-            // Don't create automatically - let user save first
-            console.log("Profile doesn't exist yet - will create on save");
+            await db.collection('profiles').doc(userId).set(defaultProfile);
+            userProfile = defaultProfile;
+        } else {
+            userProfile = profileDoc.data();
         }
         
         // Load user stats
         const statsDoc = await db.collection('userStats').doc(userId).get();
         if (statsDoc.exists) {
-            const stats = statsDoc.data();
-            updateProfileStats(stats);
+            updateStatsDisplay(statsDoc.data());
+        } else {
+            updateStatsDisplay({ calls: 0, rating: 0 });
         }
+        
+        // Populate form
+        populateProfileForm();
+        
+        // Load profile picture
+        if (userProfile.profilePicture) {
+            document.getElementById('profilePicture').src = userProfile.profilePicture;
+        }
+        
+        showLoading(false);
         
     } catch (error) {
         console.error("Error loading profile:", error);
-        showAlert('Error loading profile data. Please refresh.', 'error');
+        showAlert('Error loading profile data', 'error');
+        showLoading(false);
     }
 }
 
-// Populate profile form with data
-function populateProfileForm(profileData, userEmail) {
-    // Basic info
-    document.getElementById('profileEmail').textContent = userEmail;
-    document.getElementById('displayName').value = profileData.displayName || '';
-    document.getElementById('username').value = profileData.username || '';
-    document.getElementById('bio').value = profileData.bio || '';
+// Populate profile form
+function populateProfileForm() {
+    if (!userProfile) return;
     
-    // Availability
+    document.getElementById('displayName').value = userProfile.displayName || '';
+    document.getElementById('username').value = userProfile.username || '';
+    document.getElementById('bio').value = userProfile.bio || '';
+    document.getElementById('interests').value = (userProfile.interests || []).join(', ');
+    
     const availabilityToggle = document.getElementById('availabilityToggle');
     if (availabilityToggle) {
-        availabilityToggle.checked = profileData.available !== false;
-    }
-    
-    // Interests (simplified for now)
-    if (profileData.interests && Array.isArray(profileData.interests)) {
-        document.getElementById('interests').value = profileData.interests.join(', ');
-    }
-    
-    // Profile picture preview
-    const profilePicture = document.getElementById('profilePicture');
-    if (profilePicture && profileData.profilePicture) {
-        profilePicture.src = profileData.profilePicture;
+        availabilityToggle.checked = userProfile.available !== false;
+        updateAvailabilityDisplay(userProfile.available !== false);
     }
 }
 
-// Update profile stats display
-function updateProfileStats(stats) {
-    const statsElement = document.getElementById('profileStats');
-    if (!statsElement) return;
+// Update stats display
+function updateStatsDisplay(stats) {
+    const statsContainer = document.getElementById('profileStats');
+    if (!statsContainer) return;
     
-    statsElement.innerHTML = `
-        <div class="profile-stats-grid">
+    statsContainer.innerHTML = `
+        <div class="profile-stats">
             <div class="stat-item">
                 <div class="stat-value">${stats.calls || 0}</div>
-                <div class="stat-label">Total Calls</div>
+                <div class="stat-label">Calls</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">${(stats.rating || 0).toFixed(1)}</div>
-                <div class="stat-label">Avg Rating</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">$${(stats.earnings || 0).toFixed(2)}</div>
-                <div class="stat-label">Earnings</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${stats.activeTime ? Math.floor(stats.activeTime / 60) : 0}h</div>
-                <div class="stat-label">Active Time</div>
+                <div class="stat-label">Rating</div>
             </div>
         </div>
     `;
 }
 
-// Setup profile event listeners
-function setupProfileListeners(userId) {
+// Update availability display
+function updateAvailabilityDisplay(isAvailable) {
+    const availabilityStatus = document.getElementById('availabilityStatus');
+    if (availabilityStatus) {
+        availabilityStatus.textContent = isAvailable ? 'Available for Calls' : 'Not Available';
+        availabilityStatus.style.color = isAvailable ? 'var(--accent-green)' : 'var(--accent-red)';
+    }
+}
+
+// Setup profile listeners
+function setupProfileListeners() {
     // Profile form submission
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
         profileForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            await handleProfileSubmit(userId);
+            await saveProfile();
         });
     }
     
-    // Profile picture upload (simplified without storage)
-    const profilePictureInput = document.getElementById('profilePictureInput');
-    if (profilePictureInput) {
-        profilePictureInput.addEventListener('change', function(e) {
-            handleProfilePictureUpload(e, userId);
+    // Availability toggle
+    const availabilityToggle = document.getElementById('availabilityToggle');
+    if (availabilityToggle) {
+        availabilityToggle.addEventListener('change', function() {
+            updateAvailability(this.checked);
         });
+    }
+    
+    // Profile picture upload
+    const pictureInput = document.getElementById('profilePictureInput');
+    if (pictureInput) {
+        pictureInput.addEventListener('change', handlePictureUpload);
     }
     
     // Logout button
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function(e) {
-            e.preventDefault();
-            try {
+        logoutBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure you want to logout?')) {
                 await auth.signOut();
                 window.location.href = 'index.html';
-            } catch (error) {
-                console.error("Error signing out:", error);
-                showAlert('Error signing out', 'error');
             }
-        });
-    }
-    
-    // Mobile menu
-    const mobileMenuBtn = document.querySelector('.mobile-menu');
-    const navLinks = document.querySelector('.nav-links');
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener('click', function() {
-            navLinks.classList.toggle('show');
         });
     }
 }
 
-// Handle profile form submission
-async function handleProfileSubmit(userId) {
+// Save profile
+async function saveProfile() {
     try {
-        showAlert('Saving profile...', 'info');
+        if (!currentUser || !userProfile) return;
+        
+        showLoading(true);
         
         // Get form values
         const displayName = document.getElementById('displayName').value.trim();
         const username = document.getElementById('username').value.trim().toLowerCase();
         const bio = document.getElementById('bio').value.trim();
-        const interests = document.getElementById('interests').value.split(',').map(i => i.trim()).filter(i => i);
-        const available = document.getElementById('availabilityToggle').checked;
+        const interests = document.getElementById('interests').value
+            .split(',')
+            .map(i => i.trim())
+            .filter(i => i);
         
-        // Basic validation
+        // Validation
         if (!displayName) {
             showAlert('Display name is required', 'error');
+            showLoading(false);
             return;
         }
         
-        if (!username) {
-            showAlert('Username is required', 'error');
-            return;
-        }
-        
-        // Check username uniqueness (simplified - in real app, check against other users)
-        if (username.length < 3) {
+        if (!username || username.length < 3) {
             showAlert('Username must be at least 3 characters', 'error');
+            showLoading(false);
             return;
         }
         
-        // Get current user
-        const user = auth.currentUser;
-        if (!user) {
-            showAlert('You must be logged in to save profile', 'error');
-            return;
-        }
-        
-        // Prepare profile data
-        const profileData = {
-            userId: userId,
-            email: user.email,
-            displayName: displayName,
-            username: username,
-            bio: bio,
-            interests: interests,
-            available: available,
+        // Update profile
+        const updatedProfile = {
+            ...userProfile,
+            displayName,
+            username,
+            bio,
+            interests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        // Add createdAt if this is a new profile
-        const profileDoc = await db.collection('profiles').doc(userId).get();
-        if (!profileDoc.exists) {
-            profileData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        }
+        await db.collection('profiles').doc(currentUser.uid).set(updatedProfile, { merge: true });
         
-        // Save to Firestore
-        await db.collection('profiles').doc(userId).set(profileData, { merge: true });
+        userProfile = updatedProfile;
         
         showAlert('Profile saved successfully!', 'success');
-        
-        // Update welcome message if on dashboard
-        if (typeof updateWelcomeMessage === 'function') {
-            updateWelcomeMessage(user);
-        }
+        showLoading(false);
         
     } catch (error) {
-        console.error("Error updating profile:", error);
+        console.error("Error saving profile:", error);
         showAlert('Error saving profile: ' + error.message, 'error');
+        showLoading(false);
     }
 }
 
-// Handle profile picture upload (simplified without Firebase Storage)
-function handleProfilePictureUpload(event, userId) {
+// Update availability
+async function updateAvailability(isAvailable) {
     try {
-        const file = event.target.files[0];
-        if (!file) return;
+        if (!currentUser || !userProfile) return;
         
-        // Check file type
-        if (!file.type.match('image.*')) {
-            showAlert('Please select an image file', 'error');
-            return;
-        }
+        await db.collection('profiles').doc(currentUser.uid).update({
+            available: isAvailable,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         
-        // Check file size (max 2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            showAlert('Image must be less than 2MB', 'error');
-            return;
-        }
+        userProfile.available = isAvailable;
+        updateAvailabilityDisplay(isAvailable);
         
-        showAlert('Uploading profile picture...', 'info');
-        
-        // Create a local URL for preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const profilePicture = document.getElementById('profilePicture');
-            if (profilePicture) {
-                profilePicture.src = e.target.result;
-            }
-            
-            // For now, we'll just store the data URL (in production, upload to storage)
-            // showAlert('Profile picture updated (locally)', 'success');
-            
-            // In a real app, you would upload to Firebase Storage here
-            // and save the download URL to the profile document
-        };
-        
-        reader.readAsDataURL(file);
+        showAlert(`You are now ${isAvailable ? 'available' : 'unavailable'} for calls`, 'success');
         
     } catch (error) {
-        console.error("Error handling file upload:", error);
-        showAlert('Error uploading image: ' + error.message, 'error');
+        console.error("Error updating availability:", error);
+        showAlert('Error updating availability', 'error');
     }
 }
 
-// Utility function to show alerts
+// Handle picture upload (simplified - just updates locally for now)
+function handlePictureUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Check if it's an image
+    if (!file.type.match('image.*')) {
+        showAlert('Please select an image file', 'error');
+        return;
+    }
+    
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+        showAlert('Image must be less than 2MB', 'error');
+        return;
+    }
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('profilePicture').src = e.target.result;
+        showAlert('Profile picture updated (locally)', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+// Show loading state
+function showLoading(isLoading) {
+    const form = document.getElementById('profileForm');
+    const button = form ? form.querySelector('button[type="submit"]') : null;
+    
+    if (button) {
+        if (isLoading) {
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            button.disabled = true;
+        } else {
+            button.innerHTML = '<i class="fas fa-save"></i> Save Profile';
+            button.disabled = false;
+        }
+    }
+}
+
+// Show alert
 function showAlert(message, type = 'info') {
     // Remove existing alerts
-    document.querySelectorAll('.alert.fixed').forEach(el => el.remove());
+    const existingAlert = document.querySelector('.alert.fixed');
+    if (existingAlert) existingAlert.remove();
     
-    // Create alert element
+    // Create alert
     const alert = document.createElement('div');
     alert.className = `alert alert-${type} fixed`;
-    alert.style.position = 'fixed';
-    alert.style.top = '20px';
-    alert.style.right = '20px';
-    alert.style.zIndex = '10000';
-    alert.style.minWidth = '300px';
-    alert.style.maxWidth = '400px';
     alert.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
         ${message}
     `;
     
+    // Style alert
+    alert.style.position = 'fixed';
+    alert.style.top = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '10000';
+    alert.style.minWidth = '300px';
+    
     document.body.appendChild(alert);
     
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
-    }, 5000);
+    // Auto remove
+    setTimeout(() => alert.remove(), 5000);
 }
