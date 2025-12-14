@@ -3,29 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whisper+me - 5-Minute Private Voice Chats</title>
-    <meta name="description" content="Connect through private 5-minute voice conversations. Buy tokens, earn money, and meet interesting people.">
-    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
-    
-    <!-- Open Graph for Social Sharing -->
-    <meta property="og:title" content="Whisper+me - Private Voice Chats">
-    <meta property="og:description" content="Earn $12 per 5-minute call. Connect through private voice conversations.">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=1200">
-    <meta property="og:url" content="https://iaiwaf.com">
-    <meta property="og:type" content="website">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Whisper+me - Private Voice Chats">
-    <meta name="twitter:description" content="Earn $12 per 5-minute call. Connect through private voice conversations.">
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=1200">
+    <title>Whisper+me - Private Voice Chats</title>
+    <meta name="description" content="Connect with amazing people through private voice conversations. Earn money by sharing your wisdom. $15 per token.">
     
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Ads -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1184595877548269" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4QYRJLTXTT"></script>
@@ -47,10 +31,10 @@
             </div>
             <div class="nav-links">
                 <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
-                <a href="auth.html?type=login" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Login</a>
-                <a href="auth.html?type=signup" id="signupBtn"><i class="fas fa-user-plus"></i> Sign Up</a>
-                <a href="dashboard.html" id="dashboardBtn" style="display:none;"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a href="#" id="logoutBtn" style="display:none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="#features"><i class="fas fa-star"></i> Features</a>
+                <a href="#how-it-works"><i class="fas fa-play-circle"></i> How It Works</a>
+                <a href="auth.html?type=login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="auth.html?type=signup" class="btn btn-primary btn-small"><i class="fas fa-user-plus"></i> Sign Up</a>
             </div>
             <div class="mobile-menu">
                 <i class="fas fa-bars"></i>
@@ -60,63 +44,207 @@
 
     <!-- Hero Section -->
     <section class="hero">
+        <div class="hero-content">
+            <h1>Private Voice Chats with Amazing People</h1>
+            <p>Connect one-on-one through intimate voice conversations. Share wisdom, gain insights, and build meaningful connections. Earn money by being a whisperer.</p>
+            
+            <div class="token-price-display" style="margin-bottom: 2rem; background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3);">
+                <i class="fas fa-coins"></i> Only $15 per token • 1 token = 15 minute call
+            </div>
+            
+            <div class="hero-buttons">
+                <a href="auth.html?type=signup" class="btn btn-primary" style="background: white; color: var(--primary-blue); border-color: white;">
+                    <i class="fas fa-user-plus"></i> Start Earning Now
+                </a>
+                <a href="#how-it-works" class="btn btn-outline" style="color: white; border-color: white;">
+                    <i class="fas fa-play-circle"></i> See How It Works
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="section">
         <div class="container">
-            <div class="hero-content">
-                <h2>Connect Through Voice</h2>
-                <p>Get paid $12 for 5-minute voice conversations. Share your wisdom, connect with interesting people, and earn instantly.</p>
-                <div class="hero-buttons">
-                    <a href="auth.html?type=signup" class="btn btn-primary btn-large">
-                        <i class="fas fa-user-plus"></i> Start Earning
-                    </a>
-                    <a href="#whispers" class="btn btn-outline btn-large">
-                        <i class="fas fa-search"></i> Browse Whispers
-                    </a>
+            <h2 class="section-title">Why Choose Whisper+me?</h2>
+            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
+                We've created the perfect platform for meaningful voice connections. Whether you want to share your expertise or seek guidance, we make it simple and rewarding.
+            </p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3>100% Private</h3>
+                    <p>End-to-end encrypted conversations. Your privacy is our top priority. No recordings, no logs, just genuine connections.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <h3>Earn Real Money</h3>
+                    <p>Get paid for your time and wisdom. Set your availability and earn $15 per 15-minute call. Payouts processed weekly.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Quality Community</h3>
+                    <p>Connect with verified, interesting people. Our screening process ensures a safe and respectful environment for everyone.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Instant Connections</h3>
+                    <p>No scheduling needed. Find available whisperers or get matched instantly based on your interests and needs.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Safe & Secure</h3>
+                    <p>Verified profiles, secure payments, and 24/7 moderation. Your safety and satisfaction are guaranteed.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-headphones"></i>
+                    </div>
+                    <h3>HD Audio Quality</h3>
+                    <p>Crystal clear voice calls with noise cancellation. Focus on the conversation, not the technology.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Main Content Container -->
-    <div class="main-content-container">
-        
-        <!-- Available Whispers -->
-        <section id="whispers" class="section">
-            <div class="container">
-                <h2 class="section-title">Available Whispers</h2>
-                <p class="section-subtitle">Connect with interesting people right now</p>
-                
-                <div class="filter-buttons">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="online">Online Now</button>
-                    <button class="filter-btn" data-filter="popular">Most Popular</button>
-                    <button class="filter-btn" data-filter="new">New Users</button>
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="section" style="background: linear-gradient(135deg, var(--background-light) 0%, white 100%);">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
+                Getting started is simple. Whether you want to listen or share, our platform makes it easy to connect.
+            </p>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Create Your Profile</h3>
+                    <p>Sign up in seconds and create your profile. Add your interests, expertise, and a profile picture to help others connect with you.</p>
                 </div>
                 
-                <div class="whispers-grid" id="whispersContainer">
-                    <!-- Whispers loaded by JavaScript -->
-                    <div class="loading">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading whispers...</p>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Get Verified</h3>
+                    <p>Complete our quick verification process to ensure safety and build trust within our community.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Set Availability</h3>
+                    <p>Choose when you're available to receive calls. Set your schedule or go live instantly when you're ready.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Start Earning</h3>
+                    <p>Receive calls, share your wisdom, and earn $15 per 15-minute session. Get paid weekly via your preferred method.</p>
+                </div>
+            </div>
+            
+            <div class="cta-buttons" style="margin-top: 4rem;">
+                <a href="auth.html?type=signup" class="btn btn-primary btn-large">
+                    <i class="fas fa-user-plus"></i> Start as a Whisperer
+                </a>
+                <a href="#testimonials" class="btn btn-outline">
+                    <i class="fas fa-play-circle"></i> See Success Stories
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="section testimonials">
+        <div class="container">
+            <h2 class="section-title">Success Stories</h2>
+            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
+                Join thousands of people who have found meaningful connections and earnings on Whisper+me
+            </p>
+            
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"I've made over $2,000 in my first month just by sharing my career coaching experience. The connections I've made are priceless."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">
+                                <img src="https://i.pravatar.cc/150?img=1" alt="Sarah Chen">
+                            </div>
+                            <div class="author-info">
+                                <h4>Sarah Chen</h4>
+                                <p>Career Coach • 124 calls</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"As a college student, this has been life-changing. I can earn money while helping others with academic advice. Perfect flexibility!"</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">
+                                <img src="https://i.pravatar.cc/150?img=5" alt="Marcus Johnson">
+                            </div>
+                            <div class="author-info">
+                                <h4>Marcus Johnson</h4>
+                                <p>Student • 89 calls</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"I was nervous at first, but the community is so supportive. I've gained confidence and meaningful friendships through this platform."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">
+                                <img src="https://i.pravatar.cc/150?img=8" alt="Priya Patel">
+                            </div>
+                            <div class="author-info">
+                                <h4>Priya Patel</h4>
+                                <p>Life Coach • 156 calls</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
-        
-    </div>
+        </div>
+    </section>
 
-    <!-- Call to Action -->
-    <section class="cta-section">
+    <!-- CTA Section -->
+    <section class="section">
         <div class="container">
-            <div class="cta-content">
-                <h2>Ready to Start Earning?</h2>
-                <p>Join thousands of users who are already making money by sharing their wisdom and connecting with interesting people.</p>
-                <div class="cta-buttons">
-                    <a href="auth.html?type=signup" class="btn btn-primary btn-large">
-                        <i class="fas fa-user-plus"></i> Sign Up Now
-                    </a>
-                    <a href="#whispers" class="btn btn-outline btn-large">
-                        <i class="fas fa-search"></i> Browse Whispers
-                    </a>
+            <div class="cta-section">
+                <div class="cta-content">
+                    <h2>Ready to Start Your Journey?</h2>
+                    <p>Join thousands of whisperers and callers creating meaningful connections. Sign up today and get your first token for $15.</p>
+                    
+                    <div class="cta-buttons">
+                        <a href="auth.html?type=signup" class="btn btn-primary" style="background: white; color: var(--primary-blue);">
+                            <i class="fas fa-user-plus"></i> Sign Up Free
+                        </a>
+                        <a href="#features" class="btn btn-outline" style="color: white; border-color: white;">
+                            <i class="fas fa-question-circle"></i> Learn More
+                        </a>
+                    </div>
+                    
+                    <div style="margin-top: 2rem; font-size: 0.875rem; opacity: 0.8;">
+                        <p><i class="fas fa-shield-alt"></i> 100% secure • No credit card required to sign up</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -128,47 +256,44 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h3>Whisper+me</h3>
-                    <p>Private voice chats with amazing people. Earn money by sharing your wisdom.</p>
-                    <div class="token-price-display">
+                    <p>Connecting people through private voice conversations. Earn money by sharing your wisdom.</p>
+                    <div class="token-price-display" style="margin-top: 1rem; background: rgba(255,255,255,0.1); color: white; border: none;">
                         <i class="fas fa-coins"></i> $15 per token
                     </div>
                 </div>
                 <div class="footer-section">
                     <h3>Quick Links</h3>
                     <a href="index.html">Home</a>
-                    <a href="#whispers">Browse Whispers</a>
+                    <a href="#features">Features</a>
+                    <a href="#how-it-works">How It Works</a>
+                    <a href="#testimonials">Testimonials</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Account</h3>
                     <a href="auth.html?type=login">Login</a>
                     <a href="auth.html?type=signup">Sign Up</a>
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="payment.html">Buy Tokens</a>
                 </div>
                 <div class="footer-section">
                     <h3>Connect</h3>
                     <div class="social-links">
-                        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" title="Discord"><i class="fab fa-discord"></i></a>
-                        <a href="#" title="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-telegram"></i></a>
                     </div>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Whisper+me. All rights reserved. | $15 per Whisper token</p>
-                <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
-                    By using this site, you agree to our <a href="#" style="color: var(--accent-purple);">Terms</a> and <a href="#" style="color: var(--accent-purple);">Privacy Policy</a>
-                </p>
+                <p>&copy; 2024 Whisper+me. All rights reserved. | $15 per Whisper token | Privacy Policy | Terms of Service</p>
             </div>
         </div>
     </footer>
 
     <!-- JavaScript -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/main.js"></script>
-    
-    <!-- Mobile menu handler -->
     <script>
+        // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
             const mobileMenuBtn = document.querySelector('.mobile-menu');
             const navLinks = document.querySelector('.nav-links');
@@ -185,7 +310,71 @@
                     });
                 });
             }
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // Add active class to nav links based on scroll position
+            window.addEventListener('scroll', function() {
+                const sections = document.querySelectorAll('section[id]');
+                const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+                
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (scrollY >= (sectionTop - 100)) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.add('active');
+                    }
+                });
+            });
         });
+        
+        // Simple animation for feature cards on scroll
+        function animateOnScroll() {
+            const cards = document.querySelectorAll('.feature-card');
+            cards.forEach(card => {
+                const cardTop = card.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (cardTop < windowHeight - 100) {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }
+            });
+        }
+        
+        // Initial setup for animations
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        });
+        
+        window.addEventListener('scroll', animateOnScroll);
+        window.addEventListener('load', animateOnScroll);
     </script>
 </body>
 </html>

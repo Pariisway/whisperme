@@ -1,292 +1,321 @@
-// Authentication handling for Whisper+me
+// Authentication JavaScript for Whisper+me
 console.log("Auth.js loaded");
 
-// DOM Elements
-let authTitle;
-let authSubtitle;
-let authForm;
-let authBtn;
-let authMessage;
-let emailInput;
-let passwordInput;
-let switchLink;
-
-// Initialize when DOM is loaded
+// Initialize auth when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Auth page loaded");
     
-    // Get DOM elements safely
-    authTitle = document.getElementById('authTitle');
-    authSubtitle = document.getElementById('authSubtitle');
-    authForm = document.getElementById('authForm');
-    authBtn = document.getElementById('authBtn');
-    authMessage = document.getElementById('authMessage');
-    emailInput = document.getElementById('email');
-    passwordInput = document.getElementById('password');
-    switchLink = document.getElementById('switchLink');
-    
-    // Get URL parameters
+    // Check URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const type = urlParams.get('type') || 'login';
     
-    // Set up form based on type
+    // Setup auth form based on type
     setupAuthForm(type);
     
-    // Check if user is already logged in
-    if (typeof auth !== 'undefined') {
-        auth.onAuthStateChanged(function(user) {
-            if (user && (window.location.pathname.includes('auth.html') || window.location.pathname.includes('login.html'))) {
-                // User is already logged in, redirect to dashboard
-                console.log("User already logged in, redirecting to dashboard");
-                window.location.href = 'dashboard.html';
-            }
-        });
-    }
-    
-    // Setup event listeners
-    setupAuthListeners();
+    // Setup form submission
+    setupFormSubmission();
 });
 
 // Setup auth form based on type (login/signup)
 function setupAuthForm(type) {
-    // Safety check for elements
-    if (authTitle) {
-        authTitle.textContent = type === 'signup' ? 'Sign Up' : 'Login';
+    const authTitle = document.getElementById('authTitle');
+    const authSubtitle = document.getElementById('authSubtitle');
+    const authBtn = document.getElementById('authBtn');
+    const switchText = document.getElementById('switchText');
+    const switchLink = document.getElementById('switchLink');
+    const authForm = document.getElementById('authForm');
+    
+    // Check if Firebase is ready
+    if (typeof auth === 'undefined') {
+        console.error("Firebase auth not loaded yet");
+        showAuthMessage("Loading authentication...", "info");
+        // Wait for Firebase
+        if (typeof waitForFirebase !== 'undefined') {
+            waitForFirebase(function(firebaseReady) {
+                if (firebaseReady) {
+                    console.log("Firebase ready, setting up form");
+                    setupAuthForm(type);
+                }
+            });
+        }
+        return;
     }
     
-    if (authSubtitle) {
-        authSubtitle.textContent = type === 'signup' 
-            ? 'Create your account to start whispering' 
-            : 'Enter your credentials to continue';
-    }
-    
-    if (authBtn) {
-        authBtn.innerHTML = type === 'signup' 
-            ? '<i class="fas fa-user-plus"></i> Sign Up' 
-            : '<i class="fas fa-sign-in-alt"></i> Login';
-    }
-    
-    if (switchLink) {
-        if (type === 'signup') {
-            switchLink.textContent = 'Already have an account? Login here';
-            switchLink.href = 'auth.html?type=login';
-        } else {
-            switchLink.textContent = "Don't have an account? Sign up here";
-            switchLink.href = 'auth.html?type=signup';
+    if (type === 'signup') {
+        // Setup signup form
+        authTitle.textContent = 'Create Account';
+        authSubtitle.textContent = 'Join Whisper+me and start earning today';
+        authBtn.innerHTML = '<i class="fas fa-user-plus"></i> Sign Up';
+        switchText.innerHTML = 'Already have an account? ';
+        switchLink.textContent = 'Login here';
+        switchLink.href = 'auth.html?type=login';
+        
+        // Add confirm password field if it doesn't exist
+        if (!document.getElementById('confirmPassword')) {
+            const confirmPasswordField = `
+                <div class="form-group">
+                    <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+            `;
+            const passwordField = document.querySelector('[for="password"]').parentElement;
+            passwordField.insertAdjacentHTML('afterend', confirmPasswordField);
+        }
+    } else {
+        // Setup login form
+        authTitle.textContent = 'Login';
+        authSubtitle.textContent = 'Welcome back to Whisper+me';
+        authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+        switchText.innerHTML = 'Don\'t have an account? ';
+        switchLink.textContent = 'Sign up here';
+        switchLink.href = 'auth.html?type=signup';
+        
+        // Remove confirm password field if it exists
+        const confirmPasswordField = document.getElementById('confirmPassword');
+        if (confirmPasswordField) {
+            confirmPasswordField.parentElement.remove();
         }
     }
     
-    // Add/remove confirm password field
-    if (type === 'signup') {
-        addConfirmPasswordField();
-    } else {
-        removeConfirmPasswordField();
+    // Update nav active states
+    const loginNavBtn = document.getElementById('loginNavBtn');
+    const signupNavBtn = document.getElementById('signupNavBtn');
+    
+    if (loginNavBtn && signupNavBtn) {
+        if (type === 'signup') {
+            loginNavBtn.classList.remove('active');
+            signupNavBtn.classList.add('active');
+        } else {
+            loginNavBtn.classList.add('active');
+            signupNavBtn.classList.remove('active');
+        }
     }
 }
 
-// Add confirm password field for signup
-function addConfirmPasswordField() {
-    // Check if already exists
-    if (document.getElementById('confirmPassword')) return;
+// Setup form submission
+function setupFormSubmission() {
+    const authForm = document.getElementById('authForm');
+    if (!authForm) return;
     
-    const confirmPasswordGroup = document.createElement('div');
-    confirmPasswordGroup.className = 'form-group';
-    confirmPasswordGroup.innerHTML = `
-        <label for="confirmPassword"><i class="fas fa-lock"></i> Confirm Password</label>
-        <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••">
-    `;
-    
-    // Insert before the button
-    if (authBtn && authBtn.parentNode) {
-        authBtn.parentNode.insertBefore(confirmPasswordGroup, authBtn);
-    }
-}
-
-// Remove confirm password field
-function removeConfirmPasswordField() {
-    const confirmPassword = document.getElementById('confirmPassword');
-    if (confirmPassword && confirmPassword.parentNode) {
-        confirmPassword.parentNode.remove();
-    }
-}
-
-// Setup auth event listeners
-function setupAuthListeners() {
-    // Auth button click
-    if (authBtn) {
-        authBtn.addEventListener('click', handleAuthSubmit);
-    }
-    
-    // Form submit on enter
-    if (authForm) {
-        authForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleAuthSubmit();
-        });
-    }
-}
-
-// Handle auth form submission
-async function handleAuthSubmit() {
-    // Get URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const type = urlParams.get('type') || 'login';
-    
-    // Get form values
-    const email = emailInput ? emailInput.value.trim() : '';
-    const password = passwordInput ? passwordInput.value : '';
-    const confirmPassword = type === 'signup' ? document.getElementById('confirmPassword')?.value : null;
-    
-    // Validate inputs
-    if (!email || !password) {
-        showAuthMessage('Please fill in all fields', 'error');
-        return;
-    }
-    
-    if (type === 'signup' && password !== confirmPassword) {
-        showAuthMessage('Passwords do not match', 'error');
-        return;
-    }
-    
-    if (password.length < 6) {
-        showAuthMessage('Password must be at least 6 characters', 'error');
-        return;
-    }
-    
-    try {
-        showAuthMessage('Processing...', 'info');
+    authForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get form values
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword')?.value;
+        
+        // Get current type from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type') || 'login';
+        
+        // Validate form
+        if (!email || !password) {
+            showAuthMessage('Please fill in all fields', 'error');
+            return;
+        }
         
         if (type === 'signup') {
-            await handleSignUp(email, password);
+            if (!confirmPassword) {
+                showAuthMessage('Please confirm your password', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showAuthMessage('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAuthMessage('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            // Sign up user
+            await signUpUser(email, password);
         } else {
-            await handleLogin(email, password);
+            // Log in user
+            await logInUser(email, password);
         }
+    });
+}
+
+// Sign up user
+async function signUpUser(email, password) {
+    try {
+        showAuthMessage('Creating your account...', 'info');
+        
+        // Check if Firebase auth is available
+        if (typeof auth === 'undefined') {
+            throw new Error('Authentication service not available. Please refresh the page.');
+        }
+        
+        // Create user with email and password
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        console.log("User created:", user.uid);
+        
+        // Create user document in Firestore
+        if (typeof db !== 'undefined') {
+            await db.collection('users').doc(user.uid).set({
+                email: email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                tokens: 0,
+                role: 'user'
+            });
+            
+            // Create initial user stats
+            await db.collection('userStats').doc(user.uid).set({
+                earnings: 0,
+                calls: 0,
+                rating: 0,
+                activeTime: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Create initial profile
+            await db.collection('profiles').doc(user.uid).set({
+                userId: user.uid,
+                email: email,
+                displayName: email.split('@')[0],
+                username: email.split('@')[0].toLowerCase(),
+                available: true,
+                bio: '',
+                profilePicture: '',
+                interests: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        showAuthMessage('Account created successfully! Redirecting...', 'success');
+        
+        // Send email verification
+        await user.sendEmailVerification();
+        
+        // Redirect to dashboard after delay
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 2000);
         
     } catch (error) {
-        console.error("Auth error:", error);
-        showAuthMessage(getAuthErrorMessage(error), 'error');
+        console.error("Sign up error:", error);
+        
+        let errorMessage = 'Error creating account: ';
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                errorMessage = 'Email already in use. Try logging in instead.';
+                break;
+            case 'auth/invalid-email':
+                errorMessage = 'Invalid email address.';
+                break;
+            case 'auth/operation-not-allowed':
+                errorMessage = 'Email/password accounts are not enabled.';
+                break;
+            case 'auth/weak-password':
+                errorMessage = 'Password is too weak. Use at least 6 characters.';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        
+        showAuthMessage(errorMessage, 'error');
     }
 }
 
-// Handle user sign up
-async function handleSignUp(email, password) {
-    showAuthMessage('Creating your account...', 'info');
-    
-    // Create user with email and password
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-    
-    // Update user profile
-    await user.updateProfile({
-        displayName: email.split('@')[0]
-    });
-    
-    // Create user document in Firestore
-    await db.collection('users').doc(user.uid).set({
-        email: email,
-        displayName: email.split('@')[0],
-        tokens: 0,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    // Create profile document
-    await db.collection('profiles').doc(user.uid).set({
-        userId: user.uid,
-        email: email,
-        displayName: email.split('@')[0],
-        username: email.split('@')[0].toLowerCase(),
-        bio: 'Welcome to Whisper+me!',
-        profilePicture: '',
-        available: false,
-        socialLinks: {},
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    // Create user stats document
-    await db.collection('userStats').doc(user.uid).set({
-        userId: user.uid,
-        calls: 0,
-        earnings: 0,
-        rating: 0,
-        totalRatingCount: 0,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    showAuthMessage('Account created successfully! Redirecting...', 'success');
-    
-    // Redirect to dashboard after delay
-    setTimeout(() => {
-        window.location.href = 'dashboard.html';
-    }, 1500);
-}
-
-// Handle user login
-async function handleLogin(email, password) {
-    showAuthMessage('Logging in...', 'info');
-    
-    // Sign in user
-    await auth.signInWithEmailAndPassword(email, password);
-    
-    showAuthMessage('Login successful! Redirecting...', 'success');
-    
-    // Redirect to dashboard after delay
-    setTimeout(() => {
-        window.location.href = 'dashboard.html';
-    }, 1000);
+// Log in user
+async function logInUser(email, password) {
+    try {
+        showAuthMessage('Logging in...', 'info');
+        
+        // Check if Firebase auth is available
+        if (typeof auth === 'undefined') {
+            throw new Error('Authentication service not available. Please refresh the page.');
+        }
+        
+        // Sign in with email and password
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Check if email is verified
+        if (!user.emailVerified) {
+            showAuthMessage('Please verify your email before logging in. Check your inbox.', 'warning');
+            await auth.signOut();
+            return;
+        }
+        
+        console.log("User logged in:", user.uid);
+        
+        showAuthMessage('Login successful! Redirecting...', 'success');
+        
+        // Redirect to dashboard after delay
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error("Login error:", error);
+        
+        let errorMessage = 'Error logging in: ';
+        switch (error.code) {
+            case 'auth/invalid-email':
+                errorMessage = 'Invalid email address.';
+                break;
+            case 'auth/user-disabled':
+                errorMessage = 'This account has been disabled.';
+                break;
+            case 'auth/user-not-found':
+                errorMessage = 'No account found with this email.';
+                break;
+            case 'auth/wrong-password':
+                errorMessage = 'Incorrect password.';
+                break;
+            case 'auth/too-many-requests':
+                errorMessage = 'Too many login attempts. Try again later.';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        
+        showAuthMessage(errorMessage, 'error');
+    }
 }
 
 // Show auth message
 function showAuthMessage(message, type = 'info') {
-    if (!authMessage) {
-        // Create a temporary message if element doesn't exist
-        const tempMsg = document.createElement('div');
-        tempMsg.className = `alert alert-${type}`;
-        tempMsg.textContent = message;
-        tempMsg.style.position = 'fixed';
-        tempMsg.style.top = '20px';
-        tempMsg.style.right = '20px';
-        tempMsg.style.zIndex = '1000';
-        document.body.appendChild(tempMsg);
-        setTimeout(() => tempMsg.remove(), 5000);
-        return;
-    }
+    const authMessage = document.getElementById('authMessage');
+    if (!authMessage) return;
     
-    // Set message and type
     authMessage.textContent = message;
     authMessage.className = `alert alert-${type}`;
-    authMessage.style.display = 'block';
+    authMessage.style.display = 'flex';
     
-    // Auto-hide success messages
-    if (type === 'success') {
-        setTimeout(() => {
-            authMessage.style.display = 'none';
-        }, 3000);
-    }
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+        authMessage.style.display = 'none';
+    }, 5000);
 }
 
-// Get user-friendly auth error message
-function getAuthErrorMessage(error) {
-    switch(error.code) {
-        case 'auth/email-already-in-use':
-            return 'Email already in use. Please try logging in.';
-        case 'auth/invalid-email':
-            return 'Invalid email address.';
-        case 'auth/operation-not-allowed':
-            return 'Email/password accounts are not enabled.';
-        case 'auth/weak-password':
-            return 'Password is too weak.';
-        case 'auth/user-disabled':
-            return 'This account has been disabled.';
-        case 'auth/user-not-found':
-            return 'No account found with this email.';
-        case 'auth/wrong-password':
-            return 'Incorrect password.';
-        case 'auth/too-many-requests':
-            return 'Too many failed attempts. Please try again later.';
-        default:
-            return error.message || 'An error occurred. Please try again.';
-    }
+// Check if user is already logged in
+function checkAuthState() {
+    if (typeof auth === 'undefined') return;
+    
+    auth.onAuthStateChanged(function(user) {
+        if (user && window.location.pathname.includes('auth.html')) {
+            // User is logged in but on auth page, redirect to dashboard
+            console.log("User already logged in, redirecting to dashboard");
+            window.location.href = 'dashboard.html';
+        }
+    });
+}
+
+// Initialize auth state check
+if (typeof waitForFirebase !== 'undefined') {
+    waitForFirebase(function(firebaseReady) {
+        if (firebaseReady) {
+            checkAuthState();
+        }
+    });
 }
