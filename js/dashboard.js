@@ -5,29 +5,39 @@ console.log("Dashboard.js loaded");
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("Dashboard loaded");
     
-    // Check if Firebase is loaded
-    if (typeof auth === 'undefined') {
-        console.error("Firebase auth not loaded. Redirecting to login.");
-        window.location.href = 'auth.html?type=login';
-        return;
-    }
-    
-    // Check authentication
-    auth.onAuthStateChanged(async function(user) {
-        if (!user) {
-            console.log("No user found, redirecting to login");
+    // Wait a moment for Firebase to initialize
+    setTimeout(async () => {
+        // Check if Firebase is loaded
+        if (typeof auth === 'undefined') {
+            console.error("Firebase auth not loaded. Redirecting to login.");
             window.location.href = 'auth.html?type=login';
             return;
         }
         
-        console.log("User logged in:", user.email);
-        
-        // Load dashboard content
-        await loadDashboardContent(user.uid, user.email);
-        
-        // Setup event listeners
-        setupDashboardListeners(user.uid);
-    });
+        // Check authentication
+        auth.onAuthStateChanged(async function(user) {
+            console.log("Auth state changed in dashboard. User:", user ? "exists" : "null");
+            
+            if (!user) {
+                console.log("No user found, redirecting to login");
+                window.location.href = 'auth.html?type=login';
+                return;
+            }
+            
+            console.log("User logged in:", user.email);
+            
+            try {
+                // Load dashboard content
+                await loadDashboardContent(user.uid, user.email);
+                
+                // Setup event listeners
+                setupDashboardListeners(user.uid);
+            } catch (error) {
+                console.error("Error loading dashboard:", error);
+                showAlert('Error loading dashboard data', 'error');
+            }
+        });
+    }, 1000); // Give Firebase time to initialize
 });
 
 // Load dashboard content
