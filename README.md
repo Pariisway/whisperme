@@ -33,3 +33,19 @@ A platform for 5-minute private voice chats using tokens.
 
 ## License
 MIT License
+
+## 🔒 Safe Development Practices
+
+### Before Pushing to GitHub:
+1. Always check that `js/firebase-config.js` contains placeholder values, not real API keys
+2. Run `./safe-push.sh` instead of direct git commands
+3. Keep backup files locally (add them to .gitignore)
+
+### File Structure:
+- `js/firebase-config-REAL.js` - Your real Firebase config (in .gitignore)
+- `js/firebase-config.js` - Placeholder config for GitHub
+- `safe-push.sh` - Safe push script (in .gitignore)
+
+### Backup Strategy:
+- Backup files should end with `.backup` or be in `backups/` directory
+- All backups are ignored by git via .gitignore

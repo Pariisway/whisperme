@@ -1,65 +1,24 @@
-# SENSITIVE FILES (NEVER COMMIT THESE)
+# Sensitive
 js/firebase-config.js
 firebase-service-account.json
-.firebaserc
 
-# BACKUP AND TEMPORARY FILES
-*.backup
+# Backups
 *.backup*
-*-backup.*
-*backup*
-*.tmp
-*.temp
 *backup*
 *BACKUP*
-*-fixed.js
-*-fix.*
-*_backup*
 backups/
-old/
+js/*-fixed.js
+js/fix-indexes.js
 
-# SCRIPT AND TEST FILES
+# Scripts
 *.sh
-*.md
-test-*
-TEST_*
-FIX_*
-deploy-*
-update.sh
-push*.sh
+deploy*.sh
 fix*.sh
+push*.sh
+update.sh
+test-*
 
-# DEVELOPMENT FILES
+# Development
 dashboard-nav-fix.html
 payment.html.backup
-index.html.backup
-dashboard.html.fixed
 temp_*
-verify-*
-
-# BUILD/GENERATED FILES
-node_modules/
-dist/
-build/
-coverage/
-*.log
-
-# IDE FILES
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS FILES
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# UNTRACKED FILES FROM YOUR LIST
-ads.txt
-call-waiting.html
-js/fix-indexes.js
-js/stripe-payment.js
-start.sh
-test-setup.html
-js/firebase-config-REAL.js
