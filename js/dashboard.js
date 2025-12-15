@@ -1,4 +1,4 @@
-// Dashboard.js - Fixed Version
+// Dashboard.js - Fixed with custom call price logic
 console.log('Dashboard.js loaded - Fixed version');
 
 let user, db;
@@ -58,15 +58,19 @@ async function loadUserData() {
         // Update welcome message
         const welcomeElement = document.getElementById('userWelcome');
         if (welcomeElement) {
-        console.log("Dashboard page loaded");
+            welcomeElement.innerHTML = `
+                <h2>Welcome back, <span style="color: var(--plus-green);">${userData.displayName || user.email.split('@')[0]}</span>!</h2>
+                <p>Ready to connect with your fans?</p>
+            `;
+        }
         
         // Update stats
         document.getElementById('totalCalls').textContent = userData.totalCalls || 0;
-        document.getElementById('coinsBalance').textContent = userData.tokens || 0;
+        document.getElementById('coinsBalance').textContent = userData.coins || 0;
         
         // Format earnings as currency
         const earnings = userData.totalEarnings || 0;
-        document.getElementById('earningsTotal').textContent = \`$\${earnings.toFixed(2)}\`;
+        document.getElementById('earningsTotal').textContent = `$${earnings.toFixed(2)}`;
         
         // Format rating
         const rating = userData.averageRating || 0;
@@ -84,6 +88,12 @@ async function loadUserData() {
                 
                 try {
                     await db.collection('users').doc(user.uid).update({
+                        available: newStatus,
+                        updatedAt: new Date()
+                    });
+                    
+                    // Also update profile
+                    await db.collection('profiles').doc(user.uid).update({
                         available: newStatus,
                         updatedAt: new Date()
                     });
@@ -111,7 +121,7 @@ function updateAvailabilityButton(isAvailable) {
         availabilityBtn.innerHTML = '<i class="fas fa-toggle-on"></i> Available for Calls';
         availabilityBtn.classList.remove('btn-secondary');
         availabilityBtn.classList.add('btn-primary');
-        availabilityBtn.style.background = '#10b981';
+        availabilityBtn.style.background = 'var(--plus-green)';
         availabilityBtn.setAttribute('data-available', 'true');
     } else {
         availabilityBtn.innerHTML = '<i class="fas fa-toggle-off"></i> Set as Available';
@@ -136,13 +146,13 @@ async function loadCallsWaiting() {
             .get();
         
         if (callsQuery.empty) {
-            container.innerHTML = \`
-                <div class="empty-state" style="text-align: center; padding: 2rem; color: #666;">
+            container.innerHTML = `
+                <div class="empty-state">
                     <i class="fas fa-phone-slash" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                     <p>No calls waiting</p>
                     <p style="font-size: 0.9rem; opacity: 0.7;">When you're available, calls will appear here</p>
                 </div>
-            \`;
+            `;
             return;
         }
         
@@ -151,29 +161,29 @@ async function loadCallsWaiting() {
             const call = doc.data();
             const timeAgo = formatTimeAgo(call.createdAt?.toDate());
             
-            html += \`
-                <div class="call-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #eee;">
+            html += `
+                <div class="call-item">
                     <div>
-                        <strong style="color: #1e3a8a;">\${call.callerName || 'Fan'}</strong>
-                        <div style="font-size: 0.85rem; color: #666;">Waiting \${timeAgo}</div>
+                        <strong style="color: var(--plus-green);">${call.callerName || 'Fan'}</strong>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">Waiting ${timeAgo}</div>
                     </div>
-                    <button class="btn btn-small btn-primary" onclick="acceptCall('\${doc.id}')" style="background: #10b981;">
+                    <button class="btn btn-small btn-primary" onclick="acceptCall('${doc.id}')">
                         <i class="fas fa-phone-alt"></i> Accept
                     </button>
                 </div>
-            \`;
+            `;
         });
         
         container.innerHTML = html;
         
     } catch (error) {
         console.error('Error loading calls:', error);
-        container.innerHTML = \`
-            <div class="empty-state" style="text-align: center; padding: 2rem; color: #666;">
-                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle" style="color: var(--warning-orange);"></i>
                 <p>Error loading calls</p>
             </div>
-        \`;
+        `;
     }
 }
 
@@ -189,46 +199,48 @@ async function loadFavoriteWhispers() {
             .get();
         
         if (favoritesQuery.empty) {
-            container.innerHTML = \`
-                <div class="empty-state" style="text-align: center; padding: 2rem; color: #666;">
-                    <i class="fas fa-heart" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5; color: #ef4444;"></i>
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-heart" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5; color: var(--danger-red);"></i>
                     <p>No favorite whispers yet</p>
                     <p style="font-size: 0.9rem; opacity: 0.7;">Save your favorite whispers to call them easily</p>
                 </div>
-            \`;
+            `;
             return;
         }
         
         let html = '';
         for (const doc of favoritesQuery.docs) {
             const favorite = doc.data();
-            const whisperDoc = await db.collection('users').doc(favorite.whisperId).get();
+            const whisperDoc = await db.collection('profiles').doc(favorite.whisperId).get();
             
             if (whisperDoc.exists) {
                 const whisper = whisperDoc.data();
                 const isAvailable = whisper.available || false;
+                const callPrice = whisper.callPrice || 1;
                 
-                html += \`
-                    <div class="favorite-item" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; gap: 1rem;">
-                        <img src="\${whisper.photoURL || 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 70)}" 
-                             alt="\${whisper.displayName}" 
-                             style="width: 50px; height: 50px; border-radius: 50%;">
-                        <div style="flex: 1;">
-                            <strong style="color: #1e3a8a;">\${whisper.displayName || 'Whisper'}</strong>
-                            <div style="font-size: 0.85rem; color: #666; margin-top: 0.25rem;">
-                                <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                                    <i class="fas fa-circle" style="font-size: 0.5rem; color: \${isAvailable ? '#10b981' : '#ef4444'};"></i>
-                                    \${isAvailable ? 'Available now' : 'Unavailable'}
-                                </span>
+                html += `
+                    <div class="favorite-item">
+                        <img src="${whisper.photoURL || 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 70)}" 
+                             alt="${whisper.displayName}" 
+                             class="favorite-avatar">
+                        <div class="favorite-info">
+                            <strong>${whisper.displayName || 'Whisper'}</strong>
+                            <div class="favorite-status">
+                                <i class="fas fa-circle" style="color: ${isAvailable ? 'var(--plus-green)' : 'var(--danger-red)'};"></i>
+                                ${isAvailable ? 'Available now' : 'Unavailable'}
+                            </div>
+                            <div class="favorite-price">
+                                <i class="fas fa-coins"></i> ${callPrice} token${callPrice !== 1 ? 's' : ''} per call
                             </div>
                         </div>
-                        <button class="btn btn-small \${isAvailable ? 'btn-primary' : 'btn-secondary'}" 
-                                onclick="callWhisper('\${favorite.whisperId}')"
-                                \${!isAvailable ? 'disabled' : ''}>
+                        <button class="btn btn-small ${isAvailable ? 'btn-primary' : 'btn-secondary'}" 
+                                onclick="callWhisper('${favorite.whisperId}')"
+                                ${!isAvailable ? 'disabled' : ''}>
                             <i class="fas fa-phone"></i> Call
                         </button>
                     </div>
-                \`;
+                `;
             }
         }
         
@@ -236,12 +248,12 @@ async function loadFavoriteWhispers() {
         
     } catch (error) {
         console.error('Error loading favorites:', error);
-        container.innerHTML = \`
-            <div class="empty-state" style="text-align: center; padding: 2rem; color: #666;">
-                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle" style="color: var(--warning-orange);"></i>
                 <p>Error loading favorites</p>
             </div>
-        \`;
+        `;
     }
 }
 
@@ -267,7 +279,7 @@ async function loadStatistics() {
         const callsElement = document.getElementById('totalCalls');
         
         if (earningsElement) {
-            earningsElement.textContent = \`$\${totalEarnings.toFixed(2)}\`;
+            earningsElement.textContent = `$${totalEarnings.toFixed(2)}`;
         }
         
         if (callsElement && callCount > 0) {
@@ -314,53 +326,29 @@ function formatTimeAgo(date) {
     return Math.floor(seconds / 86400) + ' day' + (Math.floor(seconds / 86400) === 1 ? '' : 's') + ' ago';
 }
 
-function showNotification(message) {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.style.cssText = \`
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #10b981;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        animation: slideIn 0.3s ease;
-    \`;
+function showNotification(message, type = 'success') {
+    // Remove existing notifications
+    const existing = document.querySelectorAll('.notification');
+    existing.forEach(n => n.remove());
     
-    notification.innerHTML = \`
-        <i class="fas fa-check-circle"></i>
-        <span>\${message}</span>
-    \`;
+    // Create notification
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
     
     document.body.appendChild(notification);
     
-    // Add animation styles if not present
-    if (!document.querySelector('#notification-styles')) {
-        const style = document.createElement('style');
-        style.id = 'notification-styles';
-        style.textContent = \`
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        \`;
-        document.head.appendChild(style);
-    }
-    
-    // Remove after 3 seconds
+    // Auto remove after 5 seconds
     setTimeout(() => {
         notification.style.animation = 'slideIn 0.3s ease reverse';
         setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    }, 5000);
 }
 
-// Make functions available globally
+// GLOBAL FUNCTIONS
 window.acceptCall = async function(sessionId) {
     try {
         // Update call status to accepted
@@ -369,8 +357,8 @@ window.acceptCall = async function(sessionId) {
             acceptedAt: new Date()
         });
         
-        // Redirect to call page
-        window.location.href = \`call.html?session=\${sessionId}\`;
+        // Redirect to call page as whisper
+        window.location.href = `call.html?session=${sessionId}&role=whisper`;
         
     } catch (error) {
         console.error('Error accepting call:', error);
@@ -380,18 +368,15 @@ window.acceptCall = async function(sessionId) {
 
 window.callWhisper = async function(whisperId) {
     try {
-        // Check if user has enough tokens
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        const userData = userDoc.data() || {};
-        
-        if (!userData.tokens || userData.tokens < 1) {
-            alert('You need at least 1 token to make a call. Please buy more tokens.');
-            window.location.href = 'payment.html';
+        // Check if user is logged in
+        if (!user) {
+            alert('Please login to make a call');
+            window.location.href = 'auth.html?type=login';
             return;
         }
         
-        // Get whisper info
-        const whisperDoc = await db.collection('users').doc(whisperId).get();
+        // Get whisper info including their call price
+        const whisperDoc = await db.collection('profiles').doc(whisperId).get();
         const whisperData = whisperDoc.data() || {};
         
         // Check if whisper is available
@@ -400,30 +385,45 @@ window.callWhisper = async function(whisperId) {
             return;
         }
         
-        // Create call session
+        // Get whisper's call price (default 1)
+        const callPrice = whisperData.callPrice || 1;
+        
+        // Check if user has enough tokens
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        const userData = userDoc.data() || {};
+        
+        if (!userData.coins || userData.coins < callPrice) {
+            alert(`You need at least ${callPrice} token${callPrice !== 1 ? 's' : ''} to make this call. You have ${userData.coins || 0} tokens.`);
+            window.location.href = 'payment.html';
+            return;
+        }
+        
+        // Create call session with custom price
         const callSession = {
             callerId: user.uid,
             callerName: userData.displayName || user.email.split('@')[0],
             whisperId: whisperId,
             whisperName: whisperData.displayName || 'Whisper',
+            callPrice: callPrice, // Store the actual price charged
             status: 'waiting',
-            cost: 1, // 1 token per call
+            cost: callPrice, // Tokens deducted
+            earnings: callPrice * 12, // $12 per token for whisper
             createdAt: new Date(),
             expiresAt: new Date(Date.now() + 2 * 60 * 1000) // 2 minutes to accept
         };
         
-        // Deduct token from caller
+        // Deduct tokens from caller
         await db.collection('users').doc(user.uid).update({
-            tokens: firebase.firestore.FieldValue.increment(-1)
+            coins: firebase.firestore.FieldValue.increment(-callPrice)
         });
         
-        // Add transaction
+        // Add transaction record
         await db.collection('transactions').add({
             userId: user.uid,
             type: 'call',
-            amount: 15, // $15 per token
-            tokens: -1,
-            description: 'Call to ' + (whisperData.displayName || 'Whisper'),
+            amount: callPrice * 15, // $15 per token
+            tokens: -callPrice,
+            description: `Call to ${whisperData.displayName || 'Whisper'} (${callPrice} token${callPrice !== 1 ? 's' : ''})`,
             status: 'completed',
             createdAt: new Date()
         });
@@ -432,7 +432,7 @@ window.callWhisper = async function(whisperId) {
         const sessionRef = await db.collection('callSessions').add(callSession);
         
         // Redirect to waiting page
-        window.location.href = \`call-waiting.html?session=\${sessionRef.id}\`;
+        window.location.href = `call-waiting.html?session=${sessionRef.id}&role=caller`;
         
     } catch (error) {
         console.error('Error calling whisper:', error);
