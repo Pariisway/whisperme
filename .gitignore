@@ -66,3 +66,5 @@ ehthumbs.db
 *.psd
 *.ai
 *.sketch
+*.sh
+scripts/
