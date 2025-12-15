@@ -1,24 +1,68 @@
-# Sensitive
+# 🔒 SENSITIVE FILES (NEVER COMMIT)
 js/firebase-config.js
+js/firebase-config-REAL.js
 firebase-service-account.json
+.firebaserc
+.env
+.env.local
 
-# Backups
+# 🗑️ BACKUP & TEMPORARY FILES
 *.backup*
 *backup*
 *BACKUP*
+*.old
+*.tmp
+*.temp
+*-fixed.js
+*-fix.*
+*_backup*
 backups/
-js/*-fixed.js
-js/fix-indexes.js
+old/
+temp/
 
-# Scripts
+# 📜 SCRIPTS (development only)
 *.sh
 deploy*.sh
 fix*.sh
 push*.sh
-update.sh
-test-*
+update*.sh
+test-*.sh
+check-*.sh
+verify-*.sh
 
-# Development
+# 🧪 TEST & DEVELOPMENT
+test-*
+TEST_*
+FIX_*
+*-test.html
+test-setup.html
+verify-*.html
 dashboard-nav-fix.html
 payment.html.backup
-temp_*
+
+# 🏗️ BUILD/GENERATED
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# 💻 IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.project
+.settings/
+
+# 🖥️ OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+._*
+ehthumbs.db
+
+# 🎨 ASSETS (if any)
+*.psd
+*.ai
+*.sketch
