@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Firestore Database</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .step { padding: 15px; margin: 15px 0; border-left: 4px solid #ccc; }
+        .step.complete { border-color: #48bb78; background: #f0fff4; }
+        .step.error { border-color: #f56565; background: #fff5f5; }
+        .step.current { border-color: #4299e1; background: #ebf8ff; }
+        .btn { padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; text-decoration: none; display: inline-block; margin: 10px 5px; }
+        .btn:hover { background: #5a67d8; }
+        .btn-success { background: #48bb78; }
+        .btn-danger { background: #f56565; }
+        .link { color: #667eea; text-decoration: underline; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔥 Fix Firestore Database</h1>
+            <p>Your Firebase configuration is correct, but you need to <strong>create the Firestore database instance</strong>.</p>
+            
+            <div class="step current">
+                <h3>🚨 Step 1: Create Firestore Database</h3>
+                <p>Click this link and follow the steps:</p>
+                <a href="https://console.firebase.google.com/project/whisper-chat-live/firestore" target="_blank" class="btn">
+                    👉 Open Firestore Console
+                </a>
+                <p><strong>Steps to complete:</strong></p>
+                <ol>
+                    <li>Click "Create Database" (big blue button)</li>
+                    <li>Choose location: <code>nam5 (us-central)</code></li>
+                    <li>Choose "Start in test mode"</li>
+                    <li>Click "Enable"</li>
+                    <li>Wait 60 seconds</li>
+                </ol>
+            </div>
+            
+            <div class="step">
+                <h3>📝 Step 2: Test Connection</h3>
+                <p>After creating the database, click below to test:</p>
+                <button onclick="testFirestore()" class="btn">Test Firestore Connection</button>
+                <div id="testResult" style="margin-top: 15px; padding: 15px; border-radius: 8px; display: none;"></div>
+            </div>
+            
+            <div class="step">
+                <h3>✅ Step 3: Verify Your Site Works</h3>
+                <p>After Firestore is created, test your site:</p>
+                <a href="auth.html?type=signup" class="btn btn-success">Test Signup</a>
+                <a href="dashboard.html" class="btn">Test Dashboard</a>
+            </div>
+            
+            <div style="margin-top: 30px; padding: 20px; background: #f7fafc; border-radius: 10px;">
+                <h3>💡 Why This Error Happened:</h3>
+                <p>You have <strong>enabled the Firestore API</strong> but <strong>haven't created the database instance</strong>.</p>
+                <p>Think of it like: You have electricity (API enabled) but no appliances plugged in (database instance).</p>
+                <p><strong>Fix time:</strong> 2 minutes</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Use your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyALbIJSI2C-p6IyMtj_F0ZqGyN1i79jOd4",
+            authDomain: "whisper-chat-live.firebaseapp.com",
+            databaseURL: "https://whisper-chat-live-default-rtdb.firebaseio.com",
+            projectId: "whisper-chat-live",
+            storageBucket: "whisper-chat-live.firebasestorage.app",
+            messagingSenderId: "302894848452",
+            appId: "1:302894848452:web:61a7ab21a269533c426c91"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized for testing");
+        }
+        
+        async function testFirestore() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>Testing Firestore connection...</p>';
+            
+            try {
+                const db = firebase.firestore();
+                
+                // Try to write a test document
+                await db.collection('_testConnection').doc('test').set({
+                    timestamp: new Date(),
+                    message: 'Firestore connection test successful!',
+                    project: 'whisper-chat-live'
+                });
+                
+                // Try to read it back
+                const doc = await db.collection('_testConnection').doc('test').get();
+                
+                if (doc.exists) {
+                    resultDiv.innerHTML = `
+                        <div style="background: #c6f6d5; color: #22543d; padding: 15px; border-radius: 8px; border-left: 4px solid #38a169;">
+                            <strong>✅ SUCCESS!</strong>
+                            <p>Firestore database is working!</p>
+                            <p>Project: <strong>${firebase.app().options.projectId}</strong></p>
+                            <p>You can now use your Whisper+me site.</p>
+                            <a href="auth.html?type=signup" class="btn btn-success" style="margin-top: 10px;">
+                                Go to Signup
+                            </a>
+                        </div>
+                    `;
+                    
+                    // Mark step as complete
+                    document.querySelectorAll('.step')[1].classList.add('complete');
+                }
+                
+            } catch (error) {
+                console.error("Firestore error:", error);
+                
+                if (error.code === 'failed-precondition') {
+                    resultDiv.innerHTML = `
+                        <div style="background: #fed7d7; color: #742a2a; padding: 15px; border-radius: 8px; border-left: 4px solid #e53e3e;">
+                            <strong>❌ Firestore Database Not Created</strong>
+                            <p>Error: ${error.message}</p>
+                            <p><strong>ACTION REQUIRED:</strong> You must create the Firestore database instance.</p>
+                            <a href="https://console.firebase.google.com/project/whisper-chat-live/firestore" target="_blank" class="btn btn-danger">
+                                👉 Click here to Create Firestore Database
+                            </a>
+                            <p style="margin-top: 10px;">Then wait 60 seconds and test again.</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div style="background: #fed7d7; color: #742a2a; padding: 15px; border-radius: 8px; border-left: 4px solid #e53e3e;">
+                            <strong>❌ Error: ${error.code}</strong>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

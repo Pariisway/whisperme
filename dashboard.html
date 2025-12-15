@@ -6,29 +6,38 @@
     <title>Dashboard - Whisper+me</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Your existing dashboard styles here */
-        /* ... keep all your existing styles ... */
-    </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4QYRJLTXTT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-4QYRJLTXTT');
+    </script>
+    <!-- Google Adsense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1184595877548269" crossorigin="anonymous"></script>
+    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
 </head>
 <body>
-    <!-- Loading Overlay -->
-    <div id="dashboardLoading" class="dashboard-loading">
-        <i class="fas fa-spinner fa-spin"></i>
-        <p>Loading your dashboard...</p>
-    </div>
-
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
             <a href="index.html" class="logo">
-                <h1>Whisper<span style="color: var(--primary-purple);">+me</span></h1>
+                <h1>Whisper<span>+me</span></h1>
             </a>
             <div class="nav-links">
-                <!-- Navigation will be loaded by navigation.js -->
-                <div style="color: var(--dark-text-secondary); padding: 0.5rem 1rem;">
-                    <i class="fas fa-spinner fa-spin"></i> Loading...
-                </div>
+                <a href="dashboard.html" class="nav-link active">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="profile.html" class="nav-link">
+                    <i class="fas fa-user-edit"></i> Profile
+                </a>
+                <a href="payment.html" class="nav-link">
+                    <i class="fas fa-coins"></i> Whisper Coins
+                </a>
+                <a href="#" id="logoutBtn" class="nav-link btn btn-small btn-outline">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
             </div>
             <div class="mobile-menu">
                 <i class="fas fa-bars"></i>
@@ -38,7 +47,85 @@
 
     <!-- Main Content -->
     <main class="dashboard-container">
-        <!-- ... rest of your dashboard content ... -->
+        <!-- Welcome Section -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2 class="section-title">Welcome back!</h2>
+                <div class="online-status online"></div>
+            </div>
+            <div id="userWelcome">Loading your account...</div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalCalls">0</div>
+                <div class="stat-label">Total Calls</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="coinsBalance">0</div>
+                <div class="stat-label">Whisper Coins</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="earningsTotal">$0</div>
+                <div class="stat-label">Total Earnings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="ratingAvg">0.0</div>
+                <div class="stat-label">Avg Rating</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <h2 class="section-title">Quick Actions</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <a href="payment.html" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Buy More Coins
+                </a>
+                <button id="toggleAvailability" class="btn btn-secondary">
+                    <i class="fas fa-toggle-on"></i> Available for Calls
+                </button>
+                <a href="profile.html" class="btn btn-outline">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+                <a href="index.html" class="btn btn-outline">
+                    <i class="fas fa-search"></i> Find Whispers
+                </a>
+            </div>
+        </div>
+
+        <!-- Calls Waiting -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="section-title"><i class="fas fa-phone-volume"></i> Calls Waiting</h2>
+                <button id="refreshCalls" class="btn btn-small">
+                    <i class="fas fa-redo"></i> Refresh
+                </button>
+            </div>
+            <div id="callsWaiting">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading calls...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorite Whispers -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="section-title"><i class="fas fa-heart"></i> Favorite Whispers</h2>
+                <button id="refreshFavorites" class="btn btn-small">
+                    <i class="fas fa-redo"></i> Refresh
+                </button>
+            </div>
+            <div id="favoriteWhispers">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading favorites...</p>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Scripts -->
@@ -46,26 +133,39 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
-    <script src="js/navigation.js"></script> <!-- ADD THIS -->
     <script src="js/auth.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/favorites.js"></script>
-    <script src="js/fix-indexes.js"></script> <!-- ADD THIS -->
+    <script src="js/call-lifecycle.js"></script>
     
     <script>
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("Dashboard HTML loaded");
-            
-            // Check if user is logged in
-            if (typeof auth !== 'undefined') {
-                auth.onAuthStateChanged(function(user) {
-                    if (!user) {
-                        window.location.href = 'auth.html?type=login';
-                    }
-                });
+        // Mobile menu toggle
+        document.querySelector('.mobile-menu').addEventListener('click', function() {
+            document.querySelector('.nav-links').classList.toggle('show');
+        });
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to logout?')) {
+                firebase.auth().signOut();
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Refresh buttons
+        document.getElementById('refreshCalls')?.addEventListener('click', function() {
+            if (typeof loadCallsWaiting === 'function') {
+                loadCallsWaiting(firebase.auth().currentUser?.uid);
+            }
+        });
+
+        document.getElementById('refreshFavorites')?.addEventListener('click', function() {
+            if (typeof loadFavoriteWhispers === 'function') {
+                loadFavoriteWhispers(firebase.auth().currentUser?.uid);
             }
         });
     </script>
+    <script src="js/mobile-menu.js"></script>
 </body>
 </html>

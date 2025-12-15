@@ -3,255 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tokens & Payment - Whisper+me</title>
+    <title>Buy Whisper Coins - Whisper+me</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Stripe JS -->
+    
+    <!-- Stripe.js -->
     <script src="https://js.stripe.com/v3/"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    
+    <style>
+        .payment-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+        
+        .payment-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .coin-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .coin-display h2 {
+            margin: 0;
+            font-size: 3rem;
+        }
+        
+        .coin-display p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .plan-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        @media (min-width: 768px) {
+            .plan-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .plan-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .plan-card:hover {
+            border-color: var(--primary-purple);
+            transform: translateY(-5px);
+        }
+        
+        .plan-card.featured {
+            border-color: var(--primary-purple);
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f2ff 100%);
+        }
+        
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-purple);
+        }
+        
+        .plan-tokens {
+            font-size: 1.2rem;
+            color: #666;
+            margin: 0.5rem 0;
+        }
+        
+        .plan-saving {
+            background: var(--accent-green);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .payment-methods {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .payment-method {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-buy {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+        
+        .transaction-history {
+            margin-top: 3rem;
+        }
+        
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .transaction-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .transaction-amount {
+            font-weight: 600;
+        }
+        
+        .transaction-status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .status-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
             <a href="index.html" class="logo">
-                <h1>Whisper<span>+me</span></h1>
+                <h1>Whisper<span style="color: var(--primary-purple);">+me</span></h1>
             </a>
             <div class="nav-links">
-                <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
-                <a href="payment.html" class="active"><i class="fas fa-coins"></i> Tokens</a>
-                <a href="profile.html"><i class="fas fa-user-edit"></i> Profile</a>
-                <a href="#" id="logoutBtn" class="btn btn-small btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="profile.html" class="nav-link"><i class="fas fa-user-edit"></i> Profile</a>
+                <a href="payment.html" class="nav-link active"><i class="fas fa-coins"></i> Whisper Coins</a>
+                <a href="#" id="logoutBtn" class="nav-link btn btn-small btn-outline">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
             </div>
         </div>
     </nav>
 
-    <div class="dashboard-container">
-        <div class="section">
-            <div class="dashboard-header">
-                <div class="welcome-message">
-                    <h1><i class="fas fa-coins"></i> Buy Whisper Tokens</h1>
-                    <p>Each token gives you one 5-minute private conversation. $15 per token.</p>
-                </div>
-                <div class="token-balance">
-                    <div class="stat-card" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%); color: white;">
-                        <div class="stat-icon">
-                            <i class="fas fa-wallet"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>Token Balance</h3>
-                            <p id="tokenBalance">0 tokens</p>
-                        </div>
-                    </div>
-                </div>
+    <main class="payment-container">
+        <div class="payment-card">
+            <div class="coin-display">
+                <h2 id="coinBalance">0</h2>
+                <p>Whisper Coins Available</p>
+                <small>1 coin = 1 call</small>
             </div>
-
-            <!-- Payment Message -->
-            <div id="paymentMessage" class="alert" style="display: none; margin: 1rem 0;"></div>
-
-            <!-- Token Packages -->
-            <div class="package-grid">
-                <!-- Package 1 -->
-                <div class="package-card">
-                    <div class="package-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <h3>Single Token</h3>
-                    <div class="package-tokens">1 Token</div>
-                    <div class="package-price">$15</div>
-                    <ul class="package-features">
-                        <li><i class="fas fa-check"></i> 5-minute call</li>
-                        <li><i class="fas fa-check"></i> Instant delivery</li>
-                        <li><i class="fas fa-check"></i> No expiration</li>
-                    </ul>
-                    <button class="btn btn-primary buy-btn" data-tokens="1" data-price="15">
+            
+            <h2 style="text-align: center; margin-bottom: 1rem;">Buy Whisper Coins</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 2rem;">
+                Each coin gives you one 5-minute private call with any whisper
+            </p>
+            
+            <div class="plan-grid">
+                <!-- Single Token Plan -->
+                <div class="plan-card">
+                    <h3>Single Call</h3>
+                    <div class="plan-price">$15</div>
+                    <div class="plan-tokens">1 Whisper Coin</div>
+                    <div class="plan-saving">Perfect for trying</div>
+                    <button class="btn btn-primary btn-buy" data-action="buy-token" data-amount="15" data-tokens="1">
                         <i class="fas fa-shopping-cart"></i> Buy Now
                     </button>
                 </div>
-
-                <!-- Package 2 - Popular -->
-                <div class="package-card popular">
-                    <div class="popular-badge">BEST VALUE</div>
-                    <div class="package-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>10 Tokens</h3>
-                    <div class="package-tokens">10 Tokens</div>
-                    <div class="package-price">$150</div>
-                    <ul class="package-features">
-                        <li><i class="fas fa-check"></i> 50 minutes total</li>
-                        <li><i class="fas fa-check"></i> Best value</li>
-                        <li><i class="fas fa-check"></i> Instant delivery</li>
-                        <li><i class="fas fa-check"></i> No expiration</li>
-                        <li><i class="fas fa-check"></i> Priority support</li>
-                    </ul>
-                    <button class="btn btn-accent buy-btn" data-tokens="10" data-price="150">
-                        <i class="fas fa-crown"></i> Buy Now
+                
+                <!-- Featured: 5 Token Plan -->
+                <div class="plan-card featured">
+                    <h3>Most Popular</h3>
+                    <div class="plan-price">$65</div>
+                    <div class="plan-tokens">5 Whisper Coins</div>
+                    <div class="plan-saving">Save $10</div>
+                    <button class="btn btn-primary btn-buy" data-action="buy-token" data-amount="65" data-tokens="5">
+                        <i class="fas fa-shopping-cart"></i> Buy 5 Coins
                     </button>
-                </div>
-
-                <!-- Package 3 -->
-                <div class="package-card">
-                    <div class="package-icon">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <h3>50 Tokens</h3>
-                    <div class="package-tokens">50 Tokens</div>
-                    <div class="package-price">$750</div>
-                    <ul class="package-features">
-                        <li><i class="fas fa-check"></i> 250 minutes total</li>
-                        <li><i class="fas fa-check"></i> For power users</li>
-                        <li><i class="fas fa-check"></i> Instant delivery</li>
-                        <li><i class="fas fa-check"></i> No expiration</li>
-                        <li><i class="fas fa-check"></i> VIP support</li>
-                    </ul>
-                    <button class="btn btn-primary buy-btn" data-tokens="50" data-price="750">
-                        <i class="fas fa-rocket"></i> Buy Now
-                    </button>
-                </div>
-            </div>
-
-            <!-- Payment Methods -->
-            <div class="payment-methods-section">
-                <h3><i class="fas fa-credit-card"></i> Secure Payment</h3>
-                <div class="payment-icons">
-                    <i class="fab fa-cc-visa fa-2x"></i>
-                    <i class="fab fa-cc-mastercard fa-2x"></i>
-                    <i class="fab fa-cc-amex fa-2x"></i>
-                    <i class="fab fa-cc-discover fa-2x"></i>
-                    <i class="fab fa-paypal fa-2x"></i>
-                </div>
-                <p class="text-muted">
-                    <i class="fas fa-lock"></i> All payments are encrypted and secure
-                </p>
-            </div>
-
-            <!-- Earnings Section -->
-            <div class="earnings-section">
-                <h3><i class="fas fa-money-bill-wave"></i> Your Earnings</h3>
-                <div class="earnings-stats">
-                    <div class="stat-item">
-                        <div class="stat-value" id="totalEarnings">$0</div>
-                        <div class="stat-label">Total Earned</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="pendingPayout">$0</div>
-                        <div class="stat-label">Pending Payout</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="availablePayout">$0</div>
-                        <div class="stat-label">Available</div>
-                    </div>
                 </div>
                 
-                <!-- Request Payout Button (shows when $20+) -->
-                <div id="payoutSection" style="display: none; margin-top: 2rem;">
-                    <button id="requestPayoutBtn" class="btn btn-success">
-                        <i class="fas fa-paper-plane"></i> Request Payout ($20+)
+                <!-- 10 Token Plan -->
+                <div class="plan-card">
+                    <h3>Best Value</h3>
+                    <div class="plan-price">$120</div>
+                    <div class="plan-tokens">10 Whisper Coins</div>
+                    <div class="plan-saving">Save $30</div>
+                    <button class="btn btn-primary btn-buy" data-action="buy-token" data-amount="120" data-tokens="10">
+                        <i class="fas fa-shopping-cart"></i> Buy 10 Coins
                     </button>
+                </div>
+            </div>
+            
+            <div class="payment-methods">
+                <div class="payment-method">
+                    <i class="fab fa-cc-visa" style="color: #1a1f71;"></i> Visa
+                </div>
+                <div class="payment-method">
+                    <i class="fab fa-cc-mastercard" style="color: #eb001b;"></i> Mastercard
+                </div>
+                <div class="payment-method">
+                    <i class="fab fa-cc-amex" style="color: #2e77bc;"></i> Amex
+                </div>
+                <div class="payment-method">
+                    <i class="fab fa-apple-pay"></i> Apple Pay
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem; color: #666; font-size: 0.9rem;">
+                <p><i class="fas fa-lock"></i> Secure payment by Stripe</p>
+                <p>No subscription • Cancel anytime • Instant delivery</p>
+            </div>
+        </div>
+        
+        <!-- Transaction History -->
+        <div class="transaction-history">
+            <h3>Recent Transactions</h3>
+            <div id="transactionList">
+                <div class="empty-state">
+                    <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>No transactions yet</p>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-functions-compat.js"></script>
+    </main>
     
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/navigation.js"></script>
-    <script src="js/stripe-payment.js"></script>
-    
+    <!-- Scripts -->
+    <script src="js/stripe-simple.js"></script>
     <script>
-        // Load user data
-        auth.onAuthStateChanged(async function(user) {
+        // Load user's coin balance
+        firebase.auth().onAuthStateChanged(async function(user) {
             if (!user) {
                 window.location.href = 'auth.html?type=login';
                 return;
             }
             
-            // Load token balance
+            // Load user data
+            const db = firebase.firestore();
             const userDoc = await db.collection('users').doc(user.uid).get();
+            
             if (userDoc.exists) {
-                const tokens = userDoc.data().tokens || 0;
-                document.getElementById('tokenBalance').textContent = `${tokens} token${tokens !== 1 ? 's' : ''}`;
+                const userData = userDoc.data();
+                document.getElementById('coinBalance').textContent = userData.coins || 0;
             }
             
-            // Load earnings
-            await loadEarningsData(user.uid);
+            // Setup logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                firebase.auth().signOut();
+                window.location.href = 'index.html';
+            });
+            
+            // Load transaction history
+            loadTransactionHistory(user.uid);
         });
         
-        async function loadEarningsData(userId) {
+        async function loadTransactionHistory(userId) {
             try {
-                // Get pending earnings
-                const earningsQuery = await db.collection('earnings')
+                const db = firebase.firestore();
+                const snapshot = await db.collection('transactions')
                     .where('userId', '==', userId)
-                    .where('status', '==', 'pending')
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
                     .get();
                 
-                let pendingTotal = 0;
-                earningsQuery.forEach(doc => {
-                    pendingTotal += doc.data().amount;
-                });
+                const container = document.getElementById('transactionList');
                 
-                // Get total earnings
-                const allEarnings = await db.collection('earnings')
-                    .where('userId', '==', userId)
-                    .get();
-                
-                let totalEarned = 0;
-                allEarnings.forEach(doc => {
-                    const data = doc.data();
-                    if (data.status === 'paid' || data.status === 'pending') {
-                        totalEarned += data.amount;
-                    }
-                });
-                
-                // Update display
-                document.getElementById('totalEarnings').textContent = `$${totalEarned.toFixed(2)}`;
-                document.getElementById('pendingPayout').textContent = `$${pendingTotal.toFixed(2)}`;
-                document.getElementById('availablePayout').textContent = pendingTotal >= 20 ? `$${pendingTotal.toFixed(2)}` : `$${pendingTotal.toFixed(2)}`;
-                
-                // Show payout button if $20+
-                if (pendingTotal >= 20) {
-                    document.getElementById('payoutSection').style.display = 'block';
+                if (snapshot.empty) {
+                    return; // Keep empty state
                 }
                 
+                let html = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.timestamp?.toDate() || new Date();
+                    
+                    html += `
+                        <div class="transaction-item">
+                            <div>
+                                <strong>${data.description || 'Whisper Coin Purchase'}</strong>
+                                <div class="transaction-date">
+                                    ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="transaction-amount">
+                                    ${data.amount ? '$' + data.amount : '$15.00'}
+                                </div>
+                                <div class="transaction-status status-success">
+                                    Completed
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
             } catch (error) {
-                console.error('Error loading earnings:', error);
+                console.error("Error loading transactions:", error);
             }
         }
-        
-        // Request payout
-        document.getElementById('requestPayoutBtn')?.addEventListener('click', async function() {
-            try {
-                // Get user's PayPal email
-                const profileDoc = await db.collection('profiles').doc(auth.currentUser.uid).get();
-                const paypalEmail = profileDoc.data()?.banking?.paypalEmail;
-                
-                if (!paypalEmail) {
-                    alert('Please add your PayPal email in your profile first!');
-                    window.location.href = 'profile.html';
-                    return;
-                }
-                
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-                this.disabled = true;
-                
-                // In a real app, you would call a function here
-                // For now, show message
-                alert('Payout request submitted! You will receive payment within 5-7 business days.');
-                
-                // Refresh data
-                await loadEarningsData(auth.currentUser.uid);
-                
-            } catch (error) {
-                console.error('Payout error:', error);
-                alert('Error requesting payout');
-            }
-        });
     </script>
+    <script src="js/mobile-menu.js"></script>
 </body>
 </html>
