@@ -58,11 +58,7 @@ async function loadUserData() {
         // Update welcome message
         const welcomeElement = document.getElementById('userWelcome');
         if (welcomeElement) {
-            welcomeElement.innerHTML = \`
-                <h2>Welcome back, <span style="color: #1e3a8a;">\${userData.displayName || user.email.split('@')[0]}</span>!</h2>
-                <p>Ready to connect with your fans?</p>
-            \`;
-        }
+        console.log("Dashboard page loaded");
         
         // Update stats
         document.getElementById('totalCalls').textContent = userData.totalCalls || 0;
