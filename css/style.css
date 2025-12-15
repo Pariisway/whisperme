@@ -898,3 +898,77 @@ a:hover {
         max-width: 300px;
     }
 }
+
+/* Update top menu colors */
+.header nav a, 
+.header nav span,
+.navbar .nav-links a,
+.navbar a {
+    color: #1e3a8a !important; /* Dark blue */
+    font-weight: 600;
+}
+
+.navbar .nav-links a:hover,
+.navbar a:hover {
+    color: #10b981 !important; /* Green on hover */
+}
+
+/* Logo colors */
+.logo h1 {
+    font-weight: 800;
+}
+
+.logo h1 .whisper {
+    color: #1e3a8a !important; /* Dark blue */
+}
+
+.logo h1 .plus {
+    color: #10b981 !important; /* Green */
+}
+
+.logo h1 .me {
+    color: #f59e0b !important; /* Yellow */
+}
+
+/* Update button styles */
+.btn-primary {
+    background: linear-gradient(135deg, #10b981, #0ea271) !important;
+    border: none !important;
+}
+
+.btn-secondary {
+    background: #64748b !important;
+    color: white !important;
+}
+
+.btn-outline {
+    border: 2px solid #1e3a8a !important;
+    color: #1e3a8a !important;
+    background: transparent !important;
+}
+
+.btn-outline:hover {
+    background: #1e3a8a !important;
+    color: white !important;
+}
+
+/* Update availability button */
+#toggleAvailability,
+#availabilityToggle {
+    background: #10b981 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600;
+}
+
+#toggleAvailability:hover,
+#availabilityToggle:hover {
+    background: #0ea271 !important;
+    transform: translateY(-2px);
+}
+
+/* Make unavailable state more clear */
+#toggleAvailability[data-available="false"],
+#availabilityToggle[data-available="false"] {
+    background: #64748b !important;
+}
