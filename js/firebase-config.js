@@ -1,4 +1,4 @@
-// Firebase Configuration - Fixed with proper error handling
+// Firebase Configuration - Simplified
 console.log('🚀 Loading Firebase Configuration...');
 
 // Firebase configuration
@@ -13,13 +13,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase only once
-let firebaseApp;
 try {
     if (!firebase.apps.length) {
-        firebaseApp = firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         console.log('✅ Firebase App Initialized');
     } else {
-        firebaseApp = firebase.app();
         console.log('✅ Using existing Firebase app');
     }
 } catch (error) {
@@ -35,36 +33,55 @@ db.enablePersistence()
     .then(() => console.log('✅ Firestore persistence enabled'))
     .catch(err => console.warn('⚠️ Firestore persistence error:', err));
 
-// Set auth persistence
+// Set auth persistence to LOCAL
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
     .then(() => console.log('✅ Auth persistence set'))
     .catch(error => console.error('❌ Auth persistence error:', error));
 
 // Listen for auth state changes
-let authInitialized = false;
-const authStateCallbacks = [];
-
 auth.onAuthStateChanged((user) => {
-    authInitialized = true;
     console.log('👤 Auth state changed:', user ? user.email : 'No user');
     
-    // Call all registered callbacks
-    authStateCallbacks.forEach(callback => callback(user));
-}, (error) => {
-    console.error('❌ Auth state error:', error);
-    authInitialized = true;
-    // Still call callbacks to unblock waiting processes
-    authStateCallbacks.forEach(callback => callback(null));
-});
-
-// Helper function to wait for auth to initialize
-function waitForAuth(callback) {
-    if (authInitialized) {
-        callback(auth.currentUser);
-    } else {
-        authStateCallbacks.push(callback);
+    if (user) {
+        // Update user document if it doesn't exist
+        db.collection('users').doc(user.uid).get().then(doc => {
+            if (!doc.exists) {
+                db.collection('users').doc(user.uid).set({
+                    email: user.email,
+                    displayName: user.displayName || user.email.split('@')[0],
+                    photoURL: user.photoURL || '',
+                    coins: 0,
+                    totalCalls: 0,
+                    totalEarnings: 0,
+                    averageRating: 0,
+                    available: false,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                }).then(() => {
+                    console.log('✅ User document created');
+                    
+                    // Also create profile document
+                    db.collection('profiles').doc(user.uid).set({
+                        userId: user.uid,
+                        displayName: user.displayName || user.email.split('@')[0],
+                        username: user.email.split('@')[0].toLowerCase(),
+                        bio: '',
+                        callPrice: 1,
+                        available: false,
+                        rating: 0,
+                        totalCalls: 0,
+                        photoURL: user.photoURL || '',
+                        social: {},
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    }, { merge: true }).then(() => {
+                        console.log('✅ Profile document created');
+                    });
+                });
+            }
+        });
     }
-}
+});
 
 // Global error handler
 window.addEventListener('unhandledrejection', (event) => {
@@ -74,9 +91,3 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 console.log('🔥 Firebase setup complete!');
-
-// Export for other scripts
-window.waitForAuth = waitForAuth;
-window.firebaseApp = firebaseApp;
-window.firebaseAuth = auth;
-window.firebaseDb = db;

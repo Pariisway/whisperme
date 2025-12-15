@@ -1,7 +1,7 @@
-// Auth.js - Fixed with proper loading handling
+// Auth.js - Fixed variable conflict
 console.log('Auth.js loaded');
 
-let authInitialized = false;
+let authPageInitialized = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Auth page DOM loaded');
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Create auth form
     createAuthForm(authType);
     
-    // Initialize Firebase auth
+    // Initialize auth
     initAuth();
 });
 
@@ -31,7 +31,7 @@ function createAuthForm(type) {
     container.innerHTML = `
         <div style="text-align: center; margin-bottom: 2rem;">
             <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">${title}</h2>
-            <p style="color: var(--text-muted);">${isLogin ? 'Sign in to your account' : 'Start your journey today'}</p>
+            <p style="color: #94a3b8;">${isLogin ? 'Sign in to your account' : 'Start your journey today'}</p>
         </div>
         
         <form id="authForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -59,13 +59,13 @@ function createAuthForm(type) {
                 </button>
             </div>
             
-            <div style="text-align: center; margin-top: 1rem; color: var(--text-muted);">
-                <p>${switchText} <a href="auth.html?type=${switchLink}" style="color: var(--plus-green); text-decoration: none;">${switchButtonText}</a></p>
+            <div style="text-align: center; margin-top: 1rem; color: #94a3b8;">
+                <p>${switchText} <a href="auth.html?type=${switchLink}" style="color: #10b981; text-decoration: none;">${switchButtonText}</a></p>
             </div>
             
             ${isLogin ? `
             <div style="text-align: center; margin-top: 1rem;">
-                <a href="#" onclick="resetPassword()" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+                <a href="#" onclick="resetPassword()" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">
                     Forgot your password?
                 </a>
             </div>
@@ -91,29 +91,15 @@ function createAuthForm(type) {
 function initAuth() {
     console.log('Initializing auth...');
     
-    // Wait for Firebase to be ready
-    const checkFirebase = setInterval(() => {
-        if (window.firebase && firebase.auth) {
-            clearInterval(checkFirebase);
-            authInitialized = true;
-            console.log('✅ Auth initialized');
-            
-            // Check if user is already logged in
-            const user = firebase.auth().currentUser;
-            if (user) {
-                console.log('User already logged in, redirecting to dashboard...');
-                window.location.href = 'dashboard.html';
-            }
-        }
-    }, 100);
+    // Check if user is already logged in
+    if (firebase.auth().currentUser) {
+        console.log('User already logged in, redirecting to dashboard...');
+        window.location.href = 'dashboard.html';
+        return;
+    }
     
-    // Timeout after 10 seconds
-    setTimeout(() => {
-        if (!authInitialized) {
-            console.warn('⚠️ Firebase auth initialization timed out');
-            showError('Firebase not responding. Please refresh the page.');
-        }
-    }, 10000);
+    authPageInitialized = true;
+    console.log('✅ Auth page initialized');
 }
 
 async function handleLogin() {
@@ -291,15 +277,27 @@ async function handleSignup() {
 }
 
 async function resetPassword() {
-    const email = prompt('Enter your email address to reset password:');
-    if (!email) return;
+    const email = document.getElementById('email')?.value.trim();
     
-    try {
-        await firebase.auth().sendPasswordResetEmail(email);
-        alert('Password reset email sent! Check your inbox.');
-    } catch (error) {
-        console.error('Password reset error:', error);
-        alert('Error: ' + error.message);
+    if (!email) {
+        const email = prompt('Enter your email address to reset password:');
+        if (!email) return;
+        
+        try {
+            await firebase.auth().sendPasswordResetEmail(email);
+            showSuccess('Password reset email sent! Check your inbox.');
+        } catch (error) {
+            console.error('Password reset error:', error);
+            showError('Error: ' + error.message);
+        }
+    } else {
+        try {
+            await firebase.auth().sendPasswordResetEmail(email);
+            showSuccess('Password reset email sent! Check your inbox.');
+        } catch (error) {
+            console.error('Password reset error:', error);
+            showError('Error: ' + error.message);
+        }
     }
 }
 
@@ -318,3 +316,6 @@ function showSuccess(message) {
         successDiv.style.display = 'block';
     }
 }
+
+// Make resetPassword available globally
+window.resetPassword = resetPassword;
