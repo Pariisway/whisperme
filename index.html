@@ -1,637 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1184595877548269" crossorigin="anonymous"></script>
-    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whisper+Me - Connect with Fans Through Private Voice Calls</title>
+    <title>Whisper+Me - Connect with Experts Instantly</title>
+    <meta name="description" content="Whisper+Me connects you with experts for private 5-minute voice calls. Get advice, coaching, or just a listening ear.">
     
-    <!-- Meta Tags -->
-    <meta name="description" content="Connect with fans through private 5-minute voice calls. Earn $12 per call. Start your fan hotline today.">
-    <meta name="keywords" content="voice chat, earn money, fans hotline, private calls, whisper, social media, content creator">
-    <meta property="og:title" content="Whisper+Me - Your Fan Hotline">
-    <meta property="og:description" content="Connect with fans through private voice conversations. Earn $12 per 5-minute call.">
-    <meta property="og:type" content="website">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/unified-header.js"></script>
-    <script src="js/common-header.js"></script>
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="css/style.css">
     
-    <style>
-        :root {
-            --whisper-blue: #1e3a8a;
-            --plus-green: #10b981;
-            --me-yellow: #f59e0b;
-            --accent-purple: #8b5cf6;
-            --dark-bg: #0f172a;
-            --card-bg: #1e293b;
-            --text-light: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: var(--text-light);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Navigation */
-        .navbar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        .nav-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-        }
-        
-        .logo h1 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            background: linear-gradient(90deg, var(--whisper-blue), var(--plus-green), var(--me-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .logo span.whisper { color: var(--whisper-blue); }
-        .logo span.plus { color: var(--plus-green); }
-        .logo span.me { color: var(--me-yellow); }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-        
-        .nav-links a {
-            color: var(--whisper-blue);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: color 0.3s;
-        }
-        
-        .nav-links a:hover {
-            color: var(--plus-green);
-        }
-        
-        .nav-links .btn {
-            background: linear-gradient(135deg, var(--plus-green), var(--accent-purple));
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-        
-        /* Hero Section */
-        .hero {
-            padding: 6rem 0;
-            text-align: center;
-            background: radial-gradient(circle at top right, rgba(30, 58, 138, 0.2), transparent 50%),
-                        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.2), transparent 50%);
-        }
-        
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(90deg, var(--whisper-blue), var(--plus-green), var(--me-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.2;
-        }
-        
-        .hero p {
-            font-size: 1.25rem;
-            color: var(--text-muted);
-            max-width: 800px;
-            margin: 0 auto 3rem;
-        }
-        
-        .hero-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--plus-green), var(--accent-purple));
-            color: white;
-            padding: 1rem 2.5rem;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-        }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 1rem 2.5rem;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s;
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-        
-        /* Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            margin: 4rem 0;
-            padding: 3rem;
-            background: var(--card-bg);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(90deg, var(--plus-green), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        /* How It Works */
-        .how-it-works {
-            padding: 4rem 0;
-        }
-        
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            color: white;
-        }
-        
-        .section-subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 4rem;
-            font-size: 1.1rem;
-        }
-        
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-        
-        .step {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s;
-        }
-        
-        .step:hover {
-            transform: translateY(-5px);
-            border-color: var(--plus-green);
-        }
-        
-        .step-number {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--plus-green), var(--accent-purple));
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1.2rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .step h3 {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            color: white;
-        }
-        
-        .step p {
-            color: var(--text-muted);
-            line-height: 1.7;
-        }
-        
-        /* CTA Section */
-        .cta-section {
-            text-align: center;
-            padding: 6rem 0;
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.2), rgba(139, 92, 246, 0.2));
-            border-radius: 30px;
-            margin: 4rem 0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .cta-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at center, rgba(16, 185, 129, 0.1), transparent 70%);
-            pointer-events: none;
-        }
-        
-        .cta-section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            color: white;
-        }
-        
-        .cta-section p {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 3rem;
-        }
-        
-        /* Footer */
-        footer {
-            background: var(--dark-bg);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 4rem 0 2rem;
-            margin-top: 4rem;
-        }
-        
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-        
-        .footer-section h3 {
-            color: white;
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-        }
-        
-        .footer-section a {
-            display: block;
-            color: var(--text-muted);
-            text-decoration: none;
-            margin-bottom: 0.75rem;
-            transition: color 0.3s;
-        }
-        
-        .footer-section a:hover {
-            color: var(--plus-green);
-        }
-        
-        .footer-bottom {
-            text-align: center;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-        
-        /* Mobile Menu */
-        .mobile-menu {
-            display: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            
-            .hero p {
-                font-size: 1.1rem;
-            }
-            
-            .nav-links {
-                display: none;
-            }
-            
-            .mobile-menu {
-                display: block;
-            }
-            
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .btn-primary, .btn-secondary {
-                width: 100%;
-                max-width: 300px;
-                justify-content: center;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-container">
-                <a href="index.html" class="logo">
-                    <h1>
-                        <span class="whisper">Whisper</span>
-                        <span class="plus">+</span>
-                        <span class="me">Me</span>
-                    </h1>
-                </a>
-                
-                <div class="nav-links">
-                    <a href="#how-it-works">How It Works</a>
-                    <a href="#earnings">Earnings</a>
-                    <a href="auth.html?type=login">Login</a>
-                    <a href="auth.html?type=signup" class="btn">
-                        <i class="fas fa-user-plus"></i> Start Earning
-                    </a>
-                </div>
-                
-                <div class="mobile-menu">
-                    <i class="fas fa-bars"></i>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <h1>Your Voice, Your Fans, Your Earnings</h1>
-            <p>Connect directly with your fans through private 5-minute voice calls. Share exclusive content, offer advice, or just chat. Earn $12 per call instantly.</p>
-            
-            <div class="hero-buttons">
-                <a href="auth.html?type=signup" class="btn-primary">
-                    <i class="fas fa-rocket"></i> Start Earning Now
-                </a>
-                <a href="#how-it-works" class="btn-secondary">
-                    <i class="fas fa-play-circle"></i> See How It Works
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats -->
-    <div class="container">
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-number">$12</div>
-                <div class="stat-label">Per 5-Minute Call</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">24/7</div>
-                <div class="stat-label">Availability</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">Instant</div>
-                <div class="stat-label">Payouts</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">Secure</div>
-                <div class="stat-label">Private Calls</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- How It Works -->
-    <section id="how-it-works" class="how-it-works">
-        <div class="container">
-            <h2 class="section-title">How It Works</h2>
-            <p class="section-subtitle">Start earning in just 3 simple steps. Perfect for influencers, creators, and anyone with a voice.</p>
-            
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Go Live on Social</h3>
-                    <p>Share your Whisper+Me profile link on Instagram, TikTok, Twitter, or YouTube. Let your fans know you're available for private calls.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Set Your Availability</h3>
-                    <p>Turn on your availability in your dashboard. Fans can call you instantly when you're online. You control your schedule.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Earn $12 Per Call</h3>
-                    <p>Connect with fans through 5-minute private voice calls. Get paid instantly after each call. No middlemen, no delays.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <div class="container">
-        <div class="cta-section">
-            <h2>Ready to Start Your Fan Hotline?</h2>
-            <p>Join thousands of creators earning directly from their fans. No experience needed, just your voice and your audience.</p>
-            
-            <div class="hero-buttons">
-                <a href="auth.html?type=signup" class="btn-primary">
-                    <i class="fas fa-user-plus"></i> Sign Up Free
-                </a>
-                <a href="auth.html?type=login" class="btn-secondary">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Whisper+Me</h3>
-                    <p>Connect directly with your fans through private voice calls. Earn money doing what you love.</p>
-                    <div style="margin-top: 1rem; color: var(--plus-green); font-weight: 600;">
-                        <i class="fas fa-coins"></i> $15 per token • $12 per call
-                    </div>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <a href="index.html">Home</a>
-                    <a href="#how-it-works">How It Works</a>
-                    <a href="auth.html?type=login">Login</a>
-                    <a href="auth.html?type=signup">Sign Up</a>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>Account</h3>
-                    <a href="dashboard.html">Dashboard</a>
-                    <a href="profile.html">Profile</a>
-                    <a href="payment.html">Buy Tokens</a>
-                    <a href="#earnings">Earnings</a>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>Connect</h3>
-                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                        <a href="#" style="font-size: 1.5rem;"><i class="fab fa-twitter"></i></a>
-                        <a href="#" style="font-size: 1.5rem;"><i class="fab fa-instagram"></i></a>
-                        <a href="#" style="font-size: 1.5rem;"><i class="fab fa-tiktok"></i></a>
-                        <a href="#" style="font-size: 1.5rem;"><i class="fab fa-youtube"></i></a>
-                    </div>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">
-                        Perfect for: Influencers • Creators • Coaches • Entertainers
-                    </p>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2024 Whisper+Me. All rights reserved. | $15 per token • $12 per call answered</p>
-                <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.7;">Privacy Policy | Terms of Service | Contact</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script>
-        // Mobile menu toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuBtn = document.querySelector('.mobile-menu');
-            const navLinks = document.querySelector('.nav-links');
-            
-            if (mobileMenuBtn && navLinks) {
-                mobileMenuBtn.addEventListener('click', function() {
-                    navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
-                    navLinks.style.flexDirection = 'column';
-                    navLinks.style.position = 'absolute';
-                    navLinks.style.top = '100%';
-                    navLinks.style.left = '0';
-                    navLinks.style.right = '0';
-                    navLinks.style.background = 'var(--dark-bg)';
-                    navLinks.style.padding = '2rem';
-                    navLinks.style.gap = '1.5rem';
-                    navLinks.style.borderTop = '1px solid rgba(255,255,255,0.1)';
-                });
-            }
-            
-            // Smooth scroll
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    const href = this.getAttribute('href');
-                    if (href === '#') return;
-                    
-                    if (href.startsWith('#')) {
-                        e.preventDefault();
-                        const target = document.querySelector(href);
-                        if (target) {
-                            window.scrollTo({
-                                top: target.offsetTop - 100,
-                                behavior: 'smooth'
-                            });
-                        }
-                    }
-                });
-            });
-        });
-        
-        // Add scroll animation for steps
-        window.addEventListener('scroll', function() {
-            const steps = document.querySelectorAll('.step');
-            steps.forEach(step => {
-                const stepTop = step.getBoundingClientRect().top;
-                const windowHeight = window.innerHeight;
-                
-                if (stepTop < windowHeight - 100) {
-                    step.style.opacity = '1';
-                    step.style.transform = 'translateY(0)';
-                }
-            });
-        });
-        
-        // Initialize step animations
-        document.querySelectorAll('.step').forEach(step => {
-            step.style.opacity = '0';
-            step.style.transform = 'translateY(20px)';
-            step.style.transition = 'all 0.6s ease';
-        });
-    </script>
-</body>
-</html>
+    <!-- Google AdSense -->
+    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1184595877548269" crossorigin="anonymous"></script>
+    
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4QYRJLTXTT"></script>
     <script>
@@ -640,3 +30,158 @@
         gtag('js', new Date());
         gtag('config', 'G-4QYRJLTXTT');
     </script>
+</head>
+<body>
+    <!-- Header will be injected by unified-header.js -->
+    
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="whisper">Whisper</span>
+                    <span class="plus">+</span>
+                    <span class="me">Me</span>
+                </h1>
+                <p class="hero-subtitle">Connect with experts for private 5-minute voice calls. Get advice, coaching, or just a listening ear.</p>
+                <div class="hero-buttons">
+                    <a href="#available-whispers" class="btn btn-primary btn-large">
+                        <i class="fas fa-headset"></i> Browse Experts
+                    </a>
+                    <a href="auth.html?type=signup" class="btn btn-secondary btn-large">
+                        <i class="fas fa-user-plus"></i> Become an Expert
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="call-interface">
+                            <div class="call-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="call-timer">05:00</div>
+                            <div class="call-status">Live call in progress...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Available Whispers Section (Now First Column) -->
+        <section id="available-whispers" class="section">
+            <h2 class="section-title">
+                <i class="fas fa-users"></i> Available Whispers
+            </h2>
+            <p class="section-subtitle">Connect instantly with our verified experts</p>
+            
+            <div id="whispers-grid" class="whispers-grid">
+                <!-- Whisper cards will be loaded here -->
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading available whispers...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section (Now Second Column) -->
+        <section id="how-it-works" class="section">
+            <h2 class="section-title">
+                <i class="fas fa-play-circle"></i> How It Works
+            </h2>
+            
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Sign Up</h3>
+                    <p>Create your free account in seconds. Choose to be a listener (whisper) or a caller.</p>
+                </div>
+                
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Find Your Match</h3>
+                    <p>Browse available whispers by category or search for specific expertise.</p>
+                </div>
+                
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Start Earning</h3>
+                    <p>Set your call price (1-5 whisper coins per call). Get paid every 3 days.</p>
+                    <p class="note">Payout every 3 days (Instant payout coming soon)</p>
+                </div>
+                
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h3>Connect & Grow</h3>
+                    <p>Build your reputation with ratings and reviews. The more you help, the more you earn.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="cta-card">
+                <h2>Ready to Start Your Journey?</h2>
+                <p>Join thousands of users who are already connecting and growing together.</p>
+                <div class="cta-buttons">
+                    <a href="auth.html?type=signup" class="btn btn-primary btn-large">
+                        <i class="fas fa-rocket"></i> Get Started Free
+                    </a>
+                    <a href="#how-it-works" class="btn btn-secondary btn-large">
+                        <i class="fas fa-play-circle"></i> How It Works
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h2>
+                        <span class="whisper">Whisper</span>
+                        <span class="plus">+</span>
+                        <span class="me">Me</span>
+                    </h2>
+                    <p>Connecting voices, creating value.</p>
+                </div>
+                
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="mailto:support@whisperme.com">Contact Support</a>
+                </div>
+                
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-discord"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 Whisper+Me. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="js/firebase-config.js"></script>
+    
+    <!-- Unified Header -->
+    <script src="js/unified-header.js"></script>
+    
+    <!-- Home Page Script -->
+    <script src="js/home.js"></script>
+    
+    <!-- Mobile Menu -->
+    <script src="js/mobile-menu.js"></script>
+</body>
+</html>

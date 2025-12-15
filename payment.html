@@ -3,825 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whisper+Me - Buy Tokens</title>
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css">
+    <title>Buy Whisper Coins - Whisper+Me</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header will be injected by unified-header.js -->
     
+    <main class="container" style="padding-top: 2rem;">
+        <div class="card">
+            <h1 style="margin-bottom: 0.5rem;">
+                <i class="fas fa-coins" style="color: var(--me-yellow);"></i> Buy Whisper Coins
+            </h1>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                Purchase whisper coins to call your favorite experts. Each coin costs $15.
+            </p>
+            
+            <!-- Important Notice -->
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 1rem; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <i class="fas fa-info-circle" style="color: var(--plus-green); font-size: 1.2rem;"></i>
+                    <div>
+                        <div style="font-weight: 600; color: var(--plus-green); margin-bottom: 0.25rem;">Payment Terms</div>
+                        <div style="color: var(--text-light); font-size: 0.9rem;">
+                            • Full payment goes to Whisper+Me<br>
+                            • Whispers earn $12 per coin from calls<br>
+                            • Payouts processed every 3 days<br>
+                            • No refunds once 5-minute call starts<br>
+                            • Early hang-up may result in reduced earnings
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Coin Packages -->
+            <div class="packages-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <!-- Package 1 -->
+                <div class="package-card" style="background: var(--card-bg); border-radius: 15px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; font-weight: 800; color: var(--me-yellow);">5</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-light); margin-bottom: 0.5rem;">Whisper Coins</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--plus-green);">$75</div>
+                        <div style="color: var(--text-muted); margin-bottom: 1.5rem;">$15 per coin</div>
+                        <button class="btn btn-primary" onclick="selectPackage(5, 75)" style="width: 100%;">
+                            <i class="fas fa-shopping-cart"></i> Buy 5 Coins
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Package 2 (Recommended) -->
+                <div class="package-card" style="background: linear-gradient(135deg, var(--plus-green), var(--accent-purple)); border-radius: 15px; padding: 1.5rem; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                        BEST VALUE
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; font-weight: 800; color: white;">10</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">Whisper Coins</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: white;">$135</div>
+                        <div style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem;">$13.50 per coin (Save $15!)</div>
+                        <button class="btn" onclick="selectPackage(10, 135)" style="width: 100%; background: white; color: var(--dark-bg); font-weight: 600;">
+                            <i class="fas fa-crown"></i> Buy 10 Coins
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Package 3 -->
+                <div class="package-card" style="background: var(--card-bg); border-radius: 15px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; font-weight: 800; color: var(--me-yellow);">20</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-light); margin-bottom: 0.5rem;">Whisper Coins</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--plus-green);">$240</div>
+                        <div style="color: var(--text-muted); margin-bottom: 1.5rem;">$12 per coin (Save $60!)</div>
+                        <button class="btn btn-primary" onclick="selectPackage(20, 240)" style="width: 100%;">
+                            <i class="fas fa-gem"></i> Buy 20 Coins
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Custom Amount -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">
+                    <i class="fas fa-sliders-h"></i> Custom Amount
+                </h3>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div style="flex: 1;">
+                        <input type="number" id="customCoins" min="1" max="100" value="1" 
+                               style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-size: 1.25rem; font-weight: 600;">
+                    </div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--plus-green);" id="customPrice">
+                        $15.00
+                    </div>
+                    <button class="btn btn-primary" onclick="buyCustomCoins()">
+                        <i class="fas fa-bolt"></i> Buy
+                    </button>
+                </div>
+                <div style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> Minimum purchase: 1 whisper coin ($15)
+                </div>
+            </div>
+            
+            <!-- Payment Method -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;">
+                    <i class="fas fa-credit-card"></i> Payment Method
+                </h3>
+                <div id="paymentMethod" style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 1.5rem; text-align: center;">
+                    <div style="margin-bottom: 1rem;">
+                        <i class="fas fa-lock" style="font-size: 2rem; color: var(--plus-green); margin-bottom: 0.5rem;"></i>
+                        <div style="font-weight: 600;">Secure Payment Processing</div>
+                    </div>
+                    <button id="stripeButton" class="btn btn-primary" style="width: 100%;" disabled>
+                        <i class="fas fa-spinner fa-spin"></i> Loading payment...
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
     <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/unified-header.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     
     <!-- Stripe -->
     <script src="https://js.stripe.com/v3/"></script>
     
-    <style>
-        :root {
-            --whisper-blue: #1e3a8a;
-            --plus-green: #10b981;
-            --me-yellow: #f59e0b;
-            --dark-bg: #0f172a;
-            --card-bg: #1e293b;
-            --text-light: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: var(--text-light);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Payment Header */
-        .payment-header {
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.3), rgba(16, 185, 129, 0.2));
-            border-radius: 0 0 20px 20px;
-            padding: 3rem 0;
-            margin-bottom: 3rem;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-        
-        .payment-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at center, rgba(16, 185, 129, 0.1), transparent 70%);
-            pointer-events: none;
-        }
-        
-        .payment-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-        
-        @media (max-width: 768px) {
-            .payment-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        /* Pricing Card */
-        .pricing-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 2.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-        
-        .pricing-card.featured {
-            border: 2px solid var(--plus-green);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .pricing-card.featured::before {
-            content: 'BEST VALUE';
-            position: absolute;
-            top: 20px;
-            right: -30px;
-            background: var(--plus-green);
-            color: white;
-            padding: 0.5rem 3rem;
-            transform: rotate(45deg);
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-        
-        .token-icon {
-            font-size: 3rem;
-            color: var(--plus-green);
-            margin-bottom: 1rem;
-        }
-        
-        .price {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 0.5rem;
-        }
-        
-        .price span {
-            font-size: 1.5rem;
-            color: var(--text-muted);
-            font-weight: 400;
-        }
-        
-        .price-subtitle {
-            color: var(--text-muted);
-            font-size: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .quantity-selector {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin: 2rem 0;
-        }
-        
-        .quantity-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-        
-        .quantity-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .quantity-input {
-            width: 80px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 600;
-            padding: 0.5rem;
-        }
-        
-        .quantity-input:focus {
-            outline: none;
-            border-color: var(--plus-green);
-        }
-        
-        .total-price {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--plus-green);
-            margin: 1.5rem 0;
-        }
-        
-        .btn-buy {
-            background: linear-gradient(135deg, var(--plus-green), #0ea271);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: all 0.3s;
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .btn-buy:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-        }
-        
-        /* Benefits List */
-        .benefits-list {
-            list-style: none;
-            padding: 0;
-            margin-top: 2rem;
-        }
-        
-        .benefits-list li {
-            padding: 0.75rem 0;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .benefits-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .benefits-list li i {
-            color: var(--plus-green);
-        }
-        
-        /* Transactions Card */
-        .transactions-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .transaction-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .transaction-item:last-child {
-            border-bottom: none;
-        }
-        
-        .transaction-date {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-        
-        .transaction-amount {
-            font-weight: 600;
-            color: var(--plus-green);
-        }
-        
-        .transaction-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .transaction-status.completed {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--plus-green);
-        }
-        
-        .transaction-status.pending {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--me-yellow);
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: var(--text-muted);
-        }
-        
-        /* Notifications */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            color: white;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            animation: slideIn 0.3s ease;
-            max-width: 400px;
-        }
-        
-        .notification.success {
-            background: linear-gradient(135deg, var(--plus-green), #0ea271);
-        }
-        
-        .notification.error {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        /* Loading State */
-        .loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header id="mainHeader" class="navbar"></header>
-
-    <!-- Payment Header -->
-    <div class="payment-header">
-        <div class="container">
-            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem;">
-                <span style="color: var(--whisper-blue);">Buy</span>
-                <span style="color: var(--plus-green);">Tokens</span>
-            </h1>
-            <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
-                Purchase tokens to call your favorite whispers. Each token allows one 5-minute call.
-            </p>
-            
-            <div style="margin-top: 2rem; display: inline-flex; align-items: center; gap: 1rem; background: rgba(16, 185, 129, 0.1); padding: 1rem 2rem; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3);">
-                <i class="fas fa-coins" style="color: var(--plus-green); font-size: 1.5rem;"></i>
-                <div>
-                    <div style="font-weight: 600; color: white;">Your Balance: <span id="tokenBalance">0</span> tokens</div>
-                    <div style="font-size: 0.9rem; color: var(--text-muted);">1 token = $15 = One 5-minute call</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="payment-grid">
-            <!-- Pricing Section -->
-            <div class="pricing-card featured">
-                <div class="token-icon">
-                    <i class="fas fa-coins"></i>
-                </div>
-                
-                <h2 style="color: white; margin-bottom: 1rem; font-size: 1.5rem;">
-                    Whisper Tokens
-                </h2>
-                
-                <div class="price">
-                    $15<span>/token</span>
-                </div>
-                
-                <div class="price-subtitle">
-                    Per 5-minute call with any whisper
-                </div>
-                
-                <div class="quantity-selector">
-                    <button class="quantity-btn" onclick="decreaseQuantity()">-</button>
-                    <input type="number" 
-                           id="quantity" 
-                           class="quantity-input" 
-                           value="1" 
-                           min="1" 
-                           max="100"
-                           onchange="updateTotal()">
-                    <button class="quantity-btn" onclick="increaseQuantity()">+</button>
-                </div>
-                
-                <div style="color: var(--text-muted); margin: 1rem 0;">
-                    <i class="fas fa-bolt" style="color: var(--me-yellow);"></i>
-                    <span>Purchase multiple tokens for future calls</span>
-                </div>
-                
-                <div class="total-price" id="totalPrice">
-                    Total: $15.00
-                </div>
-                
-                <button class="btn-buy" id="buyBtn" onclick="processPayment()">
-                    <i class="fas fa-credit-card"></i>
-                    Buy <span id="quantityText">1</span> Token<span id="pluralText"></span> for $<span id="totalText">15.00</span>
-                </button>
-                
-                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <h3 style="color: white; margin-bottom: 1rem; font-size: 1rem;">
-                        <i class="fas fa-shield-alt" style="color: var(--plus-green);"></i>
-                        Secure Payment
-                    </h3>
-                    <div style="display: flex; justify-content: center; gap: 1rem; opacity: 0.7;">
-                        <i class="fab fa-cc-visa" style="font-size: 2rem;"></i>
-                        <i class="fab fa-cc-mastercard" style="font-size: 2rem;"></i>
-                        <i class="fab fa-cc-amex" style="font-size: 2rem;"></i>
-                        <i class="fab fa-cc-stripe" style="font-size: 2rem;"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Benefits Section -->
-            <div class="pricing-card">
-                <h2 style="color: white; margin-bottom: 2rem; font-size: 1.5rem;">
-                    <i class="fas fa-star" style="color: var(--me-yellow);"></i>
-                    Token Benefits
-                </h2>
-                
-                <ul class="benefits-list">
-                    <li>
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>1 token = 1 call</strong> with any available whisper</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>5-minute private</strong> voice conversations</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Tokens never expire</strong> - use anytime</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Support your favorite</strong> whispers directly</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Instant access</strong> to purchased tokens</span>
-                    </li>
-                    <li>
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Secure & encrypted</strong> payment processing</span>
-                    </li>
-                </ul>
-                
-                <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <h3 style="color: white; margin-bottom: 1rem; font-size: 1rem;">
-                        <i class="fas fa-info-circle" style="color: var(--plus-green);"></i>
-                        How It Works
-                    </h3>
-                    <ol style="color: var(--text-muted); padding-left: 1.5rem;">
-                        <li style="margin-bottom: 0.5rem;">Purchase tokens ($15 each)</li>
-                        <li style="margin-bottom: 0.5rem;">Browse available whispers</li>
-                        <li style="margin-bottom: 0.5rem;">Use 1 token per 5-minute call</li>
-                        <li>Connect instantly with your favorite whispers</li>
-                    </ol>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Transactions History -->
-        <div class="transactions-card">
-            <h2 style="color: white; margin-bottom: 1.5rem; font-size: 1.5rem;">
-                <i class="fas fa-history" style="color: var(--plus-green);"></i>
-                Purchase History
-            </h2>
-            
-            <div id="transactionsList">
-                <div class="empty-state">
-                    <i class="fas fa-receipt" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
-                    <p>No transactions yet</p>
-                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">Your purchase history will appear here</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer style="margin-top: 4rem; padding: 2rem 0; background: var(--dark-bg); border-top: 1px solid rgba(255,255,255,0.1);">
-        <div class="container">
-            <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-                <p>&copy; 2024 Whisper+Me. All rights reserved.</p>
-                <p style="margin-top: 0.5rem;">
-                    <span style="color: var(--plus-green);">$15 per token</span>
-                    • 
-                    <span style="color: var(--me-yellow);">$12 per call answered</span>
-                    • 
-                    <span style="color: var(--whisper-blue);">100% secure payments</span>
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="js/common-header.js"></script>
+    <!-- Firebase Configuration -->
+    <script src="js/firebase-config.js"></script>
+    
+    <!-- Unified Header -->
+    <script src="js/unified-header.js"></script>
+    
+    <!-- Payment Script -->
+    <script src="js/payment.js"></script>
     
     <script>
-        // Payment Management Script
-        let user = null;
-        let db = null;
-        let stripe = null;
-        let tokenPrice = 15; // $15 per token
+    let selectedCoins = 5;
+    let selectedAmount = 75;
+    
+    function selectPackage(coins, amount) {
+        selectedCoins = coins;
+        selectedAmount = amount;
         
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Payment page loaded');
-            
-            // Initialize Firebase
-            await initializeFirebase();
-            
-            // Initialize Stripe
-            await initializeStripe();
-            
-            // Update UI
-            updateQuantityUI();
+        // Update custom input
+        document.getElementById('customCoins').value = coins;
+        updateCustomPrice();
+        
+        // Highlight selected package
+        document.querySelectorAll('.package-card').forEach(card => {
+            card.style.border = '1px solid rgba(255,255,255,0.1)';
+            card.style.transform = 'scale(1)';
         });
         
-        async function initializeFirebase() {
-            console.log('Initializing Firebase...');
-            
-            let checkCount = 0;
-            const maxChecks = 50;
-            
-            return new Promise((resolve) => {
-                const checkFirebase = setInterval(() => {
-                    if (window.firebase && firebase.apps.length > 0) {
-                        clearInterval(checkFirebase);
-                        
-                        // Initialize services
-                        const auth = firebase.auth();
-                        db = firebase.firestore();
-                        
-                        // Check auth state
-                        auth.onAuthStateChanged(async (currentUser) => {
-                            if (!currentUser) {
-                                // Redirect to login if not authenticated
-                                window.location.href = 'auth.html?type=login&redirect=payment.html';
-                                return;
-                            }
-                            
-                            user = currentUser;
-                            console.log('User authenticated:', user.email);
-                            
-                            // Load user data
-                            await loadUserData();
-                            
-                            // Load transaction history
-                            await loadTransactionHistory();
-                            
-                            resolve();
-                        });
-                    } else if (checkCount++ > maxChecks) {
-                        clearInterval(checkFirebase);
-                        console.error('Firebase failed to load');
-                        showNotification('Payment system not available. Please refresh.', 'error');
-                        resolve();
-                    }
-                }, 100);
-            });
-        }
+        event.currentTarget.closest('.package-card').style.border = '2px solid var(--plus-green)';
+        event.currentTarget.closest('.package-card').style.transform = 'scale(1.02)';
+    }
+    
+    function updateCustomPrice() {
+        const coins = parseInt(document.getElementById('customCoins').value) || 1;
+        const pricePerCoin = coins >= 20 ? 12 : coins >= 10 ? 13.5 : 15;
+        const totalPrice = coins * pricePerCoin;
         
-        async function initializeStripe() {
-            try {
-                // Initialize Stripe with your publishable key
-                stripe = Stripe('pk_test_51QMQWlBdzCYrNcM95rZxP9jW2X3Q7p8K6vR9t7s4Lm1gH6fNqD'); // Replace with your actual Stripe key
-                console.log('Stripe initialized');
-            } catch (error) {
-                console.error('Stripe initialization error:', error);
-                showNotification('Payment processing temporarily unavailable', 'error');
-            }
-        }
+        document.getElementById('customPrice').textContent = `$${totalPrice.toFixed(2)}`;
         
-        async function loadUserData() {
-            if (!user || !db) return;
-            
-            try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                const userData = userDoc.data() || {};
-                
-                // Update token balance
-                const tokenBalance = userData.tokens || 0;
-                document.getElementById('tokenBalance').textContent = tokenBalance;
-                
-            } catch (error) {
-                console.error('Error loading user data:', error);
-            }
-        }
+        selectedCoins = coins;
+        selectedAmount = totalPrice;
+    }
+    
+    function buyCustomCoins() {
+        updateCustomPrice();
         
-        async function loadTransactionHistory() {
-            if (!user || !db) return;
-            
-            try {
-                // Query transactions without ordering to avoid index requirement
-                const transactionsQuery = await db.collection('transactions')
-                    .where('userId', '==', user.uid)
-                    .get();
-                
-                const transactionsList = document.getElementById('transactionsList');
-                
-                if (transactionsQuery.empty) {
-                    transactionsList.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-receipt" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
-                            <p>No transactions yet</p>
-                            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Your purchase history will appear here</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // Sort transactions by timestamp in memory
-                const transactions = [];
-                transactionsQuery.forEach(doc => {
-                    const data = doc.data();
-                    transactions.push({
-                        id: doc.id,
-                        ...data,
-                        timestamp: data.timestamp?.toDate() || data.createdAt?.toDate() || new Date()
-                    });
-                });
-                
-                // Sort by timestamp (newest first)
-                transactions.sort((a, b) => b.timestamp - a.timestamp);
-                
-                // Display only last 10 transactions
-                const recentTransactions = transactions.slice(0, 10);
-                
-                let html = '';
-                recentTransactions.forEach(transaction => {
-                    const date = transaction.timestamp.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                    });
-                    
-                    const amount = transaction.amount || 0;
-                    const tokens = transaction.tokens || 0;
-                    const status = transaction.status || 'completed';
-                    
-                    html += `
-                        <div class="transaction-item">
-                            <div>
-                                <div style="font-weight: 600; color: white;">${transaction.description || 'Token Purchase'}</div>
-                                <div class="transaction-date">${date}</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div class="transaction-amount">+${tokens} token${tokens !== 1 ? 's' : ''}</div>
-                                <div style="font-size: 0.9rem; color: var(--text-muted);">$${amount.toFixed(2)}</div>
-                                <div class="transaction-status ${status}">${status}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                transactionsList.innerHTML = html;
-                
-            } catch (error) {
-                console.error('Error loading transactions:', error);
-                
-                const transactionsList = document.getElementById('transactionsList');
-                transactionsList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-triangle" style="color: var(--me-yellow); font-size: 2rem; margin-bottom: 1rem;"></i>
-                        <p>Unable to load transaction history</p>
-                    </div>
-                `;
-            }
-        }
+        // Simulate package selection
+        document.querySelectorAll('.package-card').forEach(card => {
+            card.style.border = '1px solid rgba(255,255,255,0.1)';
+            card.style.transform = 'scale(1)';
+        });
         
-        function increaseQuantity() {
-            const quantityInput = document.getElementById('quantity');
-            let quantity = parseInt(quantityInput.value) || 1;
-            quantity = Math.min(quantity + 1, 100);
-            quantityInput.value = quantity;
-            updateQuantityUI();
+        // Process payment
+        if (window.initiateStripePayment) {
+            window.initiateStripePayment(selectedCoins, selectedAmount);
         }
-        
-        function decreaseQuantity() {
-            const quantityInput = document.getElementById('quantity');
-            let quantity = parseInt(quantityInput.value) || 1;
-            quantity = Math.max(quantity - 1, 1);
-            quantityInput.value = quantity;
-            updateQuantityUI();
-        }
-        
-        function updateQuantity() {
-            const quantityInput = document.getElementById('quantity');
-            let quantity = parseInt(quantityInput.value) || 1;
-            quantity = Math.max(1, Math.min(quantity, 100));
-            quantityInput.value = quantity;
-            updateQuantityUI();
-        }
-        
-        function updateTotal() {
-            updateQuantity();
-        }
-        
-        function updateQuantityUI() {
-            const quantityInput = document.getElementById('quantity');
-            const quantity = parseInt(quantityInput.value) || 1;
-            const total = quantity * tokenPrice;
-            
-            document.getElementById('totalPrice').textContent = `Total: $${total.toFixed(2)}`;
-            document.getElementById('quantityText').textContent = quantity;
-            document.getElementById('pluralText').textContent = quantity !== 1 ? 's' : '';
-            document.getElementById('totalText').textContent = total.toFixed(2);
-        }
-        
-        async function processPayment() {
-            if (!user || !stripe) {
-                showNotification('Please wait for payment system to initialize', 'error');
-                return;
-            }
-            
-            const quantityInput = document.getElementById('quantity');
-            const quantity = parseInt(quantityInput.value) || 1;
-            const totalAmount = quantity * tokenPrice * 100; // Convert to cents
-            
-            if (totalAmount < 100) { // Minimum $1.00
-                showNotification('Minimum purchase is $1.00', 'error');
-                return;
-            }
-            
-            try {
-                const buyBtn = document.getElementById('buyBtn');
-                const originalText = buyBtn.innerHTML;
-                buyBtn.innerHTML = '<div class="loader"></div> Processing...';
-                buyBtn.disabled = true;
-                
-                // Create a payment request to your backend
-                // For now, we'll simulate a successful payment
-                simulatePayment(quantity, totalAmount / 100);
-                
-            } catch (error) {
-                console.error('Payment error:', error);
-                showNotification('Payment failed: ' + error.message, 'error');
-                
-                const buyBtn = document.getElementById('buyBtn');
-                buyBtn.innerHTML = originalText;
-                buyBtn.disabled = false;
-            }
-        }
-        
-        async function simulatePayment(quantity, totalAmount) {
-            // Simulate payment processing
-            setTimeout(async () => {
-                try {
-                    // Update user's token balance
-                    await db.collection('users').doc(user.uid).update({
-                        tokens: firebase.firestore.FieldValue.increment(quantity),
-                        updatedAt: new Date()
-                    });
-                    
-                    // Record transaction
-                    await db.collection('transactions').add({
-                        userId: user.uid,
-                        type: 'purchase',
-                        amount: totalAmount,
-                        tokens: quantity,
-                        description: `Purchased ${quantity} token${quantity !== 1 ? 's' : ''}`,
-                        status: 'completed',
-                        timestamp: new Date(),
-                        createdAt: new Date()
-                    });
-                    
-                    // Show success
-                    showNotification(`Successfully purchased ${quantity} token${quantity !== 1 ? 's' : ''}!`, 'success');
-                    
-                    // Update UI
-                    await loadUserData();
-                    await loadTransactionHistory();
-                    
-                    // Reset button
-                    const buyBtn = document.getElementById('buyBtn');
-                    buyBtn.innerHTML = originalText;
-                    buyBtn.disabled = false;
-                    
-                } catch (error) {
-                    console.error('Payment simulation error:', error);
-                    showNotification('Error processing payment: ' + error.message, 'error');
-                    
-                    const buyBtn = document.getElementById('buyBtn');
-                    buyBtn.innerHTML = originalText;
-                    buyBtn.disabled = false;
-                }
-            }, 2000);
-        }
-        
-        function showNotification(message, type = 'info') {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.notification');
-            existingNotifications.forEach(n => n.remove());
-            
-            // Create notification
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-                <span>${message}</span>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.animation = 'slideIn 0.3s ease reverse';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, 5000);
-        }
-        
-        // Initialize quantity input
-        document.getElementById('quantity').addEventListener('change', updateTotal);
+    }
+    
+    document.getElementById('customCoins').addEventListener('input', updateCustomPrice);
+    document.getElementById('customCoins').addEventListener('change', updateCustomPrice);
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCustomPrice();
+        selectPackage(5, 75); // Select default package
+    });
     </script>
 </body>
 </html>

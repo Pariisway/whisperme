@@ -3,171 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Whisper+me</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Dashboard - Whisper+Me</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4QYRJLTXTT"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-4QYRJLTXTT');
-    </script>
-    <!-- Google Adsense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1184595877548269" crossorigin="anonymous"></script>
-    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="index.html" class="logo">
-                <h1>Whisper<span>+me</span></h1>
-            </a>
-            <div class="nav-links">
-                <a href="dashboard.html" class="nav-link active">
-                    <i class="fas fa-home"></i> Dashboard
-                </a>
-                <a href="profile.html" class="nav-link">
-                    <i class="fas fa-user-edit"></i> Profile
-                </a>
-                <a href="payment.html" class="nav-link">
-                    <i class="fas fa-coins"></i> Whisper Coins
-                </a>
-                <a href="#" id="logoutBtn" class="nav-link btn btn-small btn-outline">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </div>
-            <div class="mobile-menu">
-                <i class="fas fa-bars"></i>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="dashboard-container">
+    <!-- Header will be injected by unified-header.js -->
+    
+    <main class="container" style="padding-top: 2rem;">
         <!-- Welcome Section -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h2 class="section-title">Welcome back!</h2>
-                <div class="online-status online"></div>
-            </div>
-            <div id="userWelcome">Loading your account...</div>
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="totalCalls">0</div>
-                <div class="stat-label">Total Calls</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="coinsBalance">0</div>
-                <div class="stat-label">Whisper Coins</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="earningsTotal">$0</div>
-                <div class="stat-label">Total Earnings</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="ratingAvg">0.0</div>
-                <div class="stat-label">Avg Rating</div>
+        <div class="card" id="userWelcome">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading dashboard...</p>
             </div>
         </div>
-
+        
+        <!-- Quick Stats -->
+        <div class="card">
+            <h2 style="margin-bottom: 1.5rem;">
+                <i class="fas fa-chart-line" style="color: var(--plus-green);"></i> Your Stats
+            </h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value coins" id="coinsBalance">0</div>
+                    <div class="stat-label">Whisper Coins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value calls" id="totalCalls">0</div>
+                    <div class="stat-label">Total Calls</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value earnings" id="earningsTotal">$0.00</div>
+                    <div class="stat-label">Total Earnings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value rating" id="ratingAvg">0.0</div>
+                    <div class="stat-label">Avg Rating</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="margin-bottom: 1rem;">
+                    <i class="fas fa-toggle-on" style="color: var(--plus-green);"></i> Availability
+                </h3>
+                <button id="toggleAvailability" class="btn btn-secondary" style="width: 100%;">
+                    <i class="fas fa-toggle-off"></i> Set as Available
+                </button>
+                <p style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-muted);">
+                    <i class="fas fa-info-circle"></i> You'll automatically switch to unavailable after 5 calls
+                </p>
+            </div>
+        </div>
+        
         <!-- Quick Actions -->
-        <div class="card">
-            <h2 class="section-title">Quick Actions</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <a href="payment.html" class="btn btn-primary">
-                    <i class="fas fa-plus-circle"></i> Buy More Coins
-                </a>
-                <button id="toggleAvailability" class="btn btn-secondary">
-                    <i class="fas fa-toggle-on"></i> Available for Calls
-                </button>
-                <a href="profile.html" class="btn btn-outline">
-                    <i class="fas fa-edit"></i> Edit Profile
-                </a>
-                <a href="index.html" class="btn btn-outline">
-                    <i class="fas fa-search"></i> Find Whispers
+        <div class="dashboard-grid">
+            <!-- Calls Waiting -->
+            <div class="card">
+                <h2 style="margin-bottom: 1rem;">
+                    <i class="fas fa-phone-volume" style="color: var(--plus-green);"></i> Calls Waiting
+                </h2>
+                <div id="callsWaiting">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading calls...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Your Whisper Profile -->
+            <div class="card">
+                <h2 style="margin-bottom: 1rem;">
+                    <i class="fas fa-user" style="color: var(--accent-purple);"></i> Your Whisper Profile
+                </h2>
+                <div id="whisperProfile">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading profile...</p>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem;">
+                    <a href="profile.html" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Find Whispers -->
+            <div class="card">
+                <h2 style="margin-bottom: 1rem;">
+                    <i class="fas fa-search" style="color: var(--me-yellow);"></i> Find Whispers
+                </h2>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                    Connect with experts and get the advice you need.
+                </p>
+                <a href="index.html" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-headset"></i> Browse Whispers
                 </a>
             </div>
-        </div>
-
-        <!-- Calls Waiting -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="section-title"><i class="fas fa-phone-volume"></i> Calls Waiting</h2>
-                <button id="refreshCalls" class="btn btn-small">
-                    <i class="fas fa-redo"></i> Refresh
-                </button>
-            </div>
-            <div id="callsWaiting">
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Loading calls...</p>
+            
+            <!-- Favorites -->
+            <div class="card">
+                <h2 style="margin-bottom: 1rem;">
+                    <i class="fas fa-heart" style="color: var(--danger-red);"></i> Favorite Whispers
+                </h2>
+                <div id="favoriteWhispers">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading favorites...</p>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button onclick="viewAllFavorites()" class="btn btn-secondary" style="width: 100%;">
+                        <i class="fas fa-list"></i> View All Favorites
+                    </button>
                 </div>
             </div>
         </div>
-
-        <!-- Favorite Whispers -->
+        
+        <!-- Recent Activity -->
         <div class="card">
-            <div class="card-header">
-                <h2 class="section-title"><i class="fas fa-heart"></i> Favorite Whispers</h2>
-                <button id="refreshFavorites" class="btn btn-small">
-                    <i class="fas fa-redo"></i> Refresh
-                </button>
-            </div>
-            <div id="favoriteWhispers">
+            <h2 style="margin-bottom: 1rem;">
+                <i class="fas fa-history"></i> Recent Activity
+            </h2>
+            <div id="recentActivity">
                 <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>Loading favorites...</p>
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading activity...</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Firebase Configuration -->
     <script src="js/firebase-config.js"></script>
+    
+    <!-- Unified Header -->
     <script src="js/unified-header.js"></script>
-    <script src="js/common-header.js"></script>
-    <script src="js/auth.js"></script>
+    
+    <!-- Dashboard Script -->
     <script src="js/dashboard.js"></script>
-    <script src="js/favorites.js"></script>
-    <script src="js/call-lifecycle.js"></script>
     
     <script>
-        // Mobile menu toggle
-        document.querySelector('.mobile-menu').addEventListener('click', function() {
-            document.querySelector('.nav-links').classList.toggle('show');
-        });
-
-        // Logout handler
-        document.getElementById('logoutBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) {
-                firebase.auth().signOut();
-                window.location.href = 'index.html';
-            }
-        });
-
-        // Refresh buttons
-        document.getElementById('refreshCalls')?.addEventListener('click', function() {
-            if (typeof loadCallsWaiting === 'function') {
-                loadCallsWaiting(firebase.auth().currentUser?.uid);
-            }
-        });
-
-        document.getElementById('refreshFavorites')?.addEventListener('click', function() {
-            if (typeof loadFavoriteWhispers === 'function') {
-                loadFavoriteWhispers(firebase.auth().currentUser?.uid);
-            }
-        });
+    function viewAllFavorites() {
+        alert('Favorites page coming soon!');
+        // window.location.href = 'favorites.html';
+    }
     </script>
-    <script src="js/mobile-menu.js"></script>
 </body>
 </html>
