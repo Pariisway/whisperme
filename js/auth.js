@@ -1,4 +1,4 @@
-// Auth.js - Fixed variable conflict
+// Auth.js - Updated with better error handling
 console.log('Auth.js loaded');
 
 let authPageInitialized = false;
@@ -75,6 +75,12 @@ function createAuthForm(type) {
         <div id="authError" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1rem; margin-top: 1.5rem; color: #ef4444;"></div>
         
         <div id="authSuccess" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem; margin-top: 1.5rem; color: #10b981;"></div>
+        
+        <div id="apiKeyWarning" style="display: none; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; margin-top: 1.5rem; color: #f59e0b;">
+            <i class="fas fa-exclamation-triangle"></i> 
+            <strong>Firebase API Key Issue:</strong> 
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">The Firebase configuration may be incorrect. Please check your API key in the Firebase Console.</p>
+        </div>
     `;
     
     // Add form submit handler
@@ -90,6 +96,13 @@ function createAuthForm(type) {
 
 function initAuth() {
     console.log('Initializing auth...');
+    
+    // Check if Firebase is properly initialized
+    if (!firebase || !firebase.auth) {
+        console.error('Firebase not loaded properly');
+        showApiKeyWarning();
+        return;
+    }
     
     // Check if user is already logged in
     if (firebase.auth().currentUser) {
@@ -112,6 +125,7 @@ async function handleLogin() {
     // Reset messages
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
+    document.getElementById('apiKeyWarning').style.display = 'none';
     
     // Validate
     if (!email || !password) {
@@ -156,6 +170,14 @@ async function handleLogin() {
             case 'auth/network-request-failed':
                 errorMessage += 'Network error. Check your connection.';
                 break;
+            case 'auth/internal-error':
+                if (error.message.includes('API key not valid')) {
+                    errorMessage = 'Firebase configuration error: Invalid API key. Please contact support.';
+                    showApiKeyWarning();
+                } else {
+                    errorMessage += 'Server error. Please try again.';
+                }
+                break;
             default:
                 errorMessage += error.message;
         }
@@ -178,6 +200,7 @@ async function handleSignup() {
     // Reset messages
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
+    document.getElementById('apiKeyWarning').style.display = 'none';
     
     // Validate
     if (!email || !password) {
@@ -265,6 +288,14 @@ async function handleSignup() {
             case 'auth/network-request-failed':
                 errorMessage += 'Network error. Check your connection.';
                 break;
+            case 'auth/internal-error':
+                if (error.message.includes('API key not valid')) {
+                    errorMessage = 'Firebase configuration error: Invalid API key. Please contact support.';
+                    showApiKeyWarning();
+                } else {
+                    errorMessage += 'Server error. Please try again.';
+                }
+                break;
             default:
                 errorMessage += error.message;
         }
@@ -314,6 +345,13 @@ function showSuccess(message) {
     if (successDiv) {
         successDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
         successDiv.style.display = 'block';
+    }
+}
+
+function showApiKeyWarning() {
+    const warningDiv = document.getElementById('apiKeyWarning');
+    if (warningDiv) {
+        warningDiv.style.display = 'block';
     }
 }
 

@@ -1,22 +1,22 @@
-// Firebase Configuration - Simplified
+// Firebase Configuration - UPDATED WITH YOUR API KEY
 console.log('🚀 Loading Firebase Configuration...');
 
-// Firebase configuration
+// YOUR Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDQ8t6KJAsJlqRgYod8pR8rqi2rC7JLRu8",
-    authDomain: "whisper-chat-live.firebaseapp.com",
-    projectId: "whisper-chat-live",
-    storageBucket: "whisper-chat-live.firebasestorage.app",
-    messagingSenderId: "440001659313",
-    appId: "1:440001659313:web:e94a55fd19ef6683a29161",
-    measurementId: "G-4QYRJLTXTT"
+  apiKey: "AIzaSyALbIJSI2C-p6IyMtj_F0ZqGyN1i79jOd4",
+  authDomain: "whisper-chat-live.firebaseapp.com",
+  projectId: "whisper-chat-live",
+  storageBucket: "whisper-chat-live.firebasestorage.app",
+  messagingSenderId: "302894848452",
+  appId: "1:302894848452:web:61a7ab21a269533c426c91"
 };
 
 // Initialize Firebase only once
 try {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
-        console.log('✅ Firebase App Initialized');
+        console.log('✅ Firebase App Initialized with YOUR configuration');
+        console.log('📊 Project ID:', firebaseConfig.projectId);
     } else {
         console.log('✅ Using existing Firebase app');
     }
@@ -87,7 +87,21 @@ auth.onAuthStateChanged((user) => {
 window.addEventListener('unhandledrejection', (event) => {
     if (event.reason && event.reason.code && event.reason.code.includes('firebase')) {
         console.error('🔥 Firebase Error:', event.reason);
+        
+        // Check for API key errors
+        if (event.reason.message && event.reason.message.includes('API key not valid')) {
+            console.error('❌ INVALID API KEY! Please check your Firebase configuration.');
+            console.error('Current API key starts with:', firebaseConfig.apiKey.substring(0, 15) + '...');
+        }
     }
 });
 
-console.log('🔥 Firebase setup complete!');
+console.log('🔥 Firebase setup complete with YOUR configuration!');
+
+// Check Firebase services
+setTimeout(() => {
+    console.log('🔍 Checking Firebase services...');
+    console.log('- Auth available:', typeof auth !== 'undefined' ? '✅' : '❌');
+    console.log('- Firestore available:', typeof db !== 'undefined' ? '✅' : '❌');
+    console.log('- Current user:', auth.currentUser ? auth.currentUser.email : 'None');
+}, 1000);
