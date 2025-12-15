@@ -3,29 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whisper+Me - Authentication</title>
+    <title>Sign In - Whisper+Me</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        
+        .auth-card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .auth-logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .auth-card {
+                padding: 2rem;
+                margin-top: 3rem;
+            }
+            
+            .back-btn {
+                top: 1rem;
+                left: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Header will be injected by unified-header.js -->
+    <!-- Back Button -->
+    <a href="index.html" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Home
+    </a>
     
-    <main class="container" style="min-height: 80vh; display: flex; align-items: center; justify-content: center;">
-        <div class="card" style="max-width: 400px; width: 100%;">
-            <!-- Back Button -->
-            <button onclick="goBack()" class="btn btn-secondary" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-arrow-left"></i> Back to Home
-            </button>
+    <!-- Auth Container -->
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <span style="color: #1e3a8a;">Whisper</span>
+                    <span style="color: #10b981;">+</span>
+                    <span style="color: #f59e0b;">Me</span>
+                </div>
+                <p style="color: #94a3b8;">Connect with experts instantly</p>
+            </div>
             
             <div id="authContainer">
+                <!-- Auth form will be loaded here -->
                 <div class="loading">
                     <i class="fas fa-spinner fa-spin"></i>
                     <p>Loading authentication...</p>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -35,16 +105,7 @@
     <!-- Firebase Configuration -->
     <script src="js/firebase-config.js"></script>
     
-    <!-- Unified Header -->
-    <script src="js/unified-header.js"></script>
-    
     <!-- Auth Script -->
     <script src="js/auth.js"></script>
-    
-    <script>
-    function goBack() {
-        window.location.href = 'index.html';
-    }
-    </script>
 </body>
 </html>

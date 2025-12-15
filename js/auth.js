@@ -1,225 +1,320 @@
-// Auth.js - Fixed version
-console.log('Auth.js loaded - Fixed version');
+// Auth.js - Fixed with proper loading handling
+console.log('Auth.js loaded');
 
-// Wait for DOM to load
+let authInitialized = false;
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing auth...');
-    
-    // Wait for Firebase
-    let checkCount = 0;
-    const maxChecks = 50;
-    
-    const waitForFirebase = setInterval(() => {
-        if (window.firebase && firebase.apps.length > 0) {
-            clearInterval(waitForFirebase);
-            console.log('✅ Firebase is ready after ' + checkCount + ' attempts');
-            initializeAuthPage();
-        } else if (checkCount++ > maxChecks) {
-            clearInterval(waitForFirebase);
-            console.error('Firebase not loaded');
-            showError('Firebase not loaded. Please refresh the page.');
-        }
-    }, 100);
-});
-
-function initializeAuthPage() {
-    console.log('Initializing auth page...');
+    console.log('Auth page DOM loaded');
     
     // Get auth type from URL
     const urlParams = new URLSearchParams(window.location.search);
     const authType = urlParams.get('type') || 'login';
-    console.log('Auth type:', authType);
     
-    // Update page elements if they exist
-    const formTitle = document.getElementById('formTitle');
-    const formSubtitle = document.getElementById('formSubtitle');
-    const submitBtn = document.getElementById('submitBtn');
-    const submitText = document.getElementById('submitText');
-    const toggleLink = document.getElementById('toggleLink');
-    const toggleText = document.getElementById('toggleText');
+    // Create auth form
+    createAuthForm(authType);
     
-    if (formTitle) {
-        formTitle.textContent = authType === 'signup' ? 'Create Your Account' : 'Welcome Back';
-    }
+    // Initialize Firebase auth
+    initAuth();
+});
+
+function createAuthForm(type) {
+    const container = document.getElementById('authContainer');
+    if (!container) return;
     
-    if (formSubtitle) {
-        formSubtitle.textContent = authType === 'signup' 
-            ? 'Start earning from your fans today' 
-            : 'Sign in to your account to continue';
-    }
+    const isLogin = type === 'login';
+    const title = isLogin ? 'Welcome Back' : 'Create Account';
+    const buttonText = isLogin ? 'Sign In' : 'Sign Up';
+    const switchText = isLogin ? "Don't have an account?" : 'Already have an account?';
+    const switchLink = isLogin ? 'signup' : 'login';
+    const switchButtonText = isLogin ? 'Sign Up' : 'Sign In';
     
-    if (submitBtn) {
-        submitBtn.innerHTML = authType === 'signup' 
-            ? '<i class="fas fa-user-plus"></i><span>Sign Up</span>' 
-            : '<i class="fas fa-sign-in-alt"></i><span>Sign In</span>';
-    }
+    container.innerHTML = `
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">${title}</h2>
+            <p style="color: var(--text-muted);">${isLogin ? 'Sign in to your account' : 'Start your journey today'}</p>
+        </div>
+        
+        <form id="authForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="you@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" required minlength="6">
+            </div>
+            
+            ${!isLogin ? `
+            <div class="form-group">
+                <label for="displayName" class="form-label">Display Name</label>
+                <input type="text" id="displayName" class="form-control" placeholder="How you'll appear">
+            </div>
+            ` : ''}
+            
+            <div style="margin-top: 1rem;">
+                <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-spinner fa-spin" style="display: none;"></i>
+                    <span>${buttonText}</span>
+                </button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1rem; color: var(--text-muted);">
+                <p>${switchText} <a href="auth.html?type=${switchLink}" style="color: var(--plus-green); text-decoration: none;">${switchButtonText}</a></p>
+            </div>
+            
+            ${isLogin ? `
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="#" onclick="resetPassword()" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+                    Forgot your password?
+                </a>
+            </div>
+            ` : ''}
+        </form>
+        
+        <div id="authError" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1rem; margin-top: 1.5rem; color: #ef4444;"></div>
+        
+        <div id="authSuccess" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem; margin-top: 1.5rem; color: #10b981;"></div>
+    `;
     
-    if (submitText) {
-        submitText.textContent = authType === 'signup' ? 'Sign Up' : 'Sign In';
-    }
-    
-    if (toggleLink && toggleText) {
-        if (authType === 'signup') {
-            toggleText.innerHTML = 'Already have an account? ';
-            toggleLink.textContent = 'Sign in';
-            toggleLink.href = 'auth.html?type=login';
+    // Add form submit handler
+    document.getElementById('authForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (isLogin) {
+            handleLogin();
         } else {
-            toggleText.innerHTML = 'Don\'t have an account? ';
-            toggleLink.textContent = 'Sign up';
-            toggleLink.href = 'auth.html?type=signup';
+            handleSignup();
         }
+    });
+}
+
+function initAuth() {
+    console.log('Initializing auth...');
+    
+    // Wait for Firebase to be ready
+    const checkFirebase = setInterval(() => {
+        if (window.firebase && firebase.auth) {
+            clearInterval(checkFirebase);
+            authInitialized = true;
+            console.log('✅ Auth initialized');
+            
+            // Check if user is already logged in
+            const user = firebase.auth().currentUser;
+            if (user) {
+                console.log('User already logged in, redirecting to dashboard...');
+                window.location.href = 'dashboard.html';
+            }
+        }
+    }, 100);
+    
+    // Timeout after 10 seconds
+    setTimeout(() => {
+        if (!authInitialized) {
+            console.warn('⚠️ Firebase auth initialization timed out');
+            showError('Firebase not responding. Please refresh the page.');
+        }
+    }, 10000);
+}
+
+async function handleLogin() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const submitBtn = document.getElementById('submitBtn');
+    const errorDiv = document.getElementById('authError');
+    const successDiv = document.getElementById('authSuccess');
+    
+    // Reset messages
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    
+    // Validate
+    if (!email || !password) {
+        showError('Please fill in all fields');
+        return;
     }
     
-    console.log('✅ Auth page initialized successfully');
+    // Show loading
+    submitBtn.disabled = true;
+    submitBtn.querySelector('i').style.display = 'inline-block';
+    submitBtn.querySelector('span').textContent = 'Signing in...';
+    
+    try {
+        const auth = firebase.auth();
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        
+        console.log('✅ Login successful:', userCredential.user.email);
+        
+        // Show success message
+        successDiv.innerHTML = '<i class="fas fa-check-circle"></i> Login successful! Redirecting...';
+        successDiv.style.display = 'block';
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        
+        let errorMessage = 'Login failed. ';
+        switch (error.code) {
+            case 'auth/user-not-found':
+                errorMessage += 'No account found with this email.';
+                break;
+            case 'auth/wrong-password':
+                errorMessage += 'Incorrect password.';
+                break;
+            case 'auth/too-many-requests':
+                errorMessage += 'Too many failed attempts. Try again later.';
+                break;
+            case 'auth/network-request-failed':
+                errorMessage += 'Network error. Check your connection.';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        
+        showError(errorMessage);
+        submitBtn.disabled = false;
+        submitBtn.querySelector('i').style.display = 'none';
+        submitBtn.querySelector('span').textContent = 'Sign In';
+    }
+}
+
+async function handleSignup() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const displayName = document.getElementById('displayName')?.value.trim() || email.split('@')[0];
+    const submitBtn = document.getElementById('submitBtn');
+    const errorDiv = document.getElementById('authError');
+    const successDiv = document.getElementById('authSuccess');
+    
+    // Reset messages
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    
+    // Validate
+    if (!email || !password) {
+        showError('Please fill in all required fields');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showError('Password must be at least 6 characters');
+        return;
+    }
+    
+    // Show loading
+    submitBtn.disabled = true;
+    submitBtn.querySelector('i').style.display = 'inline-block';
+    submitBtn.querySelector('span').textContent = 'Creating account...';
+    
+    try {
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // Create user
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Update profile
+        await user.updateProfile({
+            displayName: displayName
+        });
+        
+        // Create user document
+        await db.collection('users').doc(user.uid).set({
+            email: email,
+            displayName: displayName,
+            coins: 0,
+            totalCalls: 0,
+            totalEarnings: 0,
+            averageRating: 0,
+            available: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+        
+        // Create profile document
+        await db.collection('profiles').doc(user.uid).set({
+            userId: user.uid,
+            displayName: displayName,
+            username: displayName.toLowerCase().replace(/\s+/g, ''),
+            bio: '',
+            callPrice: 1,
+            available: false,
+            rating: 0,
+            totalCalls: 0,
+            photoURL: '',
+            social: {},
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+        
+        console.log('✅ Signup successful:', user.email);
+        
+        // Show success message
+        successDiv.innerHTML = '<i class="fas fa-check-circle"></i> Account created! Redirecting...';
+        successDiv.style.display = 'block';
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Signup error:', error);
+        
+        let errorMessage = 'Signup failed. ';
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                errorMessage += 'Email already registered.';
+                break;
+            case 'auth/invalid-email':
+                errorMessage += 'Invalid email address.';
+                break;
+            case 'auth/weak-password':
+                errorMessage += 'Password is too weak.';
+                break;
+            case 'auth/network-request-failed':
+                errorMessage += 'Network error. Check your connection.';
+                break;
+            default:
+                errorMessage += error.message;
+        }
+        
+        showError(errorMessage);
+        submitBtn.disabled = false;
+        submitBtn.querySelector('i').style.display = 'none';
+        submitBtn.querySelector('span').textContent = 'Sign Up';
+    }
+}
+
+async function resetPassword() {
+    const email = prompt('Enter your email address to reset password:');
+    if (!email) return;
+    
+    try {
+        await firebase.auth().sendPasswordResetEmail(email);
+        alert('Password reset email sent! Check your inbox.');
+    } catch (error) {
+        console.error('Password reset error:', error);
+        alert('Error: ' + error.message);
+    }
 }
 
 function showError(message) {
-    const errorDiv = document.getElementById('errorMessage');
+    const errorDiv = document.getElementById('authError');
     if (errorDiv) {
-        errorDiv.textContent = message;
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
         errorDiv.style.display = 'block';
-    } else {
-        alert(message);
     }
 }
 
 function showSuccess(message) {
-    const successDiv = document.getElementById('successMessage');
+    const successDiv = document.getElementById('authSuccess');
     if (successDiv) {
-        successDiv.textContent = message;
+        successDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
         successDiv.style.display = 'block';
     }
 }
-
-// Handle form submission globally
-document.addEventListener('submit', async function(e) {
-    if (e.target.id === 'authForm') {
-        e.preventDefault();
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const authType = urlParams.get('type') || 'login';
-        
-        const email = document.getElementById('email')?.value;
-        const password = document.getElementById('password')?.value;
-        const submitBtn = document.getElementById('submitBtn');
-        const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
-        
-        if (!email || !password) {
-            showError('Please fill in all fields');
-            return;
-        }
-        
-        // Show loading
-        const originalContent = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-        submitBtn.disabled = true;
-        
-        // Hide messages
-        if (errorMessage) errorMessage.style.display = 'none';
-        if (successMessage) successMessage.style.display = 'none';
-        
-        try {
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            
-            if (authType === 'signup') {
-                // Sign up
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                
-                // Create user profile
-                await db.collection('users').doc(user.uid).set({
-                    email: user.email,
-                    displayName: user.email.split('@')[0],
-                    createdAt: new Date(),
-                    tokens: 0,
-                    available: false,
-                    totalEarnings: 0,
-                    totalCalls: 0,
-                    averageRating: 0
-                });
-                
-                // Create public profile
-                await db.collection('profiles').doc(user.uid).set({
-                    userId: user.uid,
-                    displayName: user.email.split('@')[0],
-                    email: user.email,
-                    bio: '',
-                    photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email.split('@')[0])}&background=1e3a8a&color=fff`,
-                    available: false,
-                    rating: 0,
-                    totalCalls: 0,
-                    createdAt: new Date()
-                });
-                
-                showSuccess('Account created successfully! Redirecting...');
-                
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
-                
-            } else {
-                // Sign in
-                await auth.signInWithEmailAndPassword(email, password);
-                window.location.href = 'dashboard.html';
-            }
-            
-        } catch (error) {
-            console.error('Auth error:', error);
-            
-            // Reset button
-            submitBtn.innerHTML = originalContent;
-            submitBtn.disabled = false;
-            
-            // Show error
-            showError(getErrorMessage(error.code));
-        }
-    }
-});
-
-function getErrorMessage(errorCode) {
-    switch(errorCode) {
-        case 'auth/invalid-email':
-            return 'Please enter a valid email address';
-        case 'auth/user-disabled':
-            return 'This account has been disabled';
-        case 'auth/user-not-found':
-            return 'No account found with this email';
-        case 'auth/wrong-password':
-            return 'Incorrect password';
-        case 'auth/email-already-in-use':
-            return 'This email is already registered';
-        case 'auth/weak-password':
-            return 'Password should be at least 6 characters';
-        case 'auth/network-request-failed':
-            return 'Network error. Please check your connection';
-        case 'auth/too-many-requests':
-            return 'Too many attempts. Please try again later';
-        default:
-            return 'An error occurred. Please try again';
-    }
-}
-
-// Check if user is already logged in
-firebase.auth().onAuthStateChanged((user) => {
-    if (user && window.location.pathname.includes('auth.html')) {
-        console.log('User already logged in, redirecting to dashboard');
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 500);
-    }
-});
-
-// Add click handler for toggle link
-document.addEventListener('click', function(e) {
-    if (e.target.id === 'toggleLink') {
-        e.preventDefault();
-        const urlParams = new URLSearchParams(window.location.search);
-        const authType = urlParams.get('type') || 'login';
-        const newType = authType === 'login' ? 'signup' : 'login';
-        window.location.href = `auth.html?type=${newType}`;
-    }
-});
-
-console.log('✅ Auth.js loaded successfully');

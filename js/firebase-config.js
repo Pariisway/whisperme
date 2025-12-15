@@ -1,82 +1,82 @@
-// Enhanced Firebase Configuration - Fixed version
-console.log('🚀 Loading Enhanced Firebase Configuration...');
+// Firebase Configuration - Fixed with proper error handling
+console.log('🚀 Loading Firebase Configuration...');
 
-// Check if Firebase is already initialized
-if (typeof firebase === 'undefined') {
-    console.error('❌ Firebase SDK not loaded. Check your internet connection.');
-    document.addEventListener('DOMContentLoaded', function() {
-        alert('Firebase SDK failed to load. Please check your internet connection and refresh the page.');
-    });
-} else {
-    try {
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-  apiKey: "AIzaSyALbIJSI2C-p6IyMtj_F0ZqGyN1i79jOd4",
-  authDomain: "whisper-chat-live.firebaseapp.com",
-  projectId: "whisper-chat-live",
-  storageBucket: "whisper-chat-live.firebasestorage.app",
-  messagingSenderId: "302894848452",
-  appId: "1:302894848452:web:61a7ab21a269533c426c91"
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyDQ8t6KJAsJlqRgYod8pR8rqi2rC7JLRu8",
+    authDomain: "whisper-chat-live.firebaseapp.com",
+    projectId: "whisper-chat-live",
+    storageBucket: "whisper-chat-live.firebasestorage.app",
+    messagingSenderId: "440001659313",
+    appId: "1:440001659313:web:e94a55fd19ef6683a29161",
+    measurementId: "G-4QYRJLTXTT"
 };
 
-        // Initialize Firebase only if it hasn't been initialized
-        let firebaseApp;
-        if (!firebase.apps.length) {
-            firebaseApp = firebase.initializeApp(firebaseConfig);
-            console.log('✅ Firebase App Initialized: ' + firebaseApp.name);
-        } else {
-            firebaseApp = firebase.apps[0];
-            console.log('✅ Using existing Firebase App: ' + firebaseApp.name);
-        }
+// Initialize Firebase only once
+let firebaseApp;
+try {
+    if (!firebase.apps.length) {
+        firebaseApp = firebase.initializeApp(firebaseConfig);
+        console.log('✅ Firebase App Initialized');
+    } else {
+        firebaseApp = firebase.app();
+        console.log('✅ Using existing Firebase app');
+    }
+} catch (error) {
+    console.error('❌ Firebase initialization error:', error);
+}
 
-        // Initialize services
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const storage = firebase.storage ? firebase.storage() : null;
+// Get Firebase services
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-        // Enable offline persistence for Firestore
-        if (db) {
-            db.enablePersistence()
-                .then(() => {
-                    console.log('✅ Firestore persistence enabled');
-                })
-                .catch((err) => {
-                    console.log('Firestore persistence error:', err.code);
-                });
-        }
+// Enable Firestore persistence
+db.enablePersistence()
+    .then(() => console.log('✅ Firestore persistence enabled'))
+    .catch(err => console.warn('⚠️ Firestore persistence error:', err));
 
-        console.log('✅ Firebase Services Ready:');
-        console.log('   - Auth:', typeof auth);
-        console.log('   - Firestore:', typeof db);
-        if (storage) console.log('   - Storage:', typeof storage);
+// Set auth persistence
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .then(() => console.log('✅ Auth persistence set'))
+    .catch(error => console.error('❌ Auth persistence error:', error));
 
-        // Make services globally available
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
-        if (storage) window.firebaseStorage = storage;
+// Listen for auth state changes
+let authInitialized = false;
+const authStateCallbacks = [];
 
-        // Check if user is logged in and update localStorage
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                localStorage.setItem('userLoggedIn', 'true');
-                console.log('👤 User logged in:', user.email);
-            } else {
-                localStorage.removeItem('userLoggedIn');
-                console.log('👤 User not logged in');
-            }
-        });
+auth.onAuthStateChanged((user) => {
+    authInitialized = true;
+    console.log('👤 Auth state changed:', user ? user.email : 'No user');
+    
+    // Call all registered callbacks
+    authStateCallbacks.forEach(callback => callback(user));
+}, (error) => {
+    console.error('❌ Auth state error:', error);
+    authInitialized = true;
+    // Still call callbacks to unblock waiting processes
+    authStateCallbacks.forEach(callback => callback(null));
+});
 
-        console.log('🔥 Firebase setup complete!');
-
-    } catch (error) {
-        console.error('❌ Firebase Initialization Failed:', error);
-        
-        // Try to recover by reloading Firebase scripts
-        setTimeout(() => {
-            if (typeof firebase === 'undefined') {
-                console.log('Attempting to reload Firebase...');
-                window.location.reload();
-            }
-        }, 3000);
+// Helper function to wait for auth to initialize
+function waitForAuth(callback) {
+    if (authInitialized) {
+        callback(auth.currentUser);
+    } else {
+        authStateCallbacks.push(callback);
     }
 }
+
+// Global error handler
+window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.code && event.reason.code.includes('firebase')) {
+        console.error('🔥 Firebase Error:', event.reason);
+    }
+});
+
+console.log('🔥 Firebase setup complete!');
+
+// Export for other scripts
+window.waitForAuth = waitForAuth;
+window.firebaseApp = firebaseApp;
+window.firebaseAuth = auth;
+window.firebaseDb = db;

@@ -1,9 +1,6 @@
-// Unified Header System for Whisper+Me
+// Unified Header System - Fixed
 console.log('Unified header system loaded');
 
-let currentUser = null;
-
-// Initialize header on all pages
 function initUnifiedHeader() {
     console.log('Initializing unified header...');
     
@@ -16,118 +13,90 @@ function initUnifiedHeader() {
         return;
     }
     
-    // Create or update header
+    // Remove any existing headers
     const existingHeader = document.querySelector('.main-header');
     if (existingHeader) {
-        updateHeaderContent();
-    } else {
-        createHeader();
+        existingHeader.remove();
     }
+    
+    // Create new header
+    createHeader();
     
     // Setup mobile menu
     setupMobileMenu();
-    
-    // Check auth state and update header
-    if (window.firebase && firebase.auth) {
-        firebase.auth().onAuthStateChanged((user) => {
-            currentUser = user;
-            updateHeaderContent(user);
-        });
-    } else {
-        // Fallback to localStorage
-        const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-        updateHeaderContent(isLoggedIn ? { email: 'user@example.com' } : null);
-    }
 }
 
 function createHeader() {
-    console.log('Creating new header...');
-    
     const header = document.createElement('header');
     header.className = 'main-header';
-    header.innerHTML = getHeaderHTML();
     
-    // Insert at the top of body
-    document.body.insertBefore(header, document.body.firstChild);
-}
-
-function updateHeaderContent(user = null) {
-    const header = document.querySelector('.main-header');
-    if (!header) return;
-    
-    header.innerHTML = getHeaderHTML(user);
-    
-    // Re-attach event listeners
-    attachHeaderEventListeners(user);
-}
-
-function getHeaderHTML(user = null) {
+    // Check auth state
+    const user = firebase.auth().currentUser;
     const isLoggedIn = !!user;
     
-    return `
+    header.innerHTML = `
         <nav class="navbar">
-            <div class="container">
-                <div class="nav-container">
-                    <a href="${isLoggedIn ? 'dashboard.html' : 'index.html'}" class="logo">
-                        <h1>
-                            <span class="whisper">Whisper</span>
-                            <span class="plus">+</span>
-                            <span class="me">Me</span>
-                        </h1>
-                    </a>
-                    
-                    <div class="nav-links">
-                        ${isLoggedIn ? `
-                            <a href="dashboard.html" class="nav-link">
-                                <i class="fas fa-home"></i> Dashboard
-                            </a>
-                            <a href="profile.html" class="nav-link">
-                                <i class="fas fa-user-edit"></i> Profile
-                            </a>
-                            <a href="payment.html" class="nav-link">
-                                <i class="fas fa-coins"></i> Buy Tokens
-                            </a>
-                            <a href="#" id="logoutBtn" class="nav-link">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        ` : `
-                            <a href="index.html" class="nav-link">
-                                <i class="fas fa-home"></i> Home
-                            </a>
-                            <a href="index.html#how-it-works" class="nav-link">
-                                <i class="fas fa-play-circle"></i> How It Works
-                            </a>
-                            <a href="auth.html?type=login" class="nav-link">
-                                <i class="fas fa-sign-in-alt"></i> Login
-                            </a>
-                            <a href="auth.html?type=signup" class="btn btn-primary btn-small">
-                                <i class="fas fa-user-plus"></i> Sign Up
-                            </a>
-                        `}
-                    </div>
-                    
-                    <div class="mobile-menu-btn">
-                        <i class="fas fa-bars"></i>
-                    </div>
+            <div class="nav-container">
+                <a href="${isLoggedIn ? 'dashboard.html' : 'index.html'}" class="logo">
+                    <span class="whisper">Whisper</span>
+                    <span class="plus">+</span>
+                    <span class="me">Me</span>
+                </a>
+                
+                <div class="nav-links">
+                    ${isLoggedIn ? `
+                        <a href="dashboard.html" class="nav-link">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                        <a href="profile.html" class="nav-link">
+                            <i class="fas fa-user-edit"></i> Profile
+                        </a>
+                        <a href="payment.html" class="nav-link">
+                            <i class="fas fa-coins"></i> Buy Coins
+                        </a>
+                        <a href="#" id="logoutBtn" class="nav-link">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    ` : `
+                        <a href="index.html" class="nav-link">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                        <a href="#how-it-works" class="nav-link">
+                            <i class="fas fa-play-circle"></i> How It Works
+                        </a>
+                        <a href="auth.html?type=login" class="nav-link">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                        <a href="auth.html?type=signup" class="btn btn-primary btn-small">
+                            <i class="fas fa-user-plus"></i> Sign Up
+                        </a>
+                    `}
+                </div>
+                
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
                 </div>
             </div>
         </nav>
     `;
+    
+    // Insert at the top of body
+    document.body.insertBefore(header, document.body.firstChild);
+    
+    // Attach event listeners
+    attachHeaderEventListeners(isLoggedIn);
 }
 
-function attachHeaderEventListeners(user) {
+function attachHeaderEventListeners(isLoggedIn) {
     // Logout button
     const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
+    if (logoutBtn && isLoggedIn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             
             if (confirm('Are you sure you want to logout?')) {
                 try {
-                    if (window.firebase && firebase.auth) {
-                        await firebase.auth().signOut();
-                    }
-                    localStorage.removeItem('userLoggedIn');
+                    await firebase.auth().signOut();
                     window.location.href = 'index.html';
                 } catch (error) {
                     console.error('Logout error:', error);
@@ -137,7 +106,11 @@ function attachHeaderEventListeners(user) {
         });
     }
     
-    // Logo click - already handled in HTML href
+    // Fix how-it-works link for homepage
+    const howItWorksLink = document.querySelector('a[href="#how-it-works"]');
+    if (howItWorksLink && !window.location.pathname.includes('index.html')) {
+        howItWorksLink.href = 'index.html#how-it-works';
+    }
 }
 
 function setupMobileMenu() {
@@ -158,12 +131,24 @@ function setupMobileMenu() {
     }
 }
 
-// Initialize when DOM loads
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initUnifiedHeader);
-} else {
-    initUnifiedHeader();
-}
+// Initialize when Firebase is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for Firebase
+    const checkFirebase = setInterval(() => {
+        if (window.firebase && firebase.auth) {
+            clearInterval(checkFirebase);
+            
+            // Listen for auth state changes
+            firebase.auth().onAuthStateChanged((user) => {
+                initUnifiedHeader();
+            });
+        }
+    }, 100);
+});
 
-// Export for global use
-window.initUnifiedHeader = initUnifiedHeader;
+// Also initialize on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Page loaded, waiting for Firebase...');
+    });
+}
