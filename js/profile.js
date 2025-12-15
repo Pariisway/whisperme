@@ -1,5 +1,5 @@
-// Profile.js - Updated to sync with dashboard and profile card
-console.log('Profile.js loaded - Fixed version');
+// Profile.js - Fixed with social links and proper saving
+console.log('Profile.js loaded');
 
 let user, db;
 
@@ -26,42 +26,112 @@ async function initProfile() {
         }
         
         user = currentUser;
-        console.log('User:', user.email);
+        console.log('Loading profile for user:', user.email);
         
         // Load user data
         await loadUserData();
         
         // Setup form submission
         setupFormSubmission();
+        
+        // Setup call price slider
+        setupCallPriceSlider();
+        
+        // Setup profile link
+        setupProfileLink();
     });
 }
 
 async function loadUserData() {
     try {
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        const userData = userDoc.data() || {};
-        
         // Load profile data
         const profileDoc = await db.collection('profiles').doc(user.uid).get();
-        const profileData = profileDoc.data() || {};
         
-        // Populate form
-        document.getElementById('displayName').value = profileData.displayName || '';
-        document.getElementById('username').value = profileData.username || '';
-        document.getElementById('bio').value = profileData.bio || '';
-        document.getElementById('callPrice').value = profileData.callPrice || 1;
-        document.getElementById('photoURL').value = profileData.photoURL || '';
-        
-        // Load social links
-        if (profileData.social) {
-            document.getElementById('twitter').value = profileData.social.twitter || '';
-            document.getElementById('instagram').value = profileData.social.instagram || '';
-            document.getElementById('website').value = profileData.social.website || '';
+        if (profileDoc.exists) {
+            const profile = profileDoc.data();
+            
+            // Populate form
+            document.getElementById('displayName').value = profile.displayName || '';
+            document.getElementById('username').value = profile.username || '';
+            document.getElementById('bio').value = profile.bio || '';
+            document.getElementById('callPrice').value = profile.callPrice || 1;
+            document.getElementById('callPriceRange').value = profile.callPrice || 1;
+            document.getElementById('photoURL').value = profile.photoURL || '';
+            
+            // Update profile image if exists
+            if (profile.photoURL) {
+                document.getElementById('profileImage').src = profile.photoURL;
+            }
+            
+            // Load social links
+            if (profile.social) {
+                document.getElementById('twitter').value = profile.social.twitter || '';
+                document.getElementById('instagram').value = profile.social.instagram || '';
+                document.getElementById('linkedin').value = profile.social.linkedin || '';
+                document.getElementById('website').value = profile.social.website || '';
+            }
+            
+            console.log('✅ Profile data loaded');
+        } else {
+            console.log('No profile found, using defaults');
         }
         
     } catch (error) {
         console.error('Error loading user data:', error);
+        showNotification('Error loading profile data', 'error');
     }
+}
+
+function setupCallPriceSlider() {
+    const slider = document.getElementById('callPriceRange');
+    const input = document.getElementById('callPrice');
+    
+    slider.addEventListener('input', function() {
+        input.value = this.value;
+    });
+    
+    input.addEventListener('input', function() {
+        let value = parseInt(this.value);
+        if (value < 1) value = 1;
+        if (value > 5) value = 5;
+        this.value = value;
+        slider.value = value;
+    });
+}
+
+function setupProfileLink() {
+    const baseUrl = window.location.origin + window.location.pathname.replace('profile.html', '');
+    const profileUrl = `${baseUrl}profile-view.html?user=${user.uid}`;
+    
+    document.getElementById('profileLink').value = profileUrl;
+    
+    // Copy link button
+    document.getElementById('copyLinkBtn').addEventListener('click', function() {
+        navigator.clipboard.writeText(profileUrl).then(() => {
+            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-copy"></i> Copy';
+            }, 2000);
+        });
+    });
+    
+    // Share link button
+    document.getElementById('shareLinkBtn').addEventListener('click', function() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'My Whisper+Me Profile',
+                text: 'Connect with me on Whisper+Me!',
+                url: profileUrl
+            });
+        } else {
+            // Fallback to copying
+            navigator.clipboard.writeText(profileUrl);
+            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-share"></i> Share';
+            }, 2000);
+        }
+    });
 }
 
 function setupFormSubmission() {
@@ -76,18 +146,25 @@ function setupFormSubmission() {
         
         try {
             const displayName = document.getElementById('displayName').value.trim();
-            const username = document.getElementById('username').value.trim();
+            const username = document.getElementById('username').value.trim().toLowerCase();
             const bio = document.getElementById('bio').value.trim();
             let callPrice = parseInt(document.getElementById('callPrice').value);
             const photoURL = document.getElementById('photoURL').value.trim();
             
+            // Social links
             const social = {
                 twitter: document.getElementById('twitter').value.trim(),
                 instagram: document.getElementById('instagram').value.trim(),
+                linkedin: document.getElementById('linkedin').value.trim(),
                 website: document.getElementById('website').value.trim()
             };
             
-            // Validate call price (1-5 whisper coins)
+            // Validate
+            if (!displayName || !username) {
+                throw new Error('Display name and username are required');
+            }
+            
+            // Validate call price (1-5)
             if (callPrice < 1) callPrice = 1;
             if (callPrice > 5) callPrice = 5;
             
@@ -103,15 +180,23 @@ function setupFormSubmission() {
                 updatedAt: new Date()
             };
             
-            await db.collection('profiles').doc(user.uid).set(profileData, { merge: true });
-            
             // Also update user document
-            await db.collection('users').doc(user.uid).set({
+            const userData = {
                 displayName,
+                photoURL,
                 updatedAt: new Date()
-            }, { merge: true });
+            };
             
-            showNotification('✅ Profile updated successfully! Your changes will appear on your dashboard and profile card.');
+            // Save to Firestore
+            await db.collection('profiles').doc(user.uid).set(profileData, { merge: true });
+            await db.collection('users').doc(user.uid).set(userData, { merge: true });
+            
+            // Update profile image if URL changed
+            if (photoURL) {
+                document.getElementById('profileImage').src = photoURL;
+            }
+            
+            showNotification('✅ Profile updated successfully! Changes will appear shortly.');
             
             // Redirect back to dashboard after a short delay
             setTimeout(() => {
@@ -120,9 +205,17 @@ function setupFormSubmission() {
             
         } catch (error) {
             console.error('Error updating profile:', error);
-            showNotification('❌ Error updating profile: ' + error.message, 'error');
+            showNotification('❌ Error: ' + error.message, 'error');
             saveButton.disabled = false;
             saveButton.innerHTML = '<i class="fas fa-save"></i> Save Profile';
+        }
+    });
+    
+    // Handle photo URL changes
+    document.getElementById('photoURL').addEventListener('input', function() {
+        const url = this.value.trim();
+        if (url) {
+            document.getElementById('profileImage').src = url;
         }
     });
 }

@@ -3,614 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waiting for Whisper - Whisper+me</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Connecting... - Whisper+Me</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    
     <style>
         .waiting-container {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             padding: 2rem;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
         
         .waiting-card {
-            background: var(--dark-card);
-            border-radius: var(--radius-lg);
+            background: #1e293b;
+            border-radius: 20px;
             padding: 3rem;
-            text-align: center;
-            max-width: 500px;
             width: 100%;
-            border: 1px solid var(--dark-border);
-            box-shadow: var(--shadow-xl);
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
         }
         
         .waiting-icon {
             width: 100px;
             height: 100px;
-            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            background: linear-gradient(135deg, #10b981, #8b5cf6);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 2rem;
-            font-size: 2.5rem;
-            color: white;
-            animation: pulse 2s infinite;
         }
         
-        .waiting-timer {
+        .waiting-icon i {
             font-size: 3rem;
-            font-weight: 700;
-            font-family: monospace;
-            color: var(--accent-yellow);
+            color: white;
+        }
+        
+        .call-timer {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #10b981;
             margin: 1.5rem 0;
-            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
         }
         
-        .whisper-info {
-            margin: 2rem 0;
-            padding: 1.5rem;
-            background: rgba(255,255,255,0.05);
-            border-radius: var(--radius);
-        }
-        
-        .whisper-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin: 0 auto 1rem;
-            overflow: hidden;
-            border: 3px solid var(--primary-blue);
-        }
-        
-        .whisper-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .whisper-name {
-            font-size: 1.5rem;
-            color: var(--dark-text);
-            margin-bottom: 0.5rem;
-        }
-        
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-full);
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--accent-yellow);
-            font-weight: 500;
-            margin: 1rem 0;
-        }
-        
-        .refund-info {
-            background: rgba(74, 222, 128, 0.1);
-            border: 1px solid var(--accent-green);
-            border-radius: var(--radius);
+        .refund-notice {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 10px;
             padding: 1rem;
-            margin: 2rem 0;
-            font-size: 0.9rem;
+            margin: 1.5rem 0;
+            text-align: left;
         }
         
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
-        @keyframes ring {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(5deg); }
-            75% { transform: rotate(-5deg); }
-        }
-        
-        .ringing {
-            animation: ring 1s infinite;
-        }
-        
-        .token-used {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(67, 97, 238, 0.1);
-            color: var(--primary-blue);
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
-            font-weight: 500;
-            margin: 1rem 0;
+        @media (max-width: 768px) {
+            .waiting-card {
+                padding: 2rem;
+            }
+            
+            .call-timer {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="waiting-container">
         <div class="waiting-card">
-            <div class="waiting-icon ringing">
+            <div class="waiting-icon">
                 <i class="fas fa-phone-alt"></i>
             </div>
             
-            <h1 style="color: white; margin-bottom: 1rem;">Waiting for Whisper</h1>
-            <p style="color: var(--dark-text-secondary); margin-bottom: 2rem;">
-                Your call is ringing. The whisper has 2 minutes to accept.
+            <h1 style="margin-bottom: 0.5rem;" id="statusTitle">Connecting to Whisper...</h1>
+            <p style="color: #94a3b8; margin-bottom: 1.5rem;" id="statusMessage">
+                Waiting for the whisper to accept your call
             </p>
             
-            <div class="waiting-timer" id="timer">02:00</div>
-            
-            <div class="token-used">
-                <i class="fas fa-coins"></i>
-                <span>1 token used</span>
-            </div>
-            
-            <div class="whisper-info">
-                <div class="whisper-avatar" id="whisperAvatar">
-                    <!-- Whisper avatar will load here -->
+            <div style="margin-bottom: 2rem;">
+                <div class="loading" style="margin-bottom: 1rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
                 </div>
-                <h3 class="whisper-name" id="whisperName">Whisper</h3>
-                <div class="status-indicator" id="statusIndicator">
-                    <i class="fas fa-circle"></i>
-                    <span>Ringing...</span>
+                <div class="call-timer" id="callTimer">
+                    02:00
                 </div>
-                <p id="statusMessage" style="color: var(--dark-text-secondary);">
-                    Whisper is being notified...
-                </p>
+                <div style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">
+                    Time remaining to accept
+                </div>
             </div>
             
-            <div class="refund-info">
-                <i class="fas fa-info-circle"></i>
-                <p style="margin: 0.5rem 0;">
-                    <strong>Token will be refunded if:</strong>
-                </p>
-                <ul style="text-align: left; margin: 0; padding-left: 1.5rem;">
-                    <li>Whisper declines the call</li>
-                    <li>Call is not answered in 2 minutes</li>
-                </ul>
-                <p style="margin: 0.5rem 0; font-size: 0.85rem;">
-                    Once accepted, no refunds even if call ends early.
-                </p>
+            <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                    <span style="color: #94a3b8;">Call Price:</span>
+                    <span style="font-weight: 600; color: #f59e0b;" id="callPrice">1 whisper coin</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                    <span style="color: #94a3b8;">Duration:</span>
+                    <span style="font-weight: 600;">5 minutes</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #94a3b8;">Status:</span>
+                    <span style="font-weight: 600; color: #10b981;" id="callStatus">Waiting</span>
+                </div>
             </div>
             
-            <div class="action-buttons">
-                <button id="cancelCall" class="btn btn-danger">
+            <div class="refund-notice">
+                <div style="display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <i class="fas fa-info-circle" style="color: #f59e0b;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #f59e0b;">Refund Policy</div>
+                        <div style="color: #f59e0b; font-size: 0.9rem;">
+                            • Coins refunded if not answered in 2 minutes<br>
+                            • No refunds once 5-minute call starts<br>
+                            • Whisper loses 50%+ if they leave early
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <button id="cancelCall" class="btn btn-danger" style="width: 100%;">
                     <i class="fas fa-times"></i> Cancel Call
-                </button>
-                <button id="refreshStatus" class="btn btn-outline">
-                    <i class="fas fa-redo"></i> Refresh
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="js/firebase-config.js"></script>
+    
+    <!-- Call Lifecycle -->
+    <script src="js/call-lifecycle.js"></script>
+    
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyALbIJSI2C-p6IyMtj_F0ZqGyN1i79jOd4",
-            authDomain: "whisper-chat-live.firebaseapp.com",
-            databaseURL: "https://whisper-chat-live-default-rtdb.firebaseio.com",
-            projectId: "whisper-chat-live",
-            storageBucket: "whisper-chat-live.firebasestorage.app",
-            messagingSenderId: "302894848452",
-            appId: "1:302894848452:web:61a7ab21a269533c426c91"
-        };
+        let waitTimer = 120; // 2 minutes
+        let waitInterval = null;
         
-        // Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        
-        let callSession = null;
-        let timerInterval = null;
-        let timeLeft = 120; // 2 minutes in seconds
-        
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Check auth
-            const user = auth.currentUser;
-            if (!user) {
-                window.location.href = 'auth.html?type=login';
-                return;
-            }
-            
-            // Get session ID from URL
+        document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const sessionId = urlParams.get('session');
+            const role = urlParams.get('role');
             
             if (!sessionId) {
                 window.location.href = 'dashboard.html';
                 return;
             }
             
-            // Load call session
-            await loadCallSession(sessionId);
+            // Start wait timer
+            startWaitTimer();
             
-            // Start timer
-            startTimer();
+            // Initialize call monitoring
+            initCall(sessionId, role);
             
-            // Setup real-time listener for call status
-            setupCallListener(sessionId);
-            
-            // Setup button listeners
-            setupButtonListeners(sessionId);
+            // Cancel button
+            document.getElementById('cancelCall').addEventListener('click', function() {
+                if (confirm('Cancel this call? Coins will be refunded.')) {
+                    window.location.href = 'dashboard.html';
+                }
+            });
         });
         
-        async function loadCallSession(sessionId) {
-            try {
-                const sessionDoc = await db.collection('callSessions').doc(sessionId).get();
-                if (!sessionDoc.exists) {
-                    showError('Call session not found');
-                    return;
-                }
-                
-                callSession = sessionDoc.data();
-                callSession.id = sessionId;
-                
-                // Load whisper info
-                await loadWhisperInfo(callSession.whisperId);
-                
-                // Update status
-                updateStatus(callSession.status);
-                
-            } catch (error) {
-                console.error("Error loading call:", error);
-                showError('Error loading call data');
-            }
-        }
-        
-        async function loadWhisperInfo(whisperId) {
-            try {
-                const profileDoc = await db.collection('profiles').doc(whisperId).get();
-                if (profileDoc.exists) {
-                    const profile = profileDoc.data();
-                    
-                    // Update UI
-                    document.getElementById('whisperName').textContent = profile.displayName || 'Whisper';
-                    
-                    // Set avatar
-                    const avatarIndex = Math.abs(hashCode(whisperId)) % 70;
-                    document.getElementById('whisperAvatar').innerHTML = `
-                        <img src="https://i.pravatar.cc/150?img=${avatarIndex}" alt="${profile.displayName}">
-                    `;
-                }
-            } catch (error) {
-                console.error("Error loading whisper info:", error);
-            }
-        }
-        
-        function startTimer() {
-            updateTimerDisplay();
+        function startWaitTimer() {
+            updateWaitTimer();
             
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
+            waitInterval = setInterval(() => {
+                waitTimer--;
+                updateWaitTimer();
                 
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    handleCallTimeout();
+                if (waitTimer <= 0) {
+                    clearInterval(waitInterval);
+                    document.getElementById('statusMessage').textContent = 'Call not answered - Refunding coins...';
+                    document.getElementById('statusMessage').style.color = '#ef4444';
+                    
+                    // Auto-redirect after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 3000);
                 }
             }, 1000);
         }
         
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            document.getElementById('timer').textContent = 
+        function updateWaitTimer() {
+            const minutes = Math.floor(waitTimer / 60);
+            const seconds = waitTimer % 60;
+            document.getElementById('callTimer').textContent = 
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        function setupCallListener(sessionId) {
-            db.collection('callSessions').doc(sessionId)
-                .onSnapshot((doc) => {
-                    if (!doc.exists) return;
-                    
-                    const data = doc.data();
-                    
-                    // Update status
-                    updateStatus(data.status);
-                    
-                    // If call accepted, redirect to call room
-                    if (data.status === 'accepted') {
-                        redirectToCallRoom(sessionId);
-                    }
-                    
-                    // If call declined, handle refund
-                    if (data.status === 'declined') {
-                        handleCallDeclined();
-                    }
-                    
-                    // If call cancelled, handle
-                    if (data.status === 'cancelled') {
-                        handleCallCancelled();
-                    }
-                });
-        }
-        
-        function updateStatus(status) {
-            const indicator = document.getElementById('statusIndicator');
-            const message = document.getElementById('statusMessage');
-            
-            switch(status) {
-                case 'waiting':
-                    indicator.innerHTML = '<i class="fas fa-circle"></i><span>Ringing...</span>';
-                    indicator.style.background = 'rgba(245, 158, 11, 0.2)';
-                    indicator.style.color = 'var(--accent-yellow)';
-                    message.textContent = 'Whisper is being notified...';
-                    break;
-                    
-                case 'accepted':
-                    indicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Accepted!</span>';
-                    indicator.style.background = 'rgba(74, 222, 128, 0.2)';
-                    indicator.style.color = 'var(--accent-green)';
-                    message.textContent = 'Whisper accepted! Redirecting to call...';
-                    break;
-                    
-                case 'declined':
-                    indicator.innerHTML = '<i class="fas fa-times-circle"></i><span>Declined</span>';
-                    indicator.style.background = 'rgba(239, 68, 68, 0.2)';
-                    indicator.style.color = 'var(--accent-red)';
-                    message.textContent = 'Whisper declined the call. Token refunded.';
-                    break;
-                    
-                case 'cancelled':
-                    indicator.innerHTML = '<i class="fas fa-ban"></i><span>Cancelled</span>';
-                    indicator.style.background = 'rgba(107, 114, 128, 0.2)';
-                    indicator.style.color = 'var(--dark-text-secondary)';
-                    message.textContent = 'Call was cancelled.';
-                    break;
-            }
-        }
-        
-        function redirectToCallRoom(sessionId) {
-            clearInterval(timerInterval);
-            setTimeout(() => {
-                window.location.href = `call.html?session=${sessionId}&role=caller`;
-            }, 1500);
-        }
-        
-        async function handleCallTimeout() {
-            clearInterval(timerInterval);
-            
-            // Update call status
-            await db.collection('callSessions').doc(callSession.id).update({
-                status: 'timeout',
-                timeoutAt: new Date(),
-                refunded: true
-            });
-            
-            // Refund token to caller
-            const user = auth.currentUser;
-            await db.collection('users').doc(user.uid).update({
-                tokens: firebase.firestore.FieldValue.increment(1)
-            });
-            
-            // Create refund transaction
-            await db.collection('transactions').add({
-                userId: user.uid,
-                type: 'refund',
-                amount: 0,
-                tokens: 1,
-                description: 'Token refunded - call timeout',
-                callId: callSession.id,
-                status: 'completed',
-                createdAt: new Date()
-            });
-            
-            // Update UI
-            updateStatus('timeout');
-            document.getElementById('statusMessage').textContent = 
-                'Call timed out. Token refunded to your account.';
-            
-            // Show success message
-            showMessage('Token refunded! Call timed out.', 'success');
-            
-            // Redirect after delay
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 5000);
-        }
-        
-        async function handleCallDeclined() {
-            clearInterval(timerInterval);
-            
-            // Token already refunded by whisper's decline action
-            showMessage('Call declined. Token refunded.', 'info');
-            
-            // Redirect after delay
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 3000);
-        }
-        
-        async function handleCallCancelled() {
-            clearInterval(timerInterval);
-            
-            // Check if token should be refunded
-            const user = auth.currentUser;
-            
-            // If call was cancelled before whisper joined, refund
-            if (!callSession.whisperJoinedAt) {
-                await db.collection('users').doc(user.uid).update({
-                    tokens: firebase.firestore.FieldValue.increment(1)
-                });
                 
-                await db.collection('transactions').add({
-                    userId: user.uid,
-                    type: 'refund',
-                    amount: 0,
-                    tokens: 1,
-                    description: 'Token refunded - call cancelled',
-                    callId: callSession.id,
-                    status: 'completed',
-                    createdAt: new Date()
-                });
-                
-                showMessage('Call cancelled. Token refunded.', 'success');
-            } else {
-                showMessage('Call cancelled. No refund (whisper already joined).', 'info');
+            if (waitTimer <= 30) {
+                document.getElementById('callTimer').style.color = '#ef4444';
             }
-            
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 3000);
         }
-        
-        function setupButtonListeners(sessionId) {
-            // Cancel call button
-            document.getElementById('cancelCall').addEventListener('click', async () => {
-                if (!confirm('Cancel this call? Token will be refunded if whisper hasn\'t joined yet.')) {
-                    return;
-                }
-                
-                try {
-                    // Update call status
-                    await db.collection('callSessions').doc(sessionId).update({
-                        status: 'cancelled',
-                        cancelledAt: new Date(),
-                        cancelledBy: 'caller'
-                    });
-                    
-                    // Stop timer
-                    clearInterval(timerInterval);
-                    
-                } catch (error) {
-                    console.error("Error cancelling call:", error);
-                    showMessage('Error cancelling call', 'error');
-                }
-            });
-            
-            // Refresh button
-            document.getElementById('refreshStatus').addEventListener('click', () => {
-                location.reload();
-            });
-        }
-        
-        function showMessage(message, type = 'info') {
-            const existing = document.querySelector('.waiting-toast');
-            if (existing) existing.remove();
-            
-            const toast = document.createElement('div');
-            toast.className = `waiting-toast toast-${type}`;
-            toast.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
-                <span>${message}</span>
-            `;
-            
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: ${type === 'success' ? '#10b981' : '#3b82f6'};
-                color: white;
-                padding: 1rem 1.5rem;
-                border-radius: 10px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-                z-index: 9999;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                animation: slideIn 0.3s ease;
-            `;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-        
-        function showError(message) {
-            const existing = document.querySelector('.waiting-toast');
-            if (existing) existing.remove();
-            
-            const toast = document.createElement('div');
-            toast.className = 'waiting-toast toast-error';
-            toast.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>${message}</span>
-            `;
-            
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #ef4444;
-                color: white;
-                padding: 1rem 1.5rem;
-                border-radius: 10px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-                z-index: 9999;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                animation: slideInDown 0.3s ease;
-            `;
-            
-            document.body.appendChild(toast);
-        }
-        
-        function hashCode(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return hash;
-        }
-        
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            
-            @keyframes slideOut {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-            }
-            
-            @keyframes slideInDown {
-                from {
-                    transform: translate(-50%, -100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translate(-50%, 0);
-                    opacity: 1;
-                }
-            }
-        `;
-        document.head.appendChild(style);
     </script>
-    <script src="js/mobile-menu.js"></script>
 </body>
 </html>

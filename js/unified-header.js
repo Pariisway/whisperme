@@ -1,4 +1,4 @@
-// Unified Header System - Fixed
+// Unified Header System - Fixed with Home button
 console.log('Unified header system loaded');
 
 function initUnifiedHeader() {
@@ -27,12 +27,14 @@ function initUnifiedHeader() {
 }
 
 function createHeader() {
+    // Check if Firebase is initialized
+    let isLoggedIn = false;
+    if (window.firebase && firebase.auth) {
+        isLoggedIn = !!firebase.auth().currentUser;
+    }
+    
     const header = document.createElement('header');
     header.className = 'main-header';
-    
-    // Check auth state
-    const user = firebase.auth().currentUser;
-    const isLoggedIn = !!user;
     
     header.innerHTML = `
         <nav class="navbar">
@@ -46,7 +48,10 @@ function createHeader() {
                 <div class="nav-links">
                     ${isLoggedIn ? `
                         <a href="dashboard.html" class="nav-link">
-                            <i class="fas fa-home"></i> Dashboard
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                        <a href="index.html#available-whispers" class="nav-link">
+                            <i class="fas fa-users"></i> Find Whispers
                         </a>
                         <a href="profile.html" class="nav-link">
                             <i class="fas fa-user-edit"></i> Profile
@@ -61,7 +66,7 @@ function createHeader() {
                         <a href="index.html" class="nav-link">
                             <i class="fas fa-home"></i> Home
                         </a>
-                        <a href="#how-it-works" class="nav-link">
+                        <a href="index.html#how-it-works" class="nav-link">
                             <i class="fas fa-play-circle"></i> How It Works
                         </a>
                         <a href="auth.html?type=login" class="nav-link">
@@ -105,12 +110,6 @@ function attachHeaderEventListeners(isLoggedIn) {
             }
         });
     }
-    
-    // Fix how-it-works link for homepage
-    const howItWorksLink = document.querySelector('a[href="#how-it-works"]');
-    if (howItWorksLink && !window.location.pathname.includes('index.html')) {
-        howItWorksLink.href = 'index.html#how-it-works';
-    }
 }
 
 function setupMobileMenu() {
@@ -144,11 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }, 100);
+    
+    // Also try to initialize immediately
+    setTimeout(initUnifiedHeader, 500);
 });
-
-// Also initialize on page load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Page loaded, waiting for Firebase...');
-    });
-}
