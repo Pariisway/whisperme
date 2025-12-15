@@ -1,611 +1,390 @@
-// Agora Video Call Integration for Whisper+me
-console.log("Agora.js loaded");
+// WORKING Agora Voice Call System for Whisper+me
+console.log("Agora.js loaded - Fixed Version");
 
-// Agora variables
-let agoraClient = null;
-let localAudioTrack = null;
-let localVideoTrack = null;
-let remoteAudioTrack = null;
-let remoteVideoTrack = null;
-let callTimer = null;
-let callStartTime = null;
-let callDuration = 300; // 5 minutes in seconds
-let callSessionId = null;
-let userRole = null; // 'caller' or 'whisper'
-
-// Agora App ID (Test credentials)
 const AGORA_APP_ID = "966c8e41da614722a88d4372c3d95dba";
+let agoraClient = null;
+let localStream = null;
+let callTimer = null;
+let timeLeft = 300; // 5 minutes
+let callStarted = false;
+let isInCall = false;
 
-// Initialize Agora client
-async function initAgoraClient() {
+// Initialize Agora - COMPATIBLE WITH V4.x SDK
+async function initAgora() {
+    console.log("🎤 Initializing Agora...");
+    
     try {
-        // Create Agora client
-        agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+        // Check if AgoraRTC is loaded
+        if (typeof AgoraRTC === 'undefined') {
+            throw new Error("Agora SDK not loaded. Please refresh the page.");
+        }
         
-        // Initialize with App ID
-        await agoraClient.init(AGORA_APP_ID);
-        console.log("Agora client initialized");
+        console.log("✅ AgoraRTC loaded:", typeof AgoraRTC);
         
-        return agoraClient;
+        // Create client with compatible options
+        agoraClient = AgoraRTC.createClient({
+            mode: 'rtc',
+            codec: 'vp8'
+        });
+        
+        console.log("✅ Agora client created");
+        return true;
+        
     } catch (error) {
-        console.error("Error initializing Agora:", error);
-        throw error;
+        console.error("❌ Agora initialization failed:", error);
+        showCallError("Voice system failed to initialize. Please refresh.");
+        return false;
     }
 }
 
-// Join a channel
-async function joinChannel(channelName, uid, token = null) {
+// Join channel
+async function joinChannel(channelName, userId, token = null) {
     try {
         if (!agoraClient) {
-            await initAgoraClient();
+            await initAgora();
         }
         
-        // Join the channel
-        await agoraClient.join(AGORA_APP_ID, channelName, token || null, uid);
-        console.log("Joined channel:", channelName, "as UID:", uid);
+        console.log(`🎧 Joining channel: ${channelName} as user: ${userId}`);
         
-        // Create and publish local audio track
-        localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-        await agoraClient.publish([localAudioTrack]);
-        console.log("Local audio track published");
+        // Join the channel
+        await agoraClient.join(AGORA_APP_ID, channelName, token, userId);
+        console.log("✅ Successfully joined channel");
+        
+        // Create local audio stream
+        localStream = AgoraRTC.createStream({
+            streamID: userId,
+            audio: true,
+            video: false,
+            screen: false
+        });
+        
+        // Initialize local stream
+        await localStream.init();
+        console.log("✅ Local stream initialized");
+        
+        // Publish local stream
+        await agoraClient.publish(localStream);
+        console.log("✅ Local stream published");
         
         // Setup event listeners
-        setupAgoraEventListeners();
+        setupAgoraEvents();
+        
+        // Update UI
+        document.getElementById('localStatus').innerHTML = '<i class="fas fa-microphone"></i> Connected';
+        document.getElementById('callStatus').textContent = 'Connected';
+        document.getElementById('callStatus').style.color = 'var(--accent-green)';
         
         return true;
+        
     } catch (error) {
-        console.error("Error joining channel:", error);
-        showAgoraError("Failed to join call: " + error.message);
+        console.error("❌ Failed to join channel:", error);
+        showCallError(`Failed to connect: ${error.message}`);
         return false;
     }
 }
 
 // Setup Agora event listeners
-function setupAgoraEventListeners() {
+function setupAgoraEvents() {
     if (!agoraClient) return;
     
-    // When a remote user publishes
-    agoraClient.on("user-published", async (user, mediaType) => {
-        console.log("Remote user published:", user.uid, mediaType);
-        
-        // Subscribe to the remote user
-        await agoraClient.subscribe(user, mediaType);
-        
-        if (mediaType === "audio") {
-            remoteAudioTrack = user.audioTrack;
-            remoteAudioTrack.play();
-            console.log("Remote audio playing");
-            
-            // Update remote user status
-            updateRemoteStatus(true);
-        }
+    // Listen for remote stream added
+    agoraClient.on('stream-added', function (evt) {
+        console.log('➕ Remote stream added:', evt.stream.getId());
+        agoraClient.subscribe(evt.stream, function (err) {
+            if (err) {
+                console.error('❌ Subscribe failed:', err);
+            }
+        });
     });
     
-    // When a remote user unpublishes
-    agoraClient.on("user-unpublished", (user, mediaType) => {
-        console.log("Remote user unpublished:", user.uid, mediaType);
+    // Listen for remote stream subscribed
+    agoraClient.on('stream-subscribed', function (evt) {
+        console.log('🎧 Remote stream subscribed:', evt.stream.getId());
+        const remoteStream = evt.stream;
         
-        if (mediaType === "audio") {
-            remoteAudioTrack = null;
-            updateRemoteStatus(false);
-        }
+        // Play remote audio
+        remoteStream.play('remote-audio');
+        
+        // Update UI
+        document.getElementById('remoteStatus').innerHTML = '<i class="fas fa-circle"></i> Connected';
+        document.getElementById('remoteStatus').classList.remove('disconnected');
+        document.getElementById('remoteStatus').classList.add('connected');
+        
+        // Start the call timer
+        startCallTimer();
+        
+        // Both users are now connected
+        isInCall = true;
+        console.log("✅ CALL STARTED: Both users connected");
     });
     
-    // When a remote user leaves
-    agoraClient.on("user-left", (user) => {
-        console.log("Remote user left:", user.uid);
-        remoteAudioTrack = null;
-        updateRemoteStatus(false);
-        
-        // Show message
-        showCallMessage("Other participant left the call", "warning");
+    // Listen for remote stream removed
+    agoraClient.on('stream-removed', function (evt) {
+        console.log('➖ Remote stream removed:', evt.stream.getId());
+        handleUserLeft();
     });
     
-    // Network quality
-    agoraClient.on("network-quality", (stats) => {
-        updateNetworkQuality(stats);
+    // Listen for peer leave
+    agoraClient.on('peer-leave', function(evt) {
+        console.log('👋 Peer left:', evt.uid);
+        handleUserLeft();
     });
 }
 
-// Leave the channel
-async function leaveChannel() {
-    try {
-        // Stop and close local tracks
-        if (localAudioTrack) {
-            localAudioTrack.stop();
-            localAudioTrack.close();
-            localAudioTrack = null;
-        }
-        
-        if (localVideoTrack) {
-            localVideoTrack.stop();
-            localVideoTrack.close();
-            localVideoTrack = null;
-        }
-        
-        // Leave the channel
-        if (agoraClient) {
-            await agoraClient.leave();
-            console.log("Left channel");
-        }
-        
-        // Stop timer
-        if (callTimer) {
-            clearInterval(callTimer);
-            callTimer = null;
-        }
-        
-        return true;
-    } catch (error) {
-        console.error("Error leaving channel:", error);
-        return false;
-    }
-}
-
-// Toggle microphone
-function toggleMicrophone() {
-    if (!localAudioTrack) return;
-    
-    const isEnabled = localAudioTrack.enabled;
-    localAudioTrack.setEnabled(!isEnabled);
-    
-    // Update UI
-    const micBtn = document.getElementById('micToggle');
-    if (micBtn) {
-        if (isEnabled) {
-            micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
-            micBtn.classList.remove('mic-active');
-            micBtn.classList.add('mic-muted');
-        } else {
-            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-            micBtn.classList.remove('mic-muted');
-            micBtn.classList.add('mic-active');
-        }
-    }
-    
-    return !isEnabled;
-}
-
-// Start call timer
+// Start 5-minute timer
 function startCallTimer() {
-    callStartTime = Date.now();
-    let remainingTime = callDuration;
+    if (callStarted) return;
+    
+    callStarted = true;
+    timeLeft = 300;
+    const timerElement = document.getElementById('timer');
     
     callTimer = setInterval(() => {
-        remainingTime--;
+        timeLeft--;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         
-        // Update timer display
-        const timerElement = document.getElementById('timer');
-        if (timerElement) {
-            const minutes = Math.floor(remainingTime / 60);
-            const seconds = remainingTime % 60;
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // Change color when under 1 minute
+        if (timeLeft <= 60) {
+            timerElement.style.color = 'var(--accent-red)';
         }
         
-        // Check if time is up
-        if (remainingTime <= 0) {
-            endCallDueToTimeout();
+        // End call when timer reaches 0
+        if (timeLeft <= 0) {
+            endCall();
         }
-        
-        // Warning at 1 minute remaining
-        if (remainingTime === 60) {
-            showCallMessage("1 minute remaining", "warning");
-        }
-        
-        // Warning at 30 seconds remaining
-        if (remainingTime === 30) {
-            showCallMessage("30 seconds remaining", "warning");
-        }
-        
     }, 1000);
+    
+    console.log("⏰ 5-minute timer started");
 }
 
-// End call due to timeout
-async function endCallDueToTimeout() {
+// Handle user leaving
+function handleUserLeft() {
+    console.log("👋 User left the call");
+    
+    if (callStarted && timeLeft > 240) { // If left in first minute
+        console.log("🔄 Call ended early");
+        if (typeof refundTokenIfCallerLeavesEarly === 'function') {
+            refundTokenIfCallerLeavesEarly();
+        }
+    }
+    
+    endCall();
+}
+
+// End call
+function endCall() {
+    console.log("🛑 Ending call...");
+    
+    // Clear timer
     if (callTimer) {
         clearInterval(callTimer);
+        callTimer = null;
     }
-    
-    // Update call status in Firestore
-    await updateCallStatus('completed');
-    
-    // Process payment
-    await processCallPayment();
     
     // Leave channel
-    await leaveChannel();
+    if (agoraClient) {
+        agoraClient.leave(() => {
+            console.log("✅ Left Agora channel");
+        }, (err) => {
+            console.error("❌ Error leaving channel:", err);
+        });
+    }
+    
+    // Stop local stream
+    if (localStream) {
+        localStream.close();
+        console.log("✅ Closed local stream");
+    }
     
     // Show rating modal
-    showRatingModal();
-}
-
-// Update call status in Firestore
-async function updateCallStatus(status) {
-    if (!callSessionId) return;
+    setTimeout(() => {
+        showRatingModal();
+    }, 1000);
     
-    try {
-        await db.collection('callSessions').doc(callSessionId).update({
-            status: status,
-            endedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            duration: Math.floor((Date.now() - callStartTime) / 1000)
-        });
-    } catch (error) {
-        console.error("Error updating call status:", error);
-    }
-}
-
-// Process call payment
-async function processCallPayment() {
-    if (!callSessionId || userRole !== 'whisper') return;
-    
-    try {
-        const sessionDoc = await db.collection('callSessions').doc(callSessionId).get();
-        if (!sessionDoc.exists) return;
-        
-        const session = sessionDoc.data();
-        
-        // Update whisper's earnings
-        await db.collection('userStats').doc(session.whisperId).update({
-            earnings: firebase.firestore.FieldValue.increment(12),
-            calls: firebase.firestore.FieldValue.increment(1)
-        });
-        
-        // Update platform earnings
-        await db.collection('platformStats').doc('earnings').update({
-            total: firebase.firestore.FieldValue.increment(3),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        console.log("Payment processed: Whisper earned $12, Platform earned $3");
-        
-    } catch (error) {
-        console.error("Error processing payment:", error);
-    }
+    callStarted = false;
+    isInCall = false;
 }
 
 // Show rating modal
 function showRatingModal() {
+    console.log("⭐ Showing rating modal");
     const modal = document.getElementById('ratingModal');
     if (modal) {
         modal.style.display = 'flex';
-        
-        // Setup rating stars
-        const stars = modal.querySelectorAll('.rating-stars i');
-        let selectedRating = 0;
-        
-        stars.forEach((star, index) => {
-            star.addEventListener('mouseover', () => {
-                // Fill stars up to this one
-                stars.forEach((s, i) => {
-                    if (i <= index) {
-                        s.className = 'fas fa-star';
-                    } else {
-                        s.className = 'far fa-star';
-                    }
-                });
-            });
+        setupStarRating();
+    } else {
+        // If no rating modal, redirect to dashboard
+        window.location.href = 'dashboard.html';
+    }
+}
+
+// Setup star rating
+function setupStarRating() {
+    const stars = document.querySelectorAll('.rating-stars i');
+    
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
             
-            star.addEventListener('click', () => {
-                selectedRating = index + 1;
-                // Keep stars filled after click
-                stars.forEach((s, i) => {
-                    s.className = i <= index ? 'fas fa-star' : 'far fa-star';
-                });
-            });
-        });
-        
-        // Submit rating
-        const submitBtn = document.getElementById('submitRating');
-        if (submitBtn) {
-            submitBtn.addEventListener('click', async () => {
-                const comment = document.getElementById('ratingComment').value;
-                
-                if (selectedRating > 0) {
-                    await submitRating(selectedRating, comment);
+            // Update all stars
+            stars.forEach((s, index) => {
+                if (index < rating) {
+                    s.classList.remove('far');
+                    s.classList.add('fas', 'active');
+                } else {
+                    s.classList.remove('fas', 'active');
+                    s.classList.add('far');
                 }
-                
-                // Redirect to dashboard
-                window.location.href = 'dashboard.html';
-            }, { once: true }); // Only fire once
-        }
-    }
-}
-
-// Submit rating
-async function submitRating(rating, comment) {
-    if (!callSessionId) return;
-    
-    try {
-        const sessionDoc = await db.collection('callSessions').doc(callSessionId).get();
-        if (!sessionDoc.exists) return;
-        
-        const session = sessionDoc.data();
-        const ratedUserId = userRole === 'caller' ? session.whisperId : session.callerId;
-        
-        // Add rating
-        await db.collection('ratings').add({
-            sessionId: callSessionId,
-            raterId: auth.currentUser.uid,
-            ratedUserId: ratedUserId,
-            rating: rating,
-            comment: comment,
-            role: userRole,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Update user's average rating
-        await updateUserRating(ratedUserId, rating);
-        
-        console.log("Rating submitted:", rating);
-        
-    } catch (error) {
-        console.error("Error submitting rating:", error);
-    }
-}
-
-// Update user's average rating
-async function updateUserRating(userId, newRating) {
-    try {
-        const statsDoc = await db.collection('userStats').doc(userId).get();
-        if (statsDoc.exists) {
-            const stats = statsDoc.data();
-            const totalRatingCount = stats.totalRatingCount || 0;
-            const currentRating = stats.rating || 0;
-            
-            // Calculate new average
-            const newAverage = ((currentRating * totalRatingCount) + newRating) / (totalRatingCount + 1);
-            
-            await db.collection('userStats').doc(userId).update({
-                rating: newAverage,
-                totalRatingCount: totalRatingCount + 1
             });
-        }
-    } catch (error) {
-        console.error("Error updating user rating:", error);
-    }
+        });
+    });
 }
 
-// Update remote user status
-function updateRemoteStatus(isConnected) {
-    const remoteStatus = document.getElementById('remoteStatus');
-    if (remoteStatus) {
-        if (isConnected) {
-            remoteStatus.innerHTML = '<i class="fas fa-microphone"></i> Connected';
-            remoteStatus.className = 'participant-status connected';
-        } else {
-            remoteStatus.innerHTML = '<i class="fas fa-microphone-slash"></i> Disconnected';
-            remoteStatus.className = 'participant-status disconnected';
-        }
+// Show call error
+function showCallError(message) {
+    const errorDiv = document.getElementById('agoraError');
+    const errorMsg = document.getElementById('errorMessage');
+    
+    if (errorDiv && errorMsg) {
+        errorMsg.textContent = message;
+        errorDiv.style.display = 'block';
     }
-    
-    // Update call status
-    const callStatus = document.getElementById('callStatus');
-    if (callStatus) {
-        callStatus.textContent = isConnected ? 'Connected' : 'Waiting...';
-        callStatus.style.color = isConnected ? 'var(--accent-green)' : 'var(--accent-yellow)';
-    }
-}
-
-// Update network quality
-function updateNetworkQuality(stats) {
-    const networkQuality = document.getElementById('networkQuality');
-    if (!networkQuality) return;
-    
-    const uplink = stats.uplinkNetworkQuality || 0;
-    const downlink = stats.downlinkNetworkQuality || 0;
-    const avgQuality = Math.round((uplink + downlink) / 2);
-    
-    let qualityText = 'Excellent';
-    let qualityColor = 'var(--accent-green)';
-    
-    if (avgQuality <= 1) {
-        qualityText = 'Poor';
-        qualityColor = 'var(--accent-red)';
-    } else if (avgQuality <= 3) {
-        qualityText = 'Fair';
-        qualityColor = 'var(--accent-yellow)';
-    } else if (avgQuality <= 5) {
-        qualityText = 'Good';
-        qualityColor = 'var(--accent-blue)';
-    }
-    
-    networkQuality.textContent = qualityText;
-    networkQuality.style.color = qualityColor;
-}
-
-// Show Agora error
-function showAgoraError(message) {
-    const errorElement = document.getElementById('agoraError');
-    if (errorElement) {
-        errorElement.querySelector('#errorMessage').textContent = message;
-        errorElement.style.display = 'block';
-    }
-}
-
-// Show call message
-function showCallMessage(message, type = 'info') {
-    // Create message element
-    const messageEl = document.createElement('div');
-    messageEl.className = `alert alert-${type}`;
-    messageEl.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
-    messageEl.style.position = 'fixed';
-    messageEl.style.top = '20px';
-    messageEl.style.left = '50%';
-    messageEl.style.transform = 'translateX(-50%)';
-    messageEl.style.zIndex = '1000';
-    messageEl.style.minWidth = '300px';
-    messageEl.style.textAlign = 'center';
-    
-    document.body.appendChild(messageEl);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        messageEl.remove();
-    }, 3000);
 }
 
 // Initialize call room
 async function initCallRoom() {
-    console.log("Initializing call room");
+    console.log("🚀 Initializing call room...");
     
-    // Get session info from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    callSessionId = urlParams.get('session');
-    userRole = urlParams.get('role') || 'caller';
-    
-    if (!callSessionId) {
-        alert('No call session found');
-        window.location.href = 'dashboard.html';
-        return;
-    }
-    
-    // Load call session data
-    await loadCallSessionData();
-    
-    // Setup UI event listeners
-    setupCallRoomListeners();
-    
-    // Join Agora channel
-    await joinAgoraChannel();
-    
-    // Start call timer
-    startCallTimer();
-}
-
-// Load call session data
-async function loadCallSessionData() {
     try {
-        const sessionDoc = await db.collection('callSessions').doc(callSessionId).get();
-        if (!sessionDoc.exists) {
-            throw new Error('Call session not found');
+        // Get session data from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session');
+        const role = urlParams.get('role') || 'caller';
+        
+        if (!sessionId) {
+            showCallError("No call session found");
+            return;
         }
         
-        const session = sessionDoc.data();
+        // Generate unique user ID
+        const userId = Math.floor(Math.random() * 1000000);
         
-        // Update UI with session info
-        const remoteNameElement = document.getElementById('remoteName');
-        if (remoteNameElement) {
-            remoteNameElement.textContent = userRole === 'caller' ? session.whisperName : session.callerName;
+        console.log(`📞 Call Details: Session=${sessionId}, Role=${role}, UserID=${userId}`);
+        
+        // Initialize Agora
+        await initAgora();
+        
+        // Join the channel (using sessionId as channel name)
+        const joined = await joinChannel(sessionId, userId);
+        
+        if (joined) {
+            console.log("✅ Call room initialized successfully");
+            
+            // If caller, wait for whisper to join
+            // If whisper, we're already in the call
+            if (role === 'whisper') {
+                // Whisper joined, update UI
+                document.getElementById('remoteName').textContent = 'Caller';
+                console.log("👂 Whisper is waiting for caller...");
+            } else {
+                // Caller joined, update UI
+                document.getElementById('remoteName').textContent = 'Whisper';
+                console.log("📞 Caller is waiting for whisper...");
+            }
         }
-        
-        // Update session status to 'in_progress'
-        await db.collection('callSessions').doc(callSessionId).update({
-            status: 'in_progress',
-            startedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
         
     } catch (error) {
-        console.error("Error loading call session:", error);
-        alert('Error loading call: ' + error.message);
-        window.location.href = 'dashboard.html';
+        console.error("❌ Failed to initialize call room:", error);
+        showCallError(`Call failed: ${error.message}`);
     }
 }
 
-// Setup call room event listeners
-function setupCallRoomListeners() {
-    // Microphone toggle
+// Setup UI controls
+function setupCallControls() {
+    // Mic toggle
     const micToggle = document.getElementById('micToggle');
     if (micToggle) {
-        micToggle.addEventListener('click', toggleMicrophone);
+        micToggle.addEventListener('click', function() {
+            if (localStream) {
+                const isMuted = localStream.isAudioOn ? !localStream.isAudioOn() : true;
+                
+                if (isMuted) {
+                    localStream.unmuteAudio();
+                    this.innerHTML = '<i class="fas fa-microphone"></i>';
+                    this.classList.remove('muted');
+                    console.log("🎤 Microphone unmuted");
+                } else {
+                    localStream.muteAudio();
+                    this.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                    this.classList.add('muted');
+                    console.log("🔇 Microphone muted");
+                }
+            }
+        });
     }
     
     // End call button
     const endCallBtn = document.getElementById('endCall');
     if (endCallBtn) {
-        endCallBtn.addEventListener('click', async () => {
-            if (confirm('Are you sure you want to end the call?')) {
-                await endCallEarly();
+        endCallBtn.addEventListener('click', function() {
+            if (confirm('End this call?')) {
+                endCall();
             }
         });
     }
     
-    // Handle page refresh/close
-    window.addEventListener('beforeunload', async (e) => {
-        // Cancel the event
-        e.preventDefault();
-        // Chrome requires returnValue to be set
-        e.returnValue = '';
+    // Rating submission
+    const submitRatingBtn = document.getElementById('submitRating');
+    if (submitRatingBtn) {
+        submitRatingBtn.addEventListener('click', async function() {
+            // Get rating
+            const activeStars = document.querySelectorAll('.rating-stars i.active');
+            const rating = activeStars.length || 5;
+            const comment = document.getElementById('ratingComment')?.value || '';
+            
+            console.log(`⭐ Rating submitted: ${rating} stars`);
+            
+            // Show loading
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            this.disabled = true;
+            
+            // Save rating to Firestore if function exists
+            if (typeof submitCallRating === 'function') {
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('session');
+                
+                if (sessionId && currentUser) {
+                    await submitCallRating(sessionId, rating, comment, currentUser.uid, 'other-user-id');
+                }
+            }
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1500);
+        });
+    }
+}
+
+// Initialize when page loads
+if (window.location.pathname.includes('call.html')) {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("📞 Call page loaded");
         
-        // End the call
-        await endCallEarly();
+        // Setup controls first
+        setupCallControls();
+        
+        // Then initialize call room
+        setTimeout(() => {
+            initCallRoom();
+        }, 1000);
     });
 }
 
-// Join Agora channel
-async function joinAgoraChannel() {
-    try {
-        // Use session ID as channel name
-        const channelName = `whisper_${callSessionId}`;
-        const uid = Math.floor(Math.random() * 100000);
-        
-        // Join the channel
-        const joined = await joinChannel(channelName, uid);
-        
-        if (joined) {
-            console.log("Successfully joined Agora channel");
-            showCallMessage("Connected to call", "success");
-        } else {
-            throw new Error("Failed to join channel");
-        }
-        
-    } catch (error) {
-        console.error("Error joining Agora channel:", error);
-        showAgoraError("Failed to connect to call: " + error.message);
-        
-        // Redirect back after delay
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 3000);
-    }
-}
-
-// End call early
-async function endCallEarly() {
-    // Stop timer
-    if (callTimer) {
-        clearInterval(callTimer);
-    }
-    
-    // Update call status
-    await updateCallStatus('ended_early');
-    
-    // Process refund if caller ended before whisper joined
-    if (userRole === 'caller') {
-        await processEarlyEndRefund();
-    }
-    
-    // Leave Agora channel
-    await leaveChannel();
-    
-    // Show rating modal
-    showRatingModal();
-}
-
-// Process refund for early end
-async function processEarlyEndRefund() {
-    try {
-        const sessionDoc = await db.collection('callSessions').doc(callSessionId).get();
-        if (!sessionDoc.exists) return;
-        
-        const session = sessionDoc.data();
-        const callDuration = session.startedAt ? Math.floor((Date.now() - session.startedAt.toDate()) / 1000) : 0;
-        
-        // If call lasted less than 30 seconds, refund token
-        if (callDuration < 30) {
-            await db.collection('users').doc(session.callerId).update({
-                tokens: firebase.firestore.FieldValue.increment(1)
-            });
-            console.log("Token refunded to caller (call < 30 seconds)");
-        }
-        
-    } catch (error) {
-        console.error("Error processing refund:", error);
-    }
-}
-
-// Export for use in HTML
+// Make functions available globally
 window.initCallRoom = initCallRoom;
-window.toggleMicrophone = toggleMicrophone;
-window.endCallEarly = endCallEarly;
-
-console.log("Agora module loaded successfully");
+window.joinChannel = joinChannel;
+window.endCall = endCall;
+window.showRatingModal = showRatingModal;

@@ -6,9 +6,12 @@
     <title>Whisper+me - Private Voice Chats</title>
     <meta name="description" content="Connect with amazing people through private voice conversations. Earn money by sharing your wisdom. $15 per token.">
     
+    <!-- AdSense -->
+    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1184595877548269" crossorigin="anonymous"></script>
+    
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -16,8 +19,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/check-firebase.js"></script>
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4QYRJLTXTT"></script>
@@ -26,7 +27,36 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-4QYRJLTXTT');
+        
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyALbIJSI2C-p6IyMtj_F0ZqGyN1i79jOd4",
+            authDomain: "whisper-chat-live.firebaseapp.com",
+            databaseURL: "https://whisper-chat-live-default-rtdb.firebaseio.com",
+            projectId: "whisper-chat-live",
+            storageBucket: "whisper-chat-live.firebasestorage.app",
+            messagingSenderId: "302894848452",
+            appId: "1:302894848452:web:61a7ab21a269533c426c91"
+        };
+        
+        // Initialize Firebase
+        if (typeof firebase !== 'undefined') {
+            firebase.initializeApp(firebaseConfig);
+            window.auth = firebase.auth();
+            window.db = firebase.firestore();
+            console.log("Firebase initialized on homepage");
+        }
     </script>
+    
+    <!-- Social Media Meta Tags -->
+    <meta property="og:title" content="Whisper+me - Private Voice Chats">
+    <meta property="og:description" content="Connect with amazing people through private voice conversations. Earn $12 per 5-minute call.">
+    <meta property="og:image" content="https://i.imgur.com/KvVrYvE.png">
+    <meta property="og:url" content="https://whisper-plus-me.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Whisper+me">
+    <meta name="twitter:description" content="Earn $12 per 5-minute call. Private voice conversations.">
+    <meta name="twitter:image" content="https://i.imgur.com/KvVrYvE.png">
 </head>
 <body>
     <!-- Navigation -->
@@ -57,7 +87,7 @@
             <p>Connect one-on-one through intimate voice conversations. Share wisdom, gain insights, and build meaningful connections. Earn money by being a whisperer.</p>
             
             <div class="token-price-display" style="margin-bottom: 2rem; background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3);">
-                <i class="fas fa-coins"></i> Only $15 per token • 1 token = 15 minute call
+                <i class="fas fa-coins"></i> Only $15 per token • 1 token = 5-minute call • Whisperers earn $12 per call
             </div>
             
             <div class="hero-buttons">
@@ -68,36 +98,49 @@
                     <i class="fas fa-play-circle"></i> See How It Works
                 </a>
             </div>
+            
+            <!-- Share Buttons -->
+            <div class="social-share" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+                <a href="https://twitter.com/intent/tweet?text=Earn%20%2412%20per%205-minute%20call%20on%20Whisper%2Bme%20-%20Private%20Voice%20Chats&url=https://whisper-plus-me.com" 
+                   target="_blank" class="btn btn-small" style="background: #1DA1F2; color: white;">
+                    <i class="fab fa-twitter"></i> Share on Twitter
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https://whisper-plus-me.com" 
+                   target="_blank" class="btn btn-small" style="background: #4267B2; color: white;">
+                    <i class="fab fa-facebook"></i> Share on Facebook
+                </a>
+            </div>
         </div>
     </section>
 
     <!-- Available Whisperers Section -->
-    <section id="whisperers" class="section" style="background: var(--background-light);">
-        <div class="container">
-            <h2 class="section-title">Meet Our Whisperers</h2>
-            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary);">
-                Connect with verified experts ready to share their wisdom. Each call is a meaningful conversation.
+    <section id="whisperers" class="section" style="background: var(--background-light); padding: 4rem 0;">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+            <h2 class="section-title" style="text-align: center; font-size: 2rem; margin-bottom: 1rem;">Available Whisperers Right Now</h2>
+            <p class="text-center" style="max-width: 800px; margin: 0 auto 3rem; color: var(--text-secondary); font-size: 1.1rem;">
+                Connect with verified experts ready to share their wisdom. Each call is a meaningful conversation. Click "Call Now" to start a 5-minute private chat.
             </p>
             
-            <div class="whispers-grid" id="homepageWhispers">
-                <!-- Whisperers will be loaded here -->
-                <div class="loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Loading whisperers...</p>
+            <div class="whispers-grid" id="homepageWhispers" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+                <!-- Whispers will load here -->
+                <div class="loading-state" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top: 1rem;">Loading available whisperers...</p>
                 </div>
             </div>
             
             <div class="text-center" style="margin-top: 3rem;">
-                <a href="auth.html?type=signup" class="btn btn-primary">
-                    <i class="fas fa-user-plus"></i> Join as a Whisperer
+                <a href="auth.html?type=signup" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.1rem;">
+                    <i class="fas fa-user-plus"></i> Become a Whisperer (Earn $12 per call)
                 </a>
                 <p class="text-muted" style="margin-top: 1rem; font-size: 0.9rem;">
-                    <i class="fas fa-shield-alt"></i> All whisperers are verified and reviewed
+                    <i class="fas fa-shield-alt"></i> All whisperers are verified • <i class="fas fa-money-bill-wave"></i> Get paid weekly
                 </p>
             </div>
         </div>
     </section>
 
+    <!-- Rest of your existing HTML remains the same -->
     <!-- How It Works Section -->
     <section id="how-it-works" class="section">
         <div class="container">
@@ -128,7 +171,7 @@
                 <div class="step">
                     <div class="step-number">4</div>
                     <h3>Start Earning</h3>
-                    <p>Receive calls, share your wisdom, and earn $15 per 15-minute session. Get paid weekly via your preferred method.</p>
+                    <p>Receive calls, share your wisdom, and earn $12 per 5-minute session. Get paid weekly via PayPal or bank transfer.</p>
                 </div>
             </div>
         </div>
@@ -156,7 +199,7 @@
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <h3>Earn Real Money</h3>
-                    <p>Get paid for your time and wisdom. Set your availability and earn $15 per 15-minute call. Payouts processed weekly.</p>
+                    <p>Get paid $12 for every 5-minute call. Payouts processed weekly to your PayPal or bank account.</p>
                 </div>
                 
                 <div class="feature-card">
@@ -196,7 +239,7 @@
                     </div>
                     
                     <div style="margin-top: 2rem; font-size: 0.875rem; opacity: 0.8;">
-                        <p><i class="fas fa-shield-alt"></i> 100% secure • No credit card required to sign up</p>
+                        <p><i class="fas fa-shield-alt"></i> 100% secure • No credit card required to sign up • 30-day money-back guarantee</p>
                     </div>
                 </div>
             </div>
@@ -211,7 +254,7 @@
                     <h3>Whisper+me</h3>
                     <p>Connecting people through private voice conversations. Earn money by sharing your wisdom.</p>
                     <div class="token-price-display" style="margin-top: 1rem; background: rgba(255,255,255,0.1); color: white; border: none;">
-                        <i class="fas fa-coins"></i> $15 per token
+                        <i class="fas fa-coins"></i> $15 per token • $12 per call earned
                     </div>
                 </div>
                 <div class="footer-section">
@@ -239,17 +282,17 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Whisper+me. All rights reserved. | $15 per Whisper token | Privacy Policy | Terms of Service</p>
+                <p>&copy; 2024 Whisper+me. All rights reserved. | $15 per Whisper token | $12 paid to whisperers | Privacy Policy | Terms of Service</p>
             </div>
         </div>
     </footer>
 
     <!-- JavaScript for Homepage -->
-    <script src="js/homepage.js"></script>
-    
     <script>
         // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
+            console.log("Homepage loaded");
+            
             const mobileMenuBtn = document.querySelector('.mobile-menu');
             const navLinks = document.querySelector('.nav-links');
             
@@ -257,79 +300,191 @@
                 mobileMenuBtn.addEventListener('click', function() {
                     navLinks.classList.toggle('show');
                 });
-                
-                // Close menu when clicking a link
-                navLinks.querySelectorAll('a').forEach(link => {
-                    link.addEventListener('click', () => {
-                        navLinks.classList.remove('show');
-                    });
-                });
             }
             
-            // Smooth scroll for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    
-                    const targetId = this.getAttribute('href');
-                    if (targetId === '#') return;
-                    
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        window.scrollTo({
-                            top: targetElement.offsetTop - 80,
-                            behavior: 'smooth'
-                        });
-                    }
-                });
-            });
+            // Load available whispers
+            loadHomepageWhispers();
+        });
+
+        // Load available whispers on homepage
+        async function loadHomepageWhispers() {
+            const container = document.getElementById('homepageWhispers');
+            if (!container) return;
             
-            // Add active class to nav links based on scroll position
-            window.addEventListener('scroll', function() {
-                const sections = document.querySelectorAll('section[id]');
-                const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
-                
-                let current = '';
-                sections.forEach(section => {
-                    const sectionTop = section.offsetTop;
-                    const sectionHeight = section.clientHeight;
-                    if (scrollY >= (sectionTop - 100)) {
-                        current = section.getAttribute('id');
-                    }
-                });
-                
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === `#${current}`) {
-                        link.classList.add('active');
-                    }
-                });
-            });
-        });
-        
-        // Simple animation for feature cards on scroll
-        function animateOnScroll() {
-            const cards = document.querySelectorAll('.feature-card');
-            cards.forEach(card => {
-                const cardTop = card.getBoundingClientRect().top;
-                const windowHeight = window.innerHeight;
-                
-                if (cardTop < windowHeight - 100) {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
+            try {
+                // Check if Firebase is ready
+                if (typeof db === 'undefined') {
+                    container.innerHTML = '<p>Loading whisperers...</p>';
+                    return;
                 }
-            });
+                
+                // Fetch available profiles
+                const profilesSnapshot = await db.collection('profiles')
+                    .where('available', '==', true)
+                    .limit(12)
+                    .get();
+                
+                if (profilesSnapshot.empty) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                            <i class="fas fa-users-slash fa-2x" style="color: #666; margin-bottom: 1rem;"></i>
+                            <h3>No whisperers available right now</h3>
+                            <p>Be the first! Sign up to become a whisperer.</p>
+                            <a href="auth.html?type=signup" class="btn btn-primary" style="margin-top: 1rem;">
+                                <i class="fas fa-user-plus"></i> Become a Whisperer
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                profilesSnapshot.forEach(doc => {
+                    const profile = doc.data();
+                    const avatarIndex = Math.abs(hashCode(profile.userId || doc.id)) % 70;
+                    
+                    html += `
+                        <div class="profile-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: transform 0.3s; border: 2px solid #e0e0e0;">
+                            <div style="text-align: center; margin-bottom: 1rem;">
+                                <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; margin: 0 auto 1rem; border: 3px solid #4361ee;">
+                                    <img src="${profile.profilePicture || `https://i.pravatar.cc/150?img=${avatarIndex}`}" 
+                                         alt="${profile.displayName}" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <div style="position: relative; display: inline-block;">
+                                    <span style="position: absolute; bottom: 5px; right: -5px; width: 12px; height: 12px; border-radius: 50%; background: #4ade80; border: 2px solid white;"></span>
+                                </div>
+                                <h3 style="margin: 0.5rem 0 0.25rem 0; color: #333; font-size: 1.2rem;">${profile.displayName || 'User'}</h3>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0 0 0.5rem 0;">@${profile.username || 'user'}</p>
+                                <span style="background: rgba(67, 97, 238, 0.1); color: #4361ee; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem; font-weight: 500;">
+                                    <i class="fas fa-circle" style="font-size: 0.6rem; margin-right: 0.25rem;"></i> Available now
+                                </span>
+                            </div>
+                            
+                            <div style="margin: 1rem 0; color: #555; font-size: 0.9rem; line-height: 1.5; min-height: 60px;">
+                                ${profile.bio || 'Ready for meaningful conversation!'}
+                            </div>
+                            
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center;">
+                                ${(profile.interests || []).slice(0, 3).map(interest => `
+                                    <span style="background: #f0f4ff; color: #4361ee; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem;">
+                                        ${interest}
+                                    </span>
+                                `).join('')}
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="startCallFromHomepage('${doc.id}', '${profile.displayName || 'User'}')" 
+                                    style="width: 100%; padding: 0.75rem; font-weight: 600;">
+                                <i class="fas fa-phone-alt"></i> Call Now (1 token)
+                            </button>
+                            
+                            <div style="text-align: center; margin-top: 0.75rem;">
+                                <small style="color: #666; font-size: 0.75rem;">
+                                    <i class="fas fa-star" style="color: #f59e0b;"></i>
+                                    ${profile.rating ? profile.rating.toFixed(1) : 'New'}
+                                    • ${profile.calls || 0} calls
+                                </small>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error("Error loading whispers:", error);
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                        <i class="fas fa-exclamation-triangle fa-2x" style="color: #ef4444; margin-bottom: 1rem;"></i>
+                        <h3>Unable to load whisperers</h3>
+                        <p>Please check your connection</p>
+                        <button class="btn btn-outline" onclick="loadHomepageWhispers()" style="margin-top: 1rem;">
+                            <i class="fas fa-redo"></i> Try Again
+                        </button>
+                    </div>
+                `;
+            }
         }
-        
-        // Initial setup for animations
-        document.querySelectorAll('.feature-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        });
-        
-        window.addEventListener('scroll', animateOnScroll);
-        window.addEventListener('load', animateOnScroll);
+
+        // Hash function for consistent avatars
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return hash;
+        }
+
+        // Start call from homepage
+        async function startCallFromHomepage(whisperId, whisperName) {
+            // Check if user is logged in
+            if (!window.auth || !window.auth.currentUser) {
+                alert('Please sign in to start a call!');
+                window.location.href = 'auth.html?type=login&redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+            
+            const user = window.auth.currentUser;
+            
+            // Check if user has tokens
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userData = userDoc.data();
+                const userTokens = userData?.tokens || 0;
+                
+                if (userTokens < 1) {
+                    alert('You need at least 1 token to start a call. Please purchase tokens first.');
+                    window.location.href = 'payment.html';
+                    return;
+                }
+                
+                // Create call session
+                const callSession = {
+                    callerId: user.uid,
+                    callerName: user.displayName || user.email.split('@')[0],
+                    callerEmail: user.email,
+                    whisperId: whisperId,
+                    whisperName: whisperName,
+                    status: 'waiting',
+                    price: 15,
+                    whisperEarns: 12,
+                    platformFee: 3,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                const sessionRef = await db.collection('callSessions').add(callSession);
+                const sessionId = sessionRef.id;
+                
+                // Deduct token from caller
+                await db.collection('users').doc(user.uid).update({
+                    tokens: firebase.firestore.FieldValue.increment(-1)
+                });
+                
+                // Redirect to call room
+                window.location.href = `call.html?session=${sessionId}&role=caller`;
+                
+            } catch (error) {
+                console.error("Error starting call:", error);
+                alert('Error starting call: ' + error.message);
+            }
+        }
+
+        // Share profile function
+        function shareProfile(userId, userName) {
+            const shareUrl = `https://whisper-plus-me.com/profile/${userId}`;
+            const shareText = `Chat with ${userName} on Whisper+me - Private 5-minute voice conversations.`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: `Chat with ${userName}`,
+                    text: shareText,
+                    url: shareUrl
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+                alert('Profile link copied to clipboard! Share it anywhere.');
+            }
+        }
     </script>
 </body>
 </html>

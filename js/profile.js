@@ -1,4 +1,4 @@
-// Profile JavaScript - Fixed Version
+// Profile JavaScript - Fixed Version (No persistence error)
 console.log("Profile.js loaded - Fixed Version");
 
 let currentUser = null;
@@ -20,20 +20,6 @@ async function initializeProfile() {
             console.error("Firebase not loaded");
             return;
         }
-        
-        // Initialize Firebase if not already initialized
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-            console.log("Firebase initialized in profile.js");
-        }
-        
-        // Get auth and db instances
-        const auth = firebase.auth();
-        db = firebase.firestore();
-        
-        // Enable persistence
-        await db.enablePersistence();
-        console.log("Firestore persistence enabled");
         
         // Check auth state
         auth.onAuthStateChanged(async function(user) {
@@ -80,6 +66,15 @@ async function loadProfileData(userId) {
                 available: true,
                 interests: [],
                 profilePicture: '',
+                social: {
+                    twitter: '',
+                    instagram: '',
+                    tiktok: ''
+                },
+                banking: {
+                    paypalEmail: '',
+                    bankAccount: ''
+                },
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
@@ -103,25 +98,39 @@ function populateProfileForm() {
     console.log("Populating form with profile:", userProfile);
     
     // Get all form elements
-    const displayNameEl = document.getElementById('displayName');
-    const usernameEl = document.getElementById('username');
-    const bioEl = document.getElementById('bio');
-    const interestsEl = document.getElementById('interests');
-    const availabilityToggle = document.getElementById('availabilityToggle');
+    const elements = {
+        'displayName': userProfile.displayName || '',
+        'username': userProfile.username || '',
+        'bio': userProfile.bio || '',
+        'interests': (userProfile.interests || []).join(', '),
+        'availabilityToggle': userProfile.available !== false,
+        'twitter': userProfile.social?.twitter || '',
+        'instagram': userProfile.social?.instagram || '',
+        'tiktok': userProfile.social?.tiktok || '',
+        'paypalEmail': userProfile.banking?.paypalEmail || '',
+        'bankAccount': userProfile.banking?.bankAccount || ''
+    };
     
-    // Check if elements exist before setting values
-    if (displayNameEl) displayNameEl.value = userProfile.displayName || '';
-    if (usernameEl) usernameEl.value = userProfile.username || '';
-    if (bioEl) bioEl.value = userProfile.bio || '';
-    if (interestsEl) interestsEl.value = (userProfile.interests || []).join(', ');
-    if (availabilityToggle) {
-        availabilityToggle.checked = userProfile.available !== false;
-    }
+    // Set values
+    Object.keys(elements).forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element.type === 'checkbox') {
+                element.checked = elements[id];
+            } else {
+                element.value = elements[id];
+            }
+        }
+    });
     
     // Update profile picture if exists
     const profilePic = document.getElementById('profilePicture');
     if (profilePic && userProfile.profilePicture) {
         profilePic.src = userProfile.profilePicture;
+    } else if (profilePic) {
+        // Use default avatar based on user ID
+        const avatarIndex = Math.abs(hashCode(userProfile.userId)) % 70;
+        profilePic.src = `https://i.pravatar.cc/150?img=${avatarIndex}`;
     }
     
     console.log("Form populated successfully");
@@ -201,24 +210,17 @@ function setupEventListeners() {
         });
     }
     
-    // Profile picture upload
+    // Profile picture upload (simplified - just preview)
     const pictureInput = document.getElementById('profilePictureInput');
     if (pictureInput) {
-        pictureInput.addEventListener('change', handlePictureUpload);
+        pictureInput.addEventListener('change', handlePicturePreview);
     }
     
-    // Logout button
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function() {
-            if (confirm('Are you sure you want to logout?')) {
-                try {
-                    await firebase.auth().signOut();
-                    window.location.href = 'index.html';
-                } catch (error) {
-                    console.error("Logout error:", error);
-                }
-            }
+    // Save social media and banking
+    const saveSocialBtn = document.getElementById('saveSocialBtn');
+    if (saveSocialBtn) {
+        saveSocialBtn.addEventListener('click', async function() {
+            await saveSocialAndBanking();
         });
     }
 }
@@ -247,19 +249,6 @@ async function saveProfile() {
             return;
         }
         
-        // Check username uniqueness (optional - can be removed if too complex)
-        if (username !== userProfile.username) {
-            const usernameCheck = await db.collection('profiles')
-                .where('username', '==', username)
-                .limit(1)
-                .get();
-            
-            if (!usernameCheck.empty) {
-                showMessage('Username already taken', 'error');
-                return;
-            }
-        }
-        
         // Update profile object
         const updatedProfile = {
             ...userProfile,
@@ -285,6 +274,33 @@ async function saveProfile() {
     }
 }
 
+async function saveSocialAndBanking() {
+    try {
+        const socialData = {
+            twitter: document.getElementById('twitter').value.trim(),
+            instagram: document.getElementById('instagram').value.trim(),
+            tiktok: document.getElementById('tiktok').value.trim()
+        };
+        
+        const bankingData = {
+            paypalEmail: document.getElementById('paypalEmail').value.trim(),
+            bankAccount: document.getElementById('bankAccount').value.trim()
+        };
+        
+        await db.collection('profiles').doc(currentUser.uid).update({
+            social: socialData,
+            banking: bankingData,
+            updatedAt: new Date()
+        });
+        
+        showMessage('✅ Social media & banking info saved!', 'success');
+        
+    } catch (error) {
+        console.error("Error saving social/banking:", error);
+        showMessage('❌ Error saving: ' + error.message, 'error');
+    }
+}
+
 async function updateAvailability(isAvailable) {
     try {
         await db.collection('profiles').doc(currentUser.uid).update({
@@ -301,7 +317,7 @@ async function updateAvailability(isAvailable) {
     }
 }
 
-function handlePictureUpload(event) {
+function handlePicturePreview(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -322,8 +338,12 @@ function handlePictureUpload(event) {
         const profilePic = document.getElementById('profilePicture');
         if (profilePic) {
             profilePic.src = e.target.result;
+            showMessage('Profile picture preview updated', 'info');
+            
+            // In a real app, you would upload to Firebase Storage here
+            // For now, we'll store as data URL (not recommended for production)
+            userProfile.profilePicture = e.target.result;
         }
-        showMessage('Profile picture updated (preview)', 'info');
     };
     reader.readAsDataURL(file);
 }
@@ -365,49 +385,21 @@ function showMessage(message, type = 'info') {
     // Auto remove after 5 seconds
     setTimeout(() => {
         if (alert.parentNode) {
-            alert.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => alert.remove(), 300);
+            alert.remove();
         }
     }, 5000);
 }
 
-// Add CSS for animations
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+// Helper function for consistent avatars
+function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-    
-    .alert-content {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .alert-content i {
-        font-size: 1.2em;
-    }
-`;
-document.head.appendChild(style);
+    return hash;
+}
 
-// Make functions available globally if needed
+// Make functions available globally
 window.saveProfile = saveProfile;
-window.handlePictureUpload = handlePictureUpload;
+window.saveSocialAndBanking = saveSocialAndBanking;
+window.handlePicturePreview = handlePicturePreview;

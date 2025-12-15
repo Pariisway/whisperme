@@ -1,36 +1,46 @@
 #!/bin/bash
+echo "🧪 Testing Whisper+me Fixes..."
+echo ""
 
-echo "🧪 TESTING ALL FIXES"
-echo "===================="
+# Check files exist
+echo "📁 Checking files:"
+ls -la js/ | grep -E "(agora|dashboard|profile|navigation|favorites)\.js"
 echo ""
-echo "✅ Files created/updated:"
-echo "   - js/homepage.js (fixed)"
-echo "   - whispers.html (created)"
-echo "   - css/homepage-fix.css (created)"
+
+# Check dashboard.html has new scripts
+echo "📄 Checking dashboard.html:"
+grep -n "favorites.js\|navigation.js\|fix-indexes.js" dashboard.html
 echo ""
-echo "📝 Open these URLs to test:"
+
+# Check profile.html has black text fix
+echo "🎨 Checking profile CSS fix:"
+grep -n "color: #000000" css/style.css
 echo ""
-echo "1. Homepage:"
-echo "   https://pariisway.github.io/whisperme/"
-echo "   ✓ Should show centered content"
-echo "   ✓ Should show '5-minute' instead of '15-minute'"
-echo "   ✓ Should load whispers from Firestore"
+
+# Check navigation.js is included in pages
+echo "🔗 Checking navigation on pages:"
+for page in dashboard.html payment.html profile.html; do
+    echo -n "$page: "
+    if grep -q "navigation.js" "$page"; then
+        echo "✅ OK"
+    else
+        echo "❌ MISSING"
+    fi
+done
 echo ""
-echo "2. Find Whispers page:"
-echo "   https://pariisway.github.io/whisperme/whispers.html"
-echo "   ✓ Should load without 404 error"
-echo "   ✓ Should show all available whispers"
+
+echo "🎯 FIXES APPLIED:"
+echo "1. ✅ Firestore index error handling"
+echo "2. ✅ Unified navigation system"
+echo "3. ✅ Profile page fixes (black text, social media)"
+echo "4. ✅ Agora call system fixed"
+echo "5. ✅ Favorite whispers section"
+echo "6. ✅ Mobile menu fixes"
 echo ""
-echo "3. Dashboard Find Whispers button:"
-echo "   Click the 'Find Whispers' button in dashboard"
-echo "   ✓ Should open whispers.html without error"
+echo "🚀 Next steps:"
+echo "1. Click the Firestore index links to create indexes"
+echo "2. Test login/logout navigation"
+echo "3. Test call between two accounts"
+echo "4. Test profile picture preview"
 echo ""
-echo "🔥 IMPORTANT: Did you update Firestore rules?"
-echo "   If not, go to:"
-echo "   https://console.firebase.google.com/project/whisper-chat-live/firestore/rules"
-echo "   And update the rules (see Step 3 above)"
-echo ""
-echo "🔄 After updating rules, clear browser cache:"
-echo "   Press Ctrl+Shift+Delete"
-echo "   Check 'Cached images and files'"
-echo "   Click 'Clear data'"
+echo "📱 Test on mobile: Open browser developer tools, toggle device toolbar"

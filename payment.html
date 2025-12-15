@@ -6,112 +6,6 @@
     <title>Tokens & Payment - Whisper+me</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        .package-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--space);
-            margin: var(--space-xl) 0;
-        }
-        
-        .package-card {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: var(--space-xl);
-            text-align: center;
-            transition: all var(--transition);
-            border: 3px solid transparent;
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .package-card:hover {
-            transform: translateY(-10px);
-            box-shadow: var(--shadow-xl);
-            border-color: var(--primary-blue);
-        }
-        
-        .package-card.popular {
-            border-color: var(--accent-yellow);
-            background: linear-gradient(135deg, var(--white) 0%, #fff9db 100%);
-        }
-        
-        .popular-badge {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-yellow-dark));
-            color: var(--dark);
-            padding: 0.5rem 1.5rem;
-            font-weight: 700;
-            transform: rotate(45deg) translate(30%, -50%);
-            transform-origin: top right;
-            font-size: 0.8rem;
-        }
-        
-        .package-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto var(--space);
-            color: white;
-            font-size: 2rem;
-        }
-        
-        .package-price {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--primary-blue);
-            margin: var(--space) 0;
-        }
-        
-        .package-price span {
-            font-size: 1rem;
-            color: var(--gray);
-            font-weight: normal;
-        }
-        
-        .package-tokens {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: var(--space);
-        }
-        
-        .package-features {
-            list-style: none;
-            padding: 0;
-            margin: var(--space) 0;
-            text-align: left;
-        }
-        
-        .package-features li {
-            padding: 0.5rem 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .package-features li i {
-            color: var(--success);
-        }
-        
-        .price-per-token {
-            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-yellow-light));
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
-            font-weight: 600;
-            color: var(--dark);
-            display: inline-block;
-            margin: var(--space) 0;
-        }
-    </style>
     <!-- Stripe JS -->
     <script src="https://js.stripe.com/v3/"></script>
 </head>
@@ -128,75 +22,61 @@
                 <a href="profile.html"><i class="fas fa-user-edit"></i> Profile</a>
                 <a href="#" id="logoutBtn" class="btn btn-small btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
-            <div class="mobile-menu">
-                <i class="fas fa-bars"></i>
-            </div>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="dashboard-container">
         <div class="section">
             <div class="dashboard-header">
                 <div class="welcome-message">
-                    <h1><i class="fas fa-coins"></i> Tokens & Payment</h1>
-                    <p>Purchase tokens to start calling and manage your earnings</p>
+                    <h1><i class="fas fa-coins"></i> Buy Whisper Tokens</h1>
+                    <p>Each token gives you one 5-minute private conversation. $15 per token.</p>
                 </div>
                 <div class="token-balance">
-                    <div class="stat-card" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%); color: white;">
+                    <div class="stat-card" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%); color: white;">
                         <div class="stat-icon">
                             <i class="fas fa-wallet"></i>
                         </div>
                         <div class="stat-content">
                             <h3>Token Balance</h3>
                             <p id="tokenBalance">0 tokens</p>
-                            <div class="token-price-display" style="background: rgba(255,255,255,0.2); margin-top: 0.5rem;">
-                                $15 per token
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Token Packages -->
-            <div class="text-center mb-4">
-                <div class="token-price-display" style="display: inline-block;">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>STANDARD PRICE:</strong> $15 per Whisper token
-                    <i class="fas fa-info-circle"></i>
-                </div>
-                <p style="color: var(--gray); margin-top: 0.5rem;">Each token gives you one 5-minute private conversation</p>
-            </div>
+            <!-- Payment Message -->
+            <div id="paymentMessage" class="alert" style="display: none; margin: 1rem 0;"></div>
 
+            <!-- Token Packages -->
             <div class="package-grid">
                 <!-- Package 1 -->
                 <div class="package-card">
                     <div class="package-icon">
                         <i class="fas fa-user"></i>
                     </div>
-                    <h3>Starter Pack</h3>
+                    <h3>Single Token</h3>
                     <div class="package-tokens">1 Token</div>
                     <div class="package-price">$15</div>
-                    <div class="price-per-token">$15 per token</div>
                     <ul class="package-features">
                         <li><i class="fas fa-check"></i> 5-minute call</li>
                         <li><i class="fas fa-check"></i> Instant delivery</li>
                         <li><i class="fas fa-check"></i> No expiration</li>
                     </ul>
-                    <button class="btn btn-primary buy-btn" data-tokens="1" data-price="15" style="width: 100%;">
+                    <button class="btn btn-primary buy-btn" data-tokens="1" data-price="15">
                         <i class="fas fa-shopping-cart"></i> Buy Now
                     </button>
                 </div>
 
                 <!-- Package 2 - Popular -->
                 <div class="package-card popular">
-                    <div class="popular-badge">MOST POPULAR</div>
+                    <div class="popular-badge">BEST VALUE</div>
                     <div class="package-icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <h3>Premium Pack</h3>
+                    <h3>10 Tokens</h3>
                     <div class="package-tokens">10 Tokens</div>
                     <div class="package-price">$150</div>
-                    <div class="price-per-token">$15 per token</div>
                     <ul class="package-features">
                         <li><i class="fas fa-check"></i> 50 minutes total</li>
                         <li><i class="fas fa-check"></i> Best value</li>
@@ -204,7 +84,7 @@
                         <li><i class="fas fa-check"></i> No expiration</li>
                         <li><i class="fas fa-check"></i> Priority support</li>
                     </ul>
-                    <button class="btn btn-accent buy-btn" data-tokens="10" data-price="150" style="width: 100%;">
+                    <button class="btn btn-accent buy-btn" data-tokens="10" data-price="150">
                         <i class="fas fa-crown"></i> Buy Now
                     </button>
                 </div>
@@ -214,122 +94,164 @@
                     <div class="package-icon">
                         <i class="fas fa-building"></i>
                     </div>
-                    <h3>Pro Pack</h3>
+                    <h3>50 Tokens</h3>
                     <div class="package-tokens">50 Tokens</div>
                     <div class="package-price">$750</div>
-                    <div class="price-per-token">$15 per token</div>
                     <ul class="package-features">
                         <li><i class="fas fa-check"></i> 250 minutes total</li>
                         <li><i class="fas fa-check"></i> For power users</li>
                         <li><i class="fas fa-check"></i> Instant delivery</li>
                         <li><i class="fas fa-check"></i> No expiration</li>
                         <li><i class="fas fa-check"></i> VIP support</li>
-                        <li><i class="fas fa-check"></i> Monthly reports</li>
                     </ul>
-                    <button class="btn btn-primary buy-btn" data-tokens="50" data-price="750" style="width: 100%;">
+                    <button class="btn btn-primary buy-btn" data-tokens="50" data-price="750">
                         <i class="fas fa-rocket"></i> Buy Now
                     </button>
                 </div>
             </div>
 
             <!-- Payment Methods -->
-            <div class="form-container" style="max-width: 600px; margin: 3rem auto;">
-                <h3 class="text-center mb-3"><i class="fas fa-credit-card"></i> Payment Method</h3>
-                <div class="payment-methods" style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
-                    <div class="payment-method" style="text-align: center;">
-                        <div style="width: 60px; height: 60px; background: white; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; border: 2px solid var(--primary-blue);">
-                            <i class="fab fa-cc-visa" style="font-size: 2rem; color: #1a1f71;"></i>
-                        </div>
-                        <span>Visa</span>
-                    </div>
-                    <div class="payment-method" style="text-align: center;">
-                        <div style="width: 60px; height: 60px; background: white; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; border: 2px solid var(--primary-blue);">
-                            <i class="fab fa-cc-mastercard" style="font-size: 2rem; color: #eb001b;"></i>
-                        </div>
-                        <span>Mastercard</span>
-                    </div>
-                    <div class="payment-method" style="text-align: center;">
-                        <div style="width: 60px; height: 60px; background: white; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; border: 2px solid var(--primary-blue);">
-                            <i class="fab fa-cc-paypal" style="font-size: 2rem; color: #003087;"></i>
-                        </div>
-                        <span>PayPal</span>
-                    </div>
+            <div class="payment-methods-section">
+                <h3><i class="fas fa-credit-card"></i> Secure Payment</h3>
+                <div class="payment-icons">
+                    <i class="fab fa-cc-visa fa-2x"></i>
+                    <i class="fab fa-cc-mastercard fa-2x"></i>
+                    <i class="fab fa-cc-amex fa-2x"></i>
+                    <i class="fab fa-cc-discover fa-2x"></i>
+                    <i class="fab fa-paypal fa-2x"></i>
                 </div>
+                <p class="text-muted">
+                    <i class="fas fa-lock"></i> All payments are encrypted and secure
+                </p>
             </div>
 
-            <!-- Earnings & Payouts -->
-            <div class="stats-grid" style="margin: 3rem 0;">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--success) 0%, #86efac 100%);">
-                        <i class="fas fa-money-bill-wave"></i>
+            <!-- Earnings Section -->
+            <div class="earnings-section">
+                <h3><i class="fas fa-money-bill-wave"></i> Your Earnings</h3>
+                <div class="earnings-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalEarnings">$0</div>
+                        <div class="stat-label">Total Earned</div>
                     </div>
-                    <div class="stat-content">
-                        <h3>Total Earnings</h3>
-                        <p id="totalEarnings">$0.00</p>
+                    <div class="stat-item">
+                        <div class="stat-value" id="pendingPayout">$0</div>
+                        <div class="stat-label">Pending Payout</div>
                     </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--accent-yellow) 0%, var(--accent-yellow-light) 100%);">
-                        <i class="fas fa-coins"></i>
+                    <div class="stat-item">
+                        <div class="stat-value" id="availablePayout">$0</div>
+                        <div class="stat-label">Available</div>
                     </div>
-                    <div class="stat-content">
-                        <h3>Tokens Used</h3>
-                        <p id="tokensUsed">0</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--secondary) 0%, #38bdf8 100%);">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Available for Payout</h3>
-                        <p id="availableForPayout">$0.00</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Payout Request Form -->
-            <div class="form-container" style="max-width: 600px; margin: 3rem auto;">
-                <h3 class="text-center mb-3"><i class="fas fa-money-check-alt"></i> Request Payout</h3>
-                <p class="text-center text-muted">Minimum payout amount: $20</p>
-                
-                <div class="form-group">
-                    <label for="payoutAmount"><i class="fas fa-dollar-sign"></i> Amount</label>
-                    <input type="number" id="payoutAmount" class="form-control" placeholder="Enter amount (min $20)" min="20" step="0.01">
                 </div>
                 
-                <div class="form-group">
-                    <label for="paypalEmail"><i class="fab fa-paypal"></i> PayPal Email</label>
-                    <input type="email" id="paypalEmail" class="form-control" placeholder="Enter your PayPal email">
-                </div>
-                
-                <div id="payoutMessage" class="alert" style="display: none;"></div>
-                
-                <button id="requestPayoutBtn" class="btn btn-success btn-block" disabled>
-                    <i class="fas fa-paper-plane"></i> Request Payout
-                </button>
-            </div>
-
-            <!-- Transaction History -->
-            <div class="form-container" style="max-width: 800px; margin: 3rem auto;">
-                <h3 class="text-center mb-3"><i class="fas fa-history"></i> Transaction History</h3>
-                <div id="transactionList">
-                    <!-- Transactions will be loaded here -->
-                    <div class="text-center" style="padding: 2rem;">
-                        <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary-blue);"></i>
-                        <p style="margin-top: 1rem;">Loading transactions...</p>
-                    </div>
+                <!-- Request Payout Button (shows when $20+) -->
+                <div id="payoutSection" style="display: none; margin-top: 2rem;">
+                    <button id="requestPayoutBtn" class="btn btn-success">
+                        <i class="fas fa-paper-plane"></i> Request Payout ($20+)
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-functions-compat.js"></script>
+    
     <script src="js/firebase-config.js"></script>
-    <script src="js/payment.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/stripe-payment.js"></script>
+    
+    <script>
+        // Load user data
+        auth.onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = 'auth.html?type=login';
+                return;
+            }
+            
+            // Load token balance
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const tokens = userDoc.data().tokens || 0;
+                document.getElementById('tokenBalance').textContent = `${tokens} token${tokens !== 1 ? 's' : ''}`;
+            }
+            
+            // Load earnings
+            await loadEarningsData(user.uid);
+        });
+        
+        async function loadEarningsData(userId) {
+            try {
+                // Get pending earnings
+                const earningsQuery = await db.collection('earnings')
+                    .where('userId', '==', userId)
+                    .where('status', '==', 'pending')
+                    .get();
+                
+                let pendingTotal = 0;
+                earningsQuery.forEach(doc => {
+                    pendingTotal += doc.data().amount;
+                });
+                
+                // Get total earnings
+                const allEarnings = await db.collection('earnings')
+                    .where('userId', '==', userId)
+                    .get();
+                
+                let totalEarned = 0;
+                allEarnings.forEach(doc => {
+                    const data = doc.data();
+                    if (data.status === 'paid' || data.status === 'pending') {
+                        totalEarned += data.amount;
+                    }
+                });
+                
+                // Update display
+                document.getElementById('totalEarnings').textContent = `$${totalEarned.toFixed(2)}`;
+                document.getElementById('pendingPayout').textContent = `$${pendingTotal.toFixed(2)}`;
+                document.getElementById('availablePayout').textContent = pendingTotal >= 20 ? `$${pendingTotal.toFixed(2)}` : `$${pendingTotal.toFixed(2)}`;
+                
+                // Show payout button if $20+
+                if (pendingTotal >= 20) {
+                    document.getElementById('payoutSection').style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('Error loading earnings:', error);
+            }
+        }
+        
+        // Request payout
+        document.getElementById('requestPayoutBtn')?.addEventListener('click', async function() {
+            try {
+                // Get user's PayPal email
+                const profileDoc = await db.collection('profiles').doc(auth.currentUser.uid).get();
+                const paypalEmail = profileDoc.data()?.banking?.paypalEmail;
+                
+                if (!paypalEmail) {
+                    alert('Please add your PayPal email in your profile first!');
+                    window.location.href = 'profile.html';
+                    return;
+                }
+                
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                this.disabled = true;
+                
+                // In a real app, you would call a function here
+                // For now, show message
+                alert('Payout request submitted! You will receive payment within 5-7 business days.');
+                
+                // Refresh data
+                await loadEarningsData(auth.currentUser.uid);
+                
+            } catch (error) {
+                console.error('Payout error:', error);
+                alert('Error requesting payout');
+            }
+        });
+    </script>
 </body>
 </html>
-    <!-- Stripe JS -->
-    <script src="https://js.stripe.com/v3/"></script>

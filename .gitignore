@@ -1,18 +1,65 @@
-# OS files
-.DS_Store
-Thumbs.db
+# SENSITIVE FILES (NEVER COMMIT THESE)
+js/firebase-config.js
+firebase-service-account.json
+.firebaserc
 
-# IDE files
-.vscode/
-.idea/
-
-# Environment variables
-.env
-.env.local
-
-# Logs
-*.log
-
-# Temporary files
+# BACKUP AND TEMPORARY FILES
+*.backup
+*.backup*
+*-backup.*
+*backup*
 *.tmp
 *.temp
+*backup*
+*BACKUP*
+*-fixed.js
+*-fix.*
+*_backup*
+backups/
+old/
+
+# SCRIPT AND TEST FILES
+*.sh
+*.md
+test-*
+TEST_*
+FIX_*
+deploy-*
+update.sh
+push*.sh
+fix*.sh
+
+# DEVELOPMENT FILES
+dashboard-nav-fix.html
+payment.html.backup
+index.html.backup
+dashboard.html.fixed
+temp_*
+verify-*
+
+# BUILD/GENERATED FILES
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# IDE FILES
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS FILES
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# UNTRACKED FILES FROM YOUR LIST
+ads.txt
+call-waiting.html
+js/fix-indexes.js
+js/stripe-payment.js
+start.sh
+test-setup.html
+js/firebase-config-REAL.js
