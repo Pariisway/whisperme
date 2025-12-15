@@ -1,4 +1,4 @@
-// Unified Header System - Fixed with Home button
+// Unified Header System - Fixed with Dashboard Home button
 console.log('Unified header system loaded');
 
 function initUnifiedHeader() {
@@ -48,13 +48,13 @@ function createHeader() {
                 <div class="nav-links">
                     ${isLoggedIn ? `
                         <a href="dashboard.html" class="nav-link">
-                            <i class="fas fa-home"></i> Home
+                            <i class="fas fa-home"></i> Dashboard
                         </a>
                         <a href="index.html#available-whispers" class="nav-link">
                             <i class="fas fa-users"></i> Find Whispers
                         </a>
                         <a href="profile.html" class="nav-link">
-                            <i class="fas fa-user-edit"></i> Profile
+                            <i class="fas fa-user-edit"></i> Edit Profile
                         </a>
                         <a href="payment.html" class="nav-link">
                             <i class="fas fa-coins"></i> Buy Coins

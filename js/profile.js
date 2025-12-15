@@ -1,5 +1,5 @@
-// Profile.js - Fixed with social links and proper saving
-console.log('Profile.js loaded');
+// Profile.js - Fixed with all features
+console.log('Profile.js loaded - Fixed version');
 
 let user, db;
 
@@ -28,17 +28,17 @@ async function initProfile() {
         user = currentUser;
         console.log('Loading profile for user:', user.email);
         
+        // Set email field (readonly)
+        document.getElementById('email').value = user.email;
+        
         // Load user data
         await loadUserData();
         
         // Setup form submission
         setupFormSubmission();
         
-        // Setup call price slider
-        setupCallPriceSlider();
-        
-        // Setup profile link
-        setupProfileLink();
+        // Setup photo URL live preview
+        setupPhotoPreview();
     });
 }
 
@@ -52,10 +52,8 @@ async function loadUserData() {
             
             // Populate form
             document.getElementById('displayName').value = profile.displayName || '';
-            document.getElementById('username').value = profile.username || '';
             document.getElementById('bio').value = profile.bio || '';
             document.getElementById('callPrice').value = profile.callPrice || 1;
-            document.getElementById('callPriceRange').value = profile.callPrice || 1;
             document.getElementById('photoURL').value = profile.photoURL || '';
             
             // Update profile image if exists
@@ -71,6 +69,14 @@ async function loadUserData() {
                 document.getElementById('website').value = profile.social.website || '';
             }
             
+            // Load banking info
+            if (profile.banking) {
+                document.getElementById('bankName').value = profile.banking.bankName || '';
+                document.getElementById('accountName').value = profile.banking.accountName || '';
+                document.getElementById('accountNumber').value = profile.banking.accountNumber || '';
+                document.getElementById('routingNumber').value = profile.banking.routingNumber || '';
+            }
+            
             console.log('✅ Profile data loaded');
         } else {
             console.log('No profile found, using defaults');
@@ -82,54 +88,11 @@ async function loadUserData() {
     }
 }
 
-function setupCallPriceSlider() {
-    const slider = document.getElementById('callPriceRange');
-    const input = document.getElementById('callPrice');
-    
-    slider.addEventListener('input', function() {
-        input.value = this.value;
-    });
-    
-    input.addEventListener('input', function() {
-        let value = parseInt(this.value);
-        if (value < 1) value = 1;
-        if (value > 5) value = 5;
-        this.value = value;
-        slider.value = value;
-    });
-}
-
-function setupProfileLink() {
-    const baseUrl = window.location.origin + window.location.pathname.replace('profile.html', '');
-    const profileUrl = `${baseUrl}profile-view.html?user=${user.uid}`;
-    
-    document.getElementById('profileLink').value = profileUrl;
-    
-    // Copy link button
-    document.getElementById('copyLinkBtn').addEventListener('click', function() {
-        navigator.clipboard.writeText(profileUrl).then(() => {
-            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
-            setTimeout(() => {
-                this.innerHTML = '<i class="fas fa-copy"></i> Copy';
-            }, 2000);
-        });
-    });
-    
-    // Share link button
-    document.getElementById('shareLinkBtn').addEventListener('click', function() {
-        if (navigator.share) {
-            navigator.share({
-                title: 'My Whisper+Me Profile',
-                text: 'Connect with me on Whisper+Me!',
-                url: profileUrl
-            });
-        } else {
-            // Fallback to copying
-            navigator.clipboard.writeText(profileUrl);
-            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
-            setTimeout(() => {
-                this.innerHTML = '<i class="fas fa-share"></i> Share';
-            }, 2000);
+function setupPhotoPreview() {
+    document.getElementById('photoURL').addEventListener('input', function() {
+        const url = this.value.trim();
+        if (url) {
+            document.getElementById('profileImage').src = url;
         }
     });
 }
@@ -146,7 +109,6 @@ function setupFormSubmission() {
         
         try {
             const displayName = document.getElementById('displayName').value.trim();
-            const username = document.getElementById('username').value.trim().toLowerCase();
             const bio = document.getElementById('bio').value.trim();
             let callPrice = parseInt(document.getElementById('callPrice').value);
             const photoURL = document.getElementById('photoURL').value.trim();
@@ -159,9 +121,21 @@ function setupFormSubmission() {
                 website: document.getElementById('website').value.trim()
             };
             
-            // Validate
-            if (!displayName || !username) {
-                throw new Error('Display name and username are required');
+            // Banking info
+            const banking = {
+                bankName: document.getElementById('bankName').value.trim(),
+                accountName: document.getElementById('accountName').value.trim(),
+                accountNumber: document.getElementById('accountNumber').value.trim(),
+                routingNumber: document.getElementById('routingNumber').value.trim()
+            };
+            
+            // Password change
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            
+            // Validate required fields
+            if (!displayName) {
+                throw new Error('Display name is required');
             }
             
             // Validate call price (1-5)
@@ -171,12 +145,13 @@ function setupFormSubmission() {
             // Update profile
             const profileData = {
                 userId: user.uid,
+                email: user.email,
                 displayName,
-                username,
                 bio,
                 callPrice,
                 photoURL,
                 social,
+                banking,
                 updatedAt: new Date()
             };
             
@@ -196,6 +171,22 @@ function setupFormSubmission() {
                 document.getElementById('profileImage').src = photoURL;
             }
             
+            // Update password if provided
+            if (currentPassword && newPassword) {
+                if (newPassword.length < 6) {
+                    throw new Error('New password must be at least 6 characters');
+                }
+                
+                // Re-authenticate before changing password
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(newPassword);
+                
+                // Clear password fields
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+            }
+            
             showNotification('✅ Profile updated successfully! Changes will appear shortly.');
             
             // Redirect back to dashboard after a short delay
@@ -207,15 +198,7 @@ function setupFormSubmission() {
             console.error('Error updating profile:', error);
             showNotification('❌ Error: ' + error.message, 'error');
             saveButton.disabled = false;
-            saveButton.innerHTML = '<i class="fas fa-save"></i> Save Profile';
-        }
-    });
-    
-    // Handle photo URL changes
-    document.getElementById('photoURL').addEventListener('input', function() {
-        const url = this.value.trim();
-        if (url) {
-            document.getElementById('profileImage').src = url;
+            saveButton.innerHTML = '<i class="fas fa-save"></i> Save All Changes';
         }
     });
 }

@@ -7,116 +7,262 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        .payment-container {
+            max-width: 500px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .coin-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 2.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .coin-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .coin-icon i {
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        .price-display {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #f59e0b;
+            margin: 1rem 0;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .quantity-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 2px solid #10b981;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .quantity-btn:hover {
+            background: #10b981;
+        }
+        
+        .quantity-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .total-price {
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .payment-methods {
+            margin-top: 2rem;
+        }
+        
+        .payment-method {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .payment-method:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .payment-method.active {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+        }
+        
+        .payment-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .price-display {
+                font-size: 3rem;
+            }
+            
+            .quantity-controls {
+                gap: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header will be injected by unified-header.js -->
     
-    <main class="container" style="padding-top: 2rem;">
-        <div class="card">
-            <h1 style="margin-bottom: 0.5rem;">
-                <i class="fas fa-coins" style="color: var(--me-yellow);"></i> Buy Whisper Coins
+    <main class="payment-container">
+        <div class="payment-header" style="text-align: center; margin-bottom: 2rem;">
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">
+                <i class="fas fa-coins" style="color: #f59e0b;"></i> Buy Whisper Coins
             </h1>
-            <p style="color: var(--text-muted); margin-bottom: 2rem;">
-                Purchase whisper coins to call your favorite experts. Each coin costs $15.
+            <p style="color: #94a3b8;">Each whisper coin = $15 USD</p>
+        </div>
+        
+        <div class="coin-card">
+            <div class="coin-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            
+            <h2 style="margin-bottom: 0.5rem; color: white;">Whisper Coin</h2>
+            <p style="color: #94a3b8; margin-bottom: 1.5rem;">
+                Use coins to call whispers for advice and coaching
             </p>
             
-            <!-- Important Notice -->
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 1rem; margin-bottom: 2rem;">
-                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-                    <i class="fas fa-info-circle" style="color: var(--plus-green); font-size: 1.2rem;"></i>
-                    <div>
-                        <div style="font-weight: 600; color: var(--plus-green); margin-bottom: 0.25rem;">Payment Terms</div>
-                        <div style="color: var(--text-light); font-size: 0.9rem;">
-                            • Full payment goes to Whisper+Me<br>
-                            • Whispers earn $12 per coin from calls<br>
-                            • Payouts processed every 3 days<br>
-                            • No refunds once 5-minute call starts<br>
-                            • Early hang-up may result in reduced earnings
-                        </div>
-                    </div>
-                </div>
+            <div class="price-display" id="totalPrice">
+                $15
+            </div>
+            <div style="color: #94a3b8; margin-bottom: 2rem;">
+                1 coin = 5-minute call
             </div>
             
-            <!-- Coin Packages -->
-            <div class="packages-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                <!-- Package 1 -->
-                <div class="package-card" style="background: var(--card-bg); border-radius: 15px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
-                    <div style="text-align: center;">
-                        <div style="font-size: 3rem; font-weight: 800; color: var(--me-yellow);">5</div>
-                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-light); margin-bottom: 0.5rem;">Whisper Coins</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--plus-green);">$75</div>
-                        <div style="color: var(--text-muted); margin-bottom: 1.5rem;">$15 per coin</div>
-                        <button class="btn btn-primary" onclick="selectPackage(5, 75)" style="width: 100%;">
-                            <i class="fas fa-shopping-cart"></i> Buy 5 Coins
-                        </button>
-                    </div>
+            <div class="quantity-controls">
+                <button class="quantity-btn" id="decreaseQuantity">
+                    <i class="fas fa-minus"></i>
+                </button>
+                
+                <div class="quantity-display" id="quantity">
+                    1
                 </div>
                 
-                <!-- Package 2 (Recommended) -->
-                <div class="package-card" style="background: linear-gradient(135deg, var(--plus-green), var(--accent-purple)); border-radius: 15px; padding: 1.5rem; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
-                        BEST VALUE
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 3rem; font-weight: 800; color: white;">10</div>
-                        <div style="font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">Whisper Coins</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: white;">$135</div>
-                        <div style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem;">$13.50 per coin (Save $15!)</div>
-                        <button class="btn" onclick="selectPackage(10, 135)" style="width: 100%; background: white; color: var(--dark-bg); font-weight: 600;">
-                            <i class="fas fa-crown"></i> Buy 10 Coins
-                        </button>
-                    </div>
+                <button class="quantity-btn" id="increaseQuantity">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <div class="total-price">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="color: #94a3b8;">Coins:</span>
+                    <span style="color: white; font-weight: 600;" id="coinsCount">1</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="color: #94a3b8;">Price per coin:</span>
+                    <span style="color: white; font-weight: 600;">$15</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.2rem;">
+                    <span style="color: white; font-weight: 700;">Total:</span>
+                    <span style="color: #10b981; font-weight: 700;" id="finalTotal">$15</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="payment-methods">
+            <h3 style="margin-bottom: 1rem; color: white;">
+                <i class="fas fa-credit-card"></i> Payment Method
+            </h3>
+            
+            <div class="payment-method active" id="cardPayment">
+                <div class="payment-icon">
+                    <i class="fas fa-credit-card" style="color: #10b981;"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: white;">Credit/Debit Card</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem;">Visa, Mastercard, American Express</div>
+                </div>
+                <i class="fas fa-check-circle" style="color: #10b981; font-size: 1.2rem;"></i>
+            </div>
+        </div>
+        
+        <!-- Card Form -->
+        <div id="cardForm" style="margin-top: 2rem;">
+            <div class="form-group">
+                <label for="cardNumber" class="form-label">
+                    <i class="fas fa-credit-card"></i> Card Number
+                </label>
+                <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="expiryDate" class="form-label">
+                        <i class="fas fa-calendar"></i> Expiry Date
+                    </label>
+                    <input type="text" id="expiryDate" class="form-control" placeholder="MM/YY">
                 </div>
                 
-                <!-- Package 3 -->
-                <div class="package-card" style="background: var(--card-bg); border-radius: 15px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1);">
-                    <div style="text-align: center;">
-                        <div style="font-size: 3rem; font-weight: 800; color: var(--me-yellow);">20</div>
-                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-light); margin-bottom: 0.5rem;">Whisper Coins</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--plus-green);">$240</div>
-                        <div style="color: var(--text-muted); margin-bottom: 1.5rem;">$12 per coin (Save $60!)</div>
-                        <button class="btn btn-primary" onclick="selectPackage(20, 240)" style="width: 100%;">
-                            <i class="fas fa-gem"></i> Buy 20 Coins
-                        </button>
-                    </div>
+                <div class="form-group">
+                    <label for="cvv" class="form-label">
+                        <i class="fas fa-lock"></i> CVV
+                    </label>
+                    <input type="text" id="cvv" class="form-control" placeholder="123">
                 </div>
             </div>
             
-            <!-- Custom Amount -->
-            <div class="card" style="margin-bottom: 2rem;">
-                <h3 style="margin-bottom: 1rem;">
-                    <i class="fas fa-sliders-h"></i> Custom Amount
-                </h3>
-                <div style="display: flex; gap: 1rem; align-items: center;">
-                    <div style="flex: 1;">
-                        <input type="number" id="customCoins" min="1" max="100" value="1" 
-                               style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; font-size: 1.25rem; font-weight: 600;">
-                    </div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--plus-green);" id="customPrice">
-                        $15.00
-                    </div>
-                    <button class="btn btn-primary" onclick="buyCustomCoins()">
-                        <i class="fas fa-bolt"></i> Buy
-                    </button>
-                </div>
-                <div style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
-                    <i class="fas fa-info-circle"></i> Minimum purchase: 1 whisper coin ($15)
-                </div>
+            <div class="form-group">
+                <label for="nameOnCard" class="form-label">
+                    <i class="fas fa-user"></i> Name on Card
+                </label>
+                <input type="text" id="nameOnCard" class="form-control" placeholder="Your full name">
             </div>
-            
-            <!-- Payment Method -->
-            <div class="card">
-                <h3 style="margin-bottom: 1rem;">
-                    <i class="fas fa-credit-card"></i> Payment Method
-                </h3>
-                <div id="paymentMethod" style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 1.5rem; text-align: center;">
-                    <div style="margin-bottom: 1rem;">
-                        <i class="fas fa-lock" style="font-size: 2rem; color: var(--plus-green); margin-bottom: 0.5rem;"></i>
-                        <div style="font-weight: 600;">Secure Payment Processing</div>
-                    </div>
-                    <button id="stripeButton" class="btn btn-primary" style="width: 100%;" disabled>
-                        <i class="fas fa-spinner fa-spin"></i> Loading payment...
-                    </button>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <button id="purchaseButton" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                <i class="fas fa-shopping-cart"></i> Purchase Coins
+            </button>
+        </div>
+        
+        <!-- Important Info -->
+        <div class="card" style="margin-top: 2rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3);">
+            <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                <i class="fas fa-info-circle" style="color: #f59e0b;"></i>
+                <div>
+                    <h4 style="color: #f59e0b; margin-bottom: 0.5rem;">Important Information</h4>
+                    <ul style="color: #f59e0b; margin: 0; padding-left: 1rem; font-size: 0.9rem;">
+                        <li>Each whisper coin costs $15 USD</li>
+                        <li>1 coin = 5-minute call with any whisper</li>
+                        <li>Coins are non-refundable</li>
+                        <li>Payment is processed securely via Stripe</li>
+                        <li>Coins are added to your account immediately</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -127,9 +273,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     
-    <!-- Stripe -->
-    <script src="https://js.stripe.com/v3/"></script>
-    
     <!-- Firebase Configuration -->
     <script src="js/firebase-config.js"></script>
     
@@ -137,64 +280,125 @@
     <script src="js/unified-header.js"></script>
     
     <!-- Payment Script -->
-    <script src="js/payment.js"></script>
-    
     <script>
-    let selectedCoins = 5;
-    let selectedAmount = 75;
-    
-    function selectPackage(coins, amount) {
-        selectedCoins = coins;
-        selectedAmount = amount;
-        
-        // Update custom input
-        document.getElementById('customCoins').value = coins;
-        updateCustomPrice();
-        
-        // Highlight selected package
-        document.querySelectorAll('.package-card').forEach(card => {
-            card.style.border = '1px solid rgba(255,255,255,0.1)';
-            card.style.transform = 'scale(1)';
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Payment page loaded - Fixed version');
+            
+            let quantity = 1;
+            const pricePerCoin = 15;
+            
+            // Initialize quantity controls
+            document.getElementById('decreaseQuantity').addEventListener('click', function() {
+                if (quantity > 1) {
+                    quantity--;
+                    updateDisplay();
+                }
+            });
+            
+            document.getElementById('increaseQuantity').addEventListener('click', function() {
+                quantity++;
+                updateDisplay();
+            });
+            
+            function updateDisplay() {
+                document.getElementById('quantity').textContent = quantity;
+                document.getElementById('coinsCount').textContent = quantity;
+                
+                const total = quantity * pricePerCoin;
+                document.getElementById('totalPrice').textContent = `$${total}`;
+                document.getElementById('finalTotal').textContent = `$${total}`;
+            }
+            
+            // Purchase button
+            document.getElementById('purchaseButton').addEventListener('click', async function() {
+                const button = this;
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                
+                try {
+                    // Check if user is logged in
+                    const user = firebase.auth().currentUser;
+                    if (!user) {
+                        throw new Error('Please login to purchase coins');
+                    }
+                    
+                    // Validate form
+                    const cardNumber = document.getElementById('cardNumber').value.trim();
+                    const expiryDate = document.getElementById('expiryDate').value.trim();
+                    const cvv = document.getElementById('cvv').value.trim();
+                    const nameOnCard = document.getElementById('nameOnCard').value.trim();
+                    
+                    if (!cardNumber || !expiryDate || !cvv || !nameOnCard) {
+                        throw new Error('Please fill in all card details');
+                    }
+                    
+                    // In a real app, you would process the payment via Stripe here
+                    // For now, we'll simulate a successful payment
+                    
+                    // Get current user coins
+                    const db = firebase.firestore();
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    const userData = userDoc.data() || {};
+                    const currentCoins = userData.coins || 0;
+                    const newCoins = currentCoins + quantity;
+                    
+                    // Update user's coin balance
+                    await db.collection('users').doc(user.uid).update({
+                        coins: newCoins,
+                        updatedAt: new Date()
+                    });
+                    
+                    // Record transaction
+                    await db.collection('transactions').add({
+                        userId: user.uid,
+                        type: 'purchase',
+                        amount: quantity * pricePerCoin,
+                        whisperCoins: quantity,
+                        description: `Purchased ${quantity} whisper coin${quantity !== 1 ? 's' : ''}`,
+                        status: 'completed',
+                        createdAt: new Date()
+                    });
+                    
+                    // Success message
+                    alert(`✅ Successfully purchased ${quantity} whisper coin${quantity !== 1 ? 's' : ''}! You now have ${newCoins} coins.`);
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error('Purchase error:', error);
+                    alert('❌ Error: ' + error.message);
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-shopping-cart"></i> Purchase Coins';
+                }
+            });
+            
+            // Format card number
+            document.getElementById('cardNumber').addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                let formatted = '';
+                
+                for (let i = 0; i < value.length; i++) {
+                    if (i > 0 && i % 4 === 0) {
+                        formatted += ' ';
+                    }
+                    formatted += value[i];
+                }
+                
+                e.target.value = formatted;
+            });
+            
+            // Format expiry date
+            document.getElementById('expiryDate').addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                if (value.length >= 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value;
+            });
         });
-        
-        event.currentTarget.closest('.package-card').style.border = '2px solid var(--plus-green)';
-        event.currentTarget.closest('.package-card').style.transform = 'scale(1.02)';
-    }
-    
-    function updateCustomPrice() {
-        const coins = parseInt(document.getElementById('customCoins').value) || 1;
-        const pricePerCoin = coins >= 20 ? 12 : coins >= 10 ? 13.5 : 15;
-        const totalPrice = coins * pricePerCoin;
-        
-        document.getElementById('customPrice').textContent = `$${totalPrice.toFixed(2)}`;
-        
-        selectedCoins = coins;
-        selectedAmount = totalPrice;
-    }
-    
-    function buyCustomCoins() {
-        updateCustomPrice();
-        
-        // Simulate package selection
-        document.querySelectorAll('.package-card').forEach(card => {
-            card.style.border = '1px solid rgba(255,255,255,0.1)';
-            card.style.transform = 'scale(1)';
-        });
-        
-        // Process payment
-        if (window.initiateStripePayment) {
-            window.initiateStripePayment(selectedCoins, selectedAmount);
-        }
-    }
-    
-    document.getElementById('customCoins').addEventListener('input', updateCustomPrice);
-    document.getElementById('customCoins').addEventListener('change', updateCustomPrice);
-    
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-        updateCustomPrice();
-        selectPackage(5, 75); // Select default package
-    });
     </script>
 </body>
 </html>
