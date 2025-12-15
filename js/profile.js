@@ -1,405 +1,224 @@
-// Profile JavaScript - Fixed Version (No persistence error)
-console.log("Profile.js loaded - Fixed Version");
+// Fixed profile.js without duplicate db declaration
 
-let currentUser = null;
-let userProfile = null;
-let db = null;
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("Profile page loaded");
-    initializeProfile();
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('Profile page loaded - Fixed version');
+    
+    // Wait for Firebase to initialize
+    let checkCount = 0;
+    const maxChecks = 50;
+    
+    const waitForFirebase = setInterval(() => {
+        if (window.firebase && firebase.apps.length > 0) {
+            clearInterval(waitForFirebase);
+            initProfile();
+        } else if (checkCount++ > maxChecks) {
+            clearInterval(waitForFirebase);
+            console.error('Firebase not loaded');
+        }
+    }, 100);
 });
 
-async function initializeProfile() {
-    console.log("Initializing profile...");
+async function initProfile() {
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+    const user = auth.currentUser;
     
-    try {
-        // Wait for Firebase to be ready
-        if (typeof firebase === 'undefined') {
-            console.error("Firebase not loaded");
-            return;
-        }
-        
-        // Check auth state
-        auth.onAuthStateChanged(async function(user) {
-            if (!user) {
-                window.location.href = 'auth.html?type=login';
-                return;
-            }
-            
-            currentUser = user;
-            console.log("User authenticated:", user.email);
-            console.log("User UID:", user.uid);
-            
-            // Load profile data
-            await loadProfileData(user.uid);
-            setupEventListeners();
-        });
-        
-    } catch (error) {
-        console.error("Error initializing profile:", error);
+    if (!user) {
+        window.location.href = 'auth.html?type=login';
+        return;
     }
+    
+    console.log('Initializing profile for user:', user.uid);
+    
+    // Load user data
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    const userData = userDoc.data() || {};
+    
+    // Populate form fields
+    if (userData.displayName) {
+        document.getElementById('displayName').value = userData.displayName;
+    }
+    
+    if (userData.bio) {
+        document.getElementById('bio').value = userData.bio;
+    }
+    
+    if (userData.photoURL) {
+        document.getElementById('profilePicture').src = userData.photoURL;
+    }
+    
+    // Populate account info
+    document.getElementById('userEmail').textContent = user.email;
+    
+    if (userData.socialMedia) {
+        document.getElementById('instagram').value = userData.socialMedia.instagram || '';
+        document.getElementById('twitter').value = userData.socialMedia.twitter || '';
+        document.getElementById('tiktok').value = userData.socialMedia.tiktok || '';
+    }
+    
+    if (userData.banking) {
+        document.getElementById('bankName').value = userData.banking.bankName || '';
+        document.getElementById('accountNumber').value = userData.banking.accountNumber || '';
+        document.getElementById('routingNumber').value = userData.banking.routingNumber || '';
+    }
+    
+    // Setup event listeners
+    setupEventListeners(user, db, storage);
 }
 
-async function loadProfileData(userId) {
-    console.log("Loading profile data for:", userId);
+function setupEventListeners(user, db, storage) {
+    // Save profile button
+    document.getElementById('saveProfileBtn').addEventListener('click', () => saveProfile(user, db));
     
-    try {
-        // Get profile document
-        const profileRef = db.collection('profiles').doc(userId);
-        const profileDoc = await profileRef.get();
-        
-        if (profileDoc.exists) {
-            userProfile = profileDoc.data();
-            console.log("Profile loaded:", userProfile);
-            populateProfileForm();
-        } else {
-            // Create default profile
-            console.log("No profile found, creating default");
-            userProfile = {
-                userId: userId,
-                email: currentUser.email,
-                displayName: currentUser.email.split('@')[0],
-                username: currentUser.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, ''),
-                bio: '',
-                available: true,
-                interests: [],
-                profilePicture: '',
-                social: {
-                    twitter: '',
-                    instagram: '',
-                    tiktok: ''
-                },
-                banking: {
-                    paypalEmail: '',
-                    bankAccount: ''
-                },
-                createdAt: new Date(),
-                updatedAt: new Date()
-            };
-            
-            // Save default profile
-            await profileRef.set(userProfile);
-            console.log("Default profile created");
-            populateProfileForm();
-        }
-        
-        // Load stats
-        await loadProfileStats(userId);
-        
-    } catch (error) {
-        console.error("Error loading profile:", error);
-        showMessage('Error loading profile: ' + error.message, 'error');
-    }
-}
-
-function populateProfileForm() {
-    console.log("Populating form with profile:", userProfile);
+    // Save account info button
+    document.getElementById('saveAccountBtn').addEventListener('click', () => saveAccountInfo(user, db));
     
-    // Get all form elements
-    const elements = {
-        'displayName': userProfile.displayName || '',
-        'username': userProfile.username || '',
-        'bio': userProfile.bio || '',
-        'interests': (userProfile.interests || []).join(', '),
-        'availabilityToggle': userProfile.available !== false,
-        'twitter': userProfile.social?.twitter || '',
-        'instagram': userProfile.social?.instagram || '',
-        'tiktok': userProfile.social?.tiktok || '',
-        'paypalEmail': userProfile.banking?.paypalEmail || '',
-        'bankAccount': userProfile.banking?.bankAccount || ''
-    };
+    // Save social media button
+    document.getElementById('saveSocialBtn').addEventListener('click', () => saveSocialMedia(user, db));
     
-    // Set values
-    Object.keys(elements).forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            if (element.type === 'checkbox') {
-                element.checked = elements[id];
-            } else {
-                element.value = elements[id];
-            }
-        }
-    });
+    // Save banking button
+    document.getElementById('saveBankingBtn').addEventListener('click', () => saveBankingInfo(user, db));
     
-    // Update profile picture if exists
-    const profilePic = document.getElementById('profilePicture');
-    if (profilePic && userProfile.profilePicture) {
-        profilePic.src = userProfile.profilePicture;
-    } else if (profilePic) {
-        // Use default avatar based on user ID
-        const avatarIndex = Math.abs(hashCode(userProfile.userId)) % 70;
-        profilePic.src = `https://i.pravatar.cc/150?img=${avatarIndex}`;
+    // Profile picture upload
+    const profilePicInput = document.getElementById('profilePicInput');
+    if (profilePicInput) {
+        profilePicInput.addEventListener('change', (e) => handlePictureUpload(e, user, db, storage));
     }
     
-    console.log("Form populated successfully");
-}
-
-async function loadProfileStats(userId) {
-    try {
-        // Load call statistics
-        const callsQuery = await db.collection('callSessions')
-            .where('whisperId', '==', userId)
-            .get();
-        
-        const stats = {
-            totalCalls: callsQuery.size,
-            completedCalls: 0,
-            rating: 0
-        };
-        
-        // Calculate stats
-        callsQuery.forEach(doc => {
-            const data = doc.data();
-            if (data.status === 'completed') {
-                stats.completedCalls++;
-                if (data.rating) {
-                    stats.rating += data.rating;
-                }
-            }
-        });
-        
-        // Update stats display
-        updateStatsDisplay(stats);
-        
-    } catch (error) {
-        console.error("Error loading stats:", error);
-    }
-}
-
-function updateStatsDisplay(stats) {
-    const statsContainer = document.getElementById('profileStats');
-    if (!statsContainer) return;
-    
-    const avgRating = stats.completedCalls > 0 ? (stats.rating / stats.completedCalls).toFixed(1) : '0.0';
-    
-    statsContainer.innerHTML = `
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-value">${stats.totalCalls || 0}</div>
-                <div class="stat-label">Total Calls</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${stats.completedCalls || 0}</div>
-                <div class="stat-label">Completed</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${avgRating}</div>
-                <div class="stat-label">Avg Rating</div>
-            </div>
-        </div>
-    `;
-}
-
-function setupEventListeners() {
-    // Profile form submission
-    const profileForm = document.getElementById('profileForm');
-    if (profileForm) {
-        profileForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await saveProfile();
-        });
-    }
-    
-    // Availability toggle
-    const availabilityToggle = document.getElementById('availabilityToggle');
-    if (availabilityToggle) {
-        availabilityToggle.addEventListener('change', async function() {
-            await updateAvailability(this.checked);
-        });
-    }
-    
-    // Profile picture upload (simplified - just preview)
-    const pictureInput = document.getElementById('profilePictureInput');
-    if (pictureInput) {
-        pictureInput.addEventListener('change', handlePicturePreview);
-    }
-    
-    // Save social media and banking
-    const saveSocialBtn = document.getElementById('saveSocialBtn');
-    if (saveSocialBtn) {
-        saveSocialBtn.addEventListener('click', async function() {
-            await saveSocialAndBanking();
+    // Manual picture upload button
+    const uploadPicBtn = document.getElementById('uploadPicBtn');
+    if (uploadPicBtn) {
+        uploadPicBtn.addEventListener('click', () => {
+            document.getElementById('profilePicInput').click();
         });
     }
 }
 
-async function saveProfile() {
-    console.log("Saving profile...");
-    
-    try {
-        // Get form values
-        const displayName = document.getElementById('displayName').value.trim();
-        const username = document.getElementById('username').value.trim().toLowerCase();
-        const bio = document.getElementById('bio').value.trim();
-        const interests = document.getElementById('interests').value
-            .split(',')
-            .map(i => i.trim())
-            .filter(i => i.length > 0);
-        
-        // Validation
-        if (!displayName) {
-            showMessage('Display name is required', 'error');
-            return;
-        }
-        
-        if (!username || username.length < 3) {
-            showMessage('Username must be at least 3 characters', 'error');
-            return;
-        }
-        
-        // Update profile object
-        const updatedProfile = {
-            ...userProfile,
-            displayName: displayName,
-            username: username,
-            bio: bio,
-            interests: interests,
-            updatedAt: new Date()
-        };
-        
-        // Save to Firestore
-        await db.collection('profiles').doc(currentUser.uid).set(updatedProfile, { merge: true });
-        
-        // Update local profile
-        userProfile = updatedProfile;
-        
-        console.log("Profile saved successfully");
-        showMessage('✅ Profile saved successfully!', 'success');
-        
-    } catch (error) {
-        console.error("Error saving profile:", error);
-        showMessage('❌ Error saving profile: ' + error.message, 'error');
-    }
-}
-
-async function saveSocialAndBanking() {
-    try {
-        const socialData = {
-            twitter: document.getElementById('twitter').value.trim(),
-            instagram: document.getElementById('instagram').value.trim(),
-            tiktok: document.getElementById('tiktok').value.trim()
-        };
-        
-        const bankingData = {
-            paypalEmail: document.getElementById('paypalEmail').value.trim(),
-            bankAccount: document.getElementById('bankAccount').value.trim()
-        };
-        
-        await db.collection('profiles').doc(currentUser.uid).update({
-            social: socialData,
-            banking: bankingData,
-            updatedAt: new Date()
-        });
-        
-        showMessage('✅ Social media & banking info saved!', 'success');
-        
-    } catch (error) {
-        console.error("Error saving social/banking:", error);
-        showMessage('❌ Error saving: ' + error.message, 'error');
-    }
-}
-
-async function updateAvailability(isAvailable) {
-    try {
-        await db.collection('profiles').doc(currentUser.uid).update({
-            available: isAvailable,
-            updatedAt: new Date()
-        });
-        
-        userProfile.available = isAvailable;
-        showMessage(`You are now ${isAvailable ? 'available' : 'unavailable'} for calls`, 'success');
-        
-    } catch (error) {
-        console.error("Error updating availability:", error);
-        showMessage('Error updating availability', 'error');
-    }
-}
-
-function handlePicturePreview(event) {
+// Define the missing function
+async function handlePictureUpload(event, user, db, storage) {
     const file = event.target.files[0];
     if (!file) return;
     
-    // Validate file
-    if (!file.type.match('image.*')) {
-        showMessage('Please select an image file', 'error');
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
         return;
     }
     
     if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        showMessage('Image must be less than 5MB', 'error');
+        alert('Image must be less than 5MB');
         return;
     }
     
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const profilePic = document.getElementById('profilePicture');
-        if (profilePic) {
-            profilePic.src = e.target.result;
-            showMessage('Profile picture preview updated', 'info');
-            
-            // In a real app, you would upload to Firebase Storage here
-            // For now, we'll store as data URL (not recommended for production)
-            userProfile.profilePicture = e.target.result;
-        }
-    };
-    reader.readAsDataURL(file);
-}
-
-function showMessage(message, type = 'info') {
-    // Remove existing messages
-    const existing = document.querySelector('.alert-message');
-    if (existing) existing.remove();
+    // Show loading
+    const profilePic = document.getElementById('profilePicture');
+    const originalSrc = profilePic.src;
+    profilePic.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
     
-    // Create message element
-    const alert = document.createElement('div');
-    alert.className = `alert-message alert-${type}`;
-    alert.innerHTML = `
-        <div class="alert-content">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        </div>
-    `;
-    
-    // Add styles
-    alert.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
-        color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
-        padding: 12px 20px;
-        border-radius: 8px;
-        border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'};
-        z-index: 10000;
-        min-width: 300px;
-        max-width: 400px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        animation: slideIn 0.3s ease;
-    `;
-    
-    document.body.appendChild(alert);
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
-    }, 5000);
-}
-
-// Helper function for consistent avatars
-function hashCode(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    try {
+        // Upload to Firebase Storage
+        const storageRef = storage.ref();
+        const fileRef = storageRef.child(`profile_pictures/${user.uid}/${Date.now()}_${file.name}`);
+        
+        // Upload file
+        await fileRef.put(file);
+        
+        // Get download URL
+        const downloadURL = await fileRef.getDownloadURL();
+        
+        // Update Firestore
+        await db.collection('users').doc(user.uid).update({
+            photoURL: downloadURL,
+            updatedAt: new Date()
+        });
+        
+        // Update UI
+        profilePic.src = downloadURL;
+        alert('Profile picture updated successfully!');
+        
+    } catch (error) {
+        console.error('Error uploading picture:', error);
+        profilePic.src = originalSrc;
+        alert('Error uploading picture: ' + error.message);
     }
-    return hash;
 }
 
-// Make functions available globally
-window.saveProfile = saveProfile;
-window.saveSocialAndBanking = saveSocialAndBanking;
-window.handlePicturePreview = handlePicturePreview;
+async function saveProfile(user, db) {
+    const displayName = document.getElementById('displayName').value;
+    const bio = document.getElementById('bio').value;
+    
+    try {
+        await db.collection('users').doc(user.uid).update({
+            displayName,
+            bio,
+            updatedAt: new Date()
+        });
+        alert('Profile updated successfully!');
+    } catch (error) {
+        alert('Error updating profile: ' + error.message);
+    }
+}
+
+async function saveAccountInfo(user, db) {
+    const newEmail = document.getElementById('newEmail').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    try {
+        if (newEmail && newEmail !== user.email) {
+            await user.updateEmail(newEmail);
+            await db.collection('users').doc(user.uid).update({
+                email: newEmail,
+                updatedAt: new Date()
+            });
+        }
+        
+        if (newPassword) {
+            if (newPassword !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            await user.updatePassword(newPassword);
+        }
+        
+        alert('Account information updated successfully!');
+    } catch (error) {
+        alert('Error updating account: ' + error.message);
+    }
+}
+
+async function saveSocialMedia(user, db) {
+    const socialMedia = {
+        instagram: document.getElementById('instagram').value,
+        twitter: document.getElementById('twitter').value,
+        tiktok: document.getElementById('tiktok').value
+    };
+    
+    try {
+        await db.collection('users').doc(user.uid).update({
+            socialMedia,
+            updatedAt: new Date()
+        });
+        alert('Social media links updated successfully!');
+    } catch (error) {
+        alert('Error updating social media: ' + error.message);
+    }
+}
+
+async function saveBankingInfo(user, db) {
+    const banking = {
+        bankName: document.getElementById('bankName').value,
+        accountNumber: document.getElementById('accountNumber').value,
+        routingNumber: document.getElementById('routingNumber').value
+    };
+    
+    try {
+        await db.collection('users').doc(user.uid).update({
+            banking,
+            updatedAt: new Date()
+        });
+        alert('Banking information updated successfully!');
+    } catch (error) {
+        alert('Error updating banking info: ' + error.message);
+    }
+}
