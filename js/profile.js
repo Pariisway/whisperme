@@ -1,45 +1,53 @@
-// Profile.js - Fixed with all features
-console.log('Profile.js loaded - Fixed version');
+// Profile.js - Fixed working version
+console.log('Profile.js loaded - Working version');
 
 let user, db;
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Profile page loaded');
     
-    // Wait for Firebase
-    const waitForFirebase = setInterval(() => {
-        if (window.firebase && firebase.apps.length > 0) {
-            clearInterval(waitForFirebase);
+    // Check if user is logged in
+    if (!window.firebase || !firebase.apps.length) {
+        setTimeout(() => {
             initProfile();
-        }
-    }, 100);
+        }, 1000);
+        return;
+    }
+    
+    initProfile();
 });
 
 async function initProfile() {
-    const auth = firebase.auth();
-    db = firebase.firestore();
-    
-    auth.onAuthStateChanged(async (currentUser) => {
-        if (!currentUser) {
-            window.location.href = 'auth.html?type=login';
-            return;
-        }
+    try {
+        // Wait for Firebase to be ready
+        const auth = firebase.auth();
+        db = firebase.firestore();
         
-        user = currentUser;
-        console.log('Loading profile for user:', user.email);
-        
-        // Set email field (readonly)
-        document.getElementById('email').value = user.email;
-        
-        // Load user data
-        await loadUserData();
-        
-        // Setup form submission
-        setupFormSubmission();
-        
-        // Setup photo URL live preview
-        setupPhotoPreview();
-    });
+        auth.onAuthStateChanged(async (currentUser) => {
+            if (!currentUser) {
+                window.location.href = 'auth.html?type=login';
+                return;
+            }
+            
+            user = currentUser;
+            console.log('Loading profile for user:', user.email);
+            
+            // Set email field (readonly)
+            document.getElementById('email').value = user.email;
+            
+            // Load user data
+            await loadUserData();
+            
+            // Setup form submission
+            setupFormSubmission();
+            
+            // Setup photo URL live preview
+            setupPhotoPreview();
+        });
+    } catch (error) {
+        console.error('Error initializing profile:', error);
+        setTimeout(initProfile, 1000);
+    }
 }
 
 async function loadUserData() {
@@ -80,6 +88,9 @@ async function loadUserData() {
             console.log('✅ Profile data loaded');
         } else {
             console.log('No profile found, using defaults');
+            // Set default display name from email
+            const defaultName = user.email.split('@')[0];
+            document.getElementById('displayName').value = defaultName;
         }
         
     } catch (error) {
@@ -104,6 +115,7 @@ function setupFormSubmission() {
         e.preventDefault();
         
         const saveButton = document.getElementById('saveProfile');
+        const originalText = saveButton.innerHTML;
         saveButton.disabled = true;
         saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         
@@ -112,6 +124,24 @@ function setupFormSubmission() {
             const bio = document.getElementById('bio').value.trim();
             let callPrice = parseInt(document.getElementById('callPrice').value);
             const photoURL = document.getElementById('photoURL').value.trim();
+            
+            // Validate required fields
+            if (!displayName) {
+                throw new Error('Display name is required');
+            }
+            
+            if (!photoURL) {
+                throw new Error('Profile image URL is required');
+            }
+            
+            // Validate URL
+            if (!isValidUrl(photoURL)) {
+                throw new Error('Please enter a valid image URL');
+            }
+            
+            // Validate call price (1-5)
+            if (callPrice < 1) callPrice = 1;
+            if (callPrice > 5) callPrice = 5;
             
             // Social links
             const social = {
@@ -133,16 +163,7 @@ function setupFormSubmission() {
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             
-            // Validate required fields
-            if (!displayName) {
-                throw new Error('Display name is required');
-            }
-            
-            // Validate call price (1-5)
-            if (callPrice < 1) callPrice = 1;
-            if (callPrice > 5) callPrice = 5;
-            
-            // Update profile
+            // Update profile data
             const profileData = {
                 userId: user.uid,
                 email: user.email,
@@ -152,19 +173,27 @@ function setupFormSubmission() {
                 photoURL,
                 social,
                 banking,
-                updatedAt: new Date()
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
             // Also update user document
             const userData = {
                 displayName,
                 photoURL,
-                updatedAt: new Date()
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
+            
+            console.log('Saving profile data:', profileData);
             
             // Save to Firestore
             await db.collection('profiles').doc(user.uid).set(profileData, { merge: true });
             await db.collection('users').doc(user.uid).set(userData, { merge: true });
+            
+            // Update auth user display name
+            await user.updateProfile({
+                displayName: displayName,
+                photoURL: photoURL
+            });
             
             // Update profile image if URL changed
             if (photoURL) {
@@ -185,6 +214,8 @@ function setupFormSubmission() {
                 // Clear password fields
                 document.getElementById('currentPassword').value = '';
                 document.getElementById('newPassword').value = '';
+                
+                showNotification('✅ Password updated successfully!');
             }
             
             showNotification('✅ Profile updated successfully! Changes will appear shortly.');
@@ -198,9 +229,18 @@ function setupFormSubmission() {
             console.error('Error updating profile:', error);
             showNotification('❌ Error: ' + error.message, 'error');
             saveButton.disabled = false;
-            saveButton.innerHTML = '<i class="fas fa-save"></i> Save All Changes';
+            saveButton.innerHTML = originalText;
         }
     });
+}
+
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
 }
 
 function showNotification(message, type = 'success') {

@@ -1,73 +1,92 @@
-// Dashboard.js - Fixed with profile link and proper loading
+// Dashboard.js - Fixed with proper loading
 console.log('Dashboard.js loaded - Fixed version');
 
 let user, db;
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard page loaded');
-    
-    // Wait for Firebase to initialize
-    let checkCount = 0;
-    const maxChecks = 50;
-    
-    const waitForFirebase = setInterval(() => {
-        if (window.firebase && firebase.apps.length > 0) {
-            clearInterval(waitForFirebase);
-            initDashboard();
-        } else if (checkCount++ > maxChecks) {
-            clearInterval(waitForFirebase);
-            console.error('Firebase not loaded');
-        }
-    }, 100);
+    initDashboard();
 });
 
 async function initDashboard() {
-    const auth = firebase.auth();
-    db = firebase.firestore();
-    
-    auth.onAuthStateChanged(async (currentUser) => {
-        if (!currentUser) {
-            window.location.href = 'auth.html?type=login';
+    try {
+        // Wait for Firebase
+        if (!window.firebase || !firebase.apps.length) {
+            setTimeout(initDashboard, 500);
             return;
         }
         
-        user = currentUser;
-        console.log('User authenticated:', user.email);
+        const auth = firebase.auth();
+        db = firebase.firestore();
         
-        // Show loading states
-        showLoadingStates();
-        
-        // Load all dashboard data
-        await loadUserData();
-        await loadStatistics();
-        await loadCallsWaiting();
-        await loadWhisperProfile();
-        await loadFavoriteWhispers();
-        await loadRecentActivity();
-        await setupProfileLink();
-        
-        // Setup availability toggle
-        await setupAvailabilityToggle();
-        
-        // Check if user should be auto-marked as unavailable
-        await checkAutoUnavailable();
+        auth.onAuthStateChanged(async (currentUser) => {
+            if (!currentUser) {
+                window.location.href = 'auth.html?type=login';
+                return;
+            }
+            
+            user = currentUser;
+            console.log('User authenticated:', user.email);
+            
+            // Update loading states
+            updateLoadingStates();
+            
+            // Load all dashboard data
+            await Promise.all([
+                loadUserData(),
+                loadStatistics(),
+                loadCallsWaiting(),
+                loadWhisperProfile(),
+                loadFavoriteWhispers(),
+                loadRecentActivity(),
+                setupProfileLink(),
+                setupAvailabilityToggle()
+            ]);
+            
+            // Hide loading states
+            hideLoadingStates();
+            
+            console.log('✅ Dashboard fully loaded');
+        });
+    } catch (error) {
+        console.error('Error initializing dashboard:', error);
+        showNotification('Error loading dashboard', 'error');
+    }
+}
+
+function updateLoadingStates() {
+    // Update dashboard header
+    const header = document.querySelector('.dashboard-header');
+    if (header) {
+        header.innerHTML = `
+            <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">
+                Loading Dashboard...
+            </h1>
+            <p style="color: #94a3b8;">
+                <i class="fas fa-spinner fa-spin"></i> Please wait...
+            </p>
+        `;
+    }
+    
+    // Update all sections
+    const sections = ['callsWaiting', 'whisperProfile', 'favoriteWhispers', 'recentActivity'];
+    sections.forEach(sectionId => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            element.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                    <p>Loading...</p>
+                </div>
+            `;
+        }
     });
 }
 
-function showLoadingStates() {
-    // Update all containers with loading states
-    const containers = {
-        'userWelcome': '<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>',
-        'callsWaiting': '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading calls...</div>',
-        'whisperProfile': '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>',
-        'favoriteWhispers': '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading favorites...</div>',
-        'recentActivity': '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading activity...</div>'
-    };
-    
-    for (const [id, html] of Object.entries(containers)) {
-        const element = document.getElementById(id);
-        if (element) element.innerHTML = html;
-    }
+function hideLoadingStates() {
+    // Remove loading states
+    const loadingElements = document.querySelectorAll('.loading');
+    loadingElements.forEach(el => el.remove());
 }
 
 async function loadUserData() {
@@ -116,7 +135,7 @@ async function loadStatistics() {
         const coinsBalance = document.getElementById('coinsBalance');
         if (coinsBalance) coinsBalance.textContent = userData.coins || 0;
         
-        // Calculate total calls as whisper
+        // Load completed calls count
         const callsAsWhisper = await db.collection('callSessions')
             .where('whisperId', '==', user.uid)
             .where('status', '==', 'completed')
@@ -126,7 +145,7 @@ async function loadStatistics() {
         const totalCalls = document.getElementById('totalCalls');
         if (totalCalls) totalCalls.textContent = callCount;
         
-        // Calculate total earnings from whisperEarnings
+        // Load earnings
         const earningsQuery = await db.collection('whisperEarnings')
             .where('whisperId', '==', user.uid)
             .where('status', '==', 'completed')
@@ -138,11 +157,10 @@ async function loadStatistics() {
             totalEarnings += earning.amountEarned || 0;
         });
         
-        // Format earnings
         const earningsTotal = document.getElementById('earningsTotal');
         if (earningsTotal) earningsTotal.textContent = `$${totalEarnings.toFixed(2)}`;
         
-        // Calculate average rating
+        // Load ratings
         const ratingQuery = await db.collection('callSessions')
             .where('whisperId', '==', user.uid)
             .where('status', '==', 'completed')
@@ -164,12 +182,6 @@ async function loadStatistics() {
         const ratingAvg = document.getElementById('ratingAvg');
         if (ratingAvg) ratingAvg.textContent = averageRating;
         
-        console.log('✅ Statistics loaded:', { 
-            calls: callCount, 
-            earnings: totalEarnings, 
-            rating: averageRating 
-        });
-        
     } catch (error) {
         console.error('Error loading statistics:', error);
     }
@@ -190,12 +202,18 @@ async function loadCallsWaiting() {
         
         if (callsQuery.empty) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 1rem;">
-                    <i class="fas fa-phone-slash" style="font-size: 2rem; color: #94a3b8; margin-bottom: 1rem;"></i>
-                    <p style="color: white;">No calls waiting</p>
-                    <p style="font-size: 0.9rem; color: #94a3b8;">When you're available, calls will appear here</p>
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-phone-slash" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3 style="color: white; margin-bottom: 0.5rem;">No Calls Waiting</h3>
+                    <p style="color: #94a3b8;">When you're available, incoming calls will appear here.</p>
+                    <button id="toggleAvailability" class="btn btn-primary" style="margin-top: 1rem;">
+                        <i class="fas fa-toggle-on"></i> Set as Available
+                    </button>
                 </div>
             `;
+            
+            // Re-attach availability button
+            setTimeout(() => setupAvailabilityToggle(), 100);
             return;
         }
         
@@ -206,14 +224,15 @@ async function loadCallsWaiting() {
             const callPrice = call.callPrice || 1;
             
             html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
                     <div>
-                        <div style="font-weight: 600; color: #10b981;">${call.callerName || 'Fan'}</div>
+                        <div style="font-weight: 700; color: #10b981; margin-bottom: 0.25rem;">${call.callerName || 'Fan'}</div>
                         <div style="font-size: 0.85rem; color: #94a3b8;">
-                            ${timeAgo} • ${callPrice} coin${callPrice !== 1 ? 's' : ''}
+                            <i class="fas fa-clock"></i> ${timeAgo} • 
+                            <i class="fas fa-coins"></i> ${callPrice} coin${callPrice !== 1 ? 's' : ''}
                         </div>
                     </div>
-                    <button class="btn btn-small btn-primary" onclick="acceptCall('${doc.id}')">
+                    <button class="btn btn-small btn-primary" onclick="acceptCall('${doc.id}')" style="min-width: 100px;">
                         <i class="fas fa-phone-alt"></i> Accept
                     </button>
                 </div>
@@ -226,8 +245,8 @@ async function loadCallsWaiting() {
     } catch (error) {
         console.error('Error loading calls:', error);
         container.innerHTML = `
-            <div style="text-align: center; padding: 1rem; color: #f97316;">
-                <i class="fas fa-exclamation-triangle"></i>
+            <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                 <p>Error loading calls</p>
             </div>
         `;
@@ -243,10 +262,11 @@ async function loadWhisperProfile() {
         
         if (!profileDoc.exists) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 1rem;">
-                    <i class="fas fa-user-plus" style="font-size: 2rem; color: #94a3b8; margin-bottom: 1rem;"></i>
-                    <p style="color: white;">No profile set up yet</p>
-                    <a href="profile.html" class="btn btn-small btn-primary" style="margin-top: 1rem;">
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-user-plus" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3 style="color: white; margin-bottom: 0.5rem;">No Profile Yet</h3>
+                    <p style="color: #94a3b8;">Create your profile to start receiving calls.</p>
+                    <a href="profile.html" class="btn btn-primary" style="margin-top: 1rem;">
                         <i class="fas fa-user-edit"></i> Create Profile
                     </a>
                 </div>
@@ -265,59 +285,51 @@ async function loadWhisperProfile() {
                           profile.banking.accountNumber;
         
         container.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                <div style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 3px solid #10b981;">
                     <img src="${profile.photoURL || 'https://i.pravatar.cc/150'}" 
                          alt="${profile.displayName}" 
                          style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
-                <div>
-                    <div style="font-weight: 700; color: white;">${profile.displayName || 'No name'}</div>
-                    <div style="font-size: 0.9rem; color: #94a3b8;">${user.email}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; color: white; font-size: 1.2rem;">${profile.displayName || 'No name'}</div>
+                    <div style="font-size: 0.9rem; color: #94a3b8;">${profile.bio ? profile.bio.substring(0, 60) + (profile.bio.length > 60 ? '...' : '') : 'No bio yet'}</div>
                 </div>
             </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
-                        <div style="font-size: 0.85rem; color: #94a3b8;">Call Price</div>
-                        <div style="font-size: 1.25rem; font-weight: 700; color: #f59e0b;">
-                            ${callPrice} coin${callPrice !== 1 ? 's' : ''}
+                        <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.25rem;">Call Price</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #f59e0b;">
+                            ${callPrice} <i class="fas fa-coins" style="font-size: 1rem;"></i>
                         </div>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.85rem; color: #94a3b8;">Status</div>
-                        <div style="font-size: 1rem; font-weight: 600; color: ${isAvailable ? '#10b981' : '#ef4444'}">
-                            ${isAvailable ? 'Available' : 'Unavailable'}
-                        </div>
-                    </div>
-                </div>
-                <div style="margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <div style="font-size: 0.85rem; color: #94a3b8;">Rating</div>
-                        <div style="font-size: 1rem; color: #fbbf24;">
+                        <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.25rem;">Rating</div>
+                        <div style="font-size: 1.2rem; color: #fbbf24;">
                             <i class="fas fa-star"></i> ${rating.toFixed(1)}
                         </div>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.85rem; color: #94a3b8;">Calls</div>
-                        <div style="font-size: 1rem; color: white;">${profile.totalCalls || 0}</div>
-                    </div>
                 </div>
             </div>
-            <div style="font-size: 0.9rem; color: ${hasBanking ? '#10b981' : '#ef4444'}; margin-bottom: 0.5rem;">
-                <i class="fas fa-${hasBanking ? 'check-circle' : 'exclamation-circle'}"></i> 
-                Banking: ${hasBanking ? 'Setup Complete' : 'Not Setup'}
-            </div>
-            <div style="font-size: 0.9rem; color: #94a3b8;">
-                <i class="fas fa-clock"></i> Next payout: Every 3 days
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                <div>
+                    <div style="font-size: 0.9rem; color: ${hasBanking ? '#10b981' : '#ef4444'};">
+                        <i class="fas fa-${hasBanking ? 'check-circle' : 'exclamation-circle'}"></i> 
+                        Banking: ${hasBanking ? 'Setup' : 'Not Setup'}
+                    </div>
+                </div>
+                <a href="profile.html" class="btn btn-small btn-secondary">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
             </div>
         `;
         
     } catch (error) {
         console.error('Error loading whisper profile:', error);
         container.innerHTML = `
-            <div style="text-align: center; padding: 1rem; color: #f97316;">
-                <i class="fas fa-exclamation-triangle"></i>
+            <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                 <p>Error loading profile</p>
             </div>
         `;
@@ -332,13 +344,13 @@ async function loadFavoriteWhispers() {
         // Get user's favorites
         const favoritesDoc = await db.collection('favorites').doc(user.uid).get();
         
-        if (!favoritesDoc.exists || !favoritesDoc.data().whisperIds) {
+        if (!favoritesDoc.exists || !favoritesDoc.data().whisperIds || favoritesDoc.data().whisperIds.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 1rem;">
-                    <i class="fas fa-heart" style="font-size: 2rem; color: #ef4444; opacity: 0.5; margin-bottom: 1rem;"></i>
-                    <p style="color: white;">No favorite whispers yet</p>
-                    <p style="font-size: 0.9rem; color: #94a3b8;">Save your favorite whispers to call them easily</p>
-                    <a href="index.html#available-whispers" class="btn btn-small btn-primary" style="margin-top: 1rem;">
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-heart" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3 style="color: white; margin-bottom: 0.5rem;">No Favorites Yet</h3>
+                    <p style="color: #94a3b8;">Save your favorite whispers to call them easily.</p>
+                    <a href="index.html#available-whispers" class="btn btn-primary" style="margin-top: 1rem;">
                         <i class="fas fa-users"></i> Find Whispers
                     </a>
                 </div>
@@ -346,18 +358,65 @@ async function loadFavoriteWhispers() {
             return;
         }
         
-        // TODO: Load favorite whispers data
-        container.innerHTML = `
-            <div style="text-align: center; padding: 1rem;">
-                <p style="color: white;">${favoritesDoc.data().whisperIds.length} favorite whisper${favoritesDoc.data().whisperIds.length !== 1 ? 's' : ''}</p>
-            </div>
-        `;
+        const whisperIds = favoritesDoc.data().whisperIds;
+        const whispers = [];
+        
+        // Load each favorite whisper's data
+        for (const whisperId of whisperIds.slice(0, 3)) {
+            const whisperDoc = await db.collection('profiles').doc(whisperId).get();
+            if (whisperDoc.exists) {
+                whispers.push(whisperDoc.data());
+            }
+        }
+        
+        if (whispers.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-users" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p style="color: white;">No favorite whispers found</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+        whispers.forEach(whisper => {
+            html += `
+                <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                    <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden;">
+                        <img src="${whisper.photoURL || 'https://i.pravatar.cc/150'}" 
+                             alt="${whisper.displayName}" 
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: white;">${whisper.displayName}</div>
+                        <div style="font-size: 0.85rem; color: #94a3b8;">${whisper.callPrice || 1} coins</div>
+                    </div>
+                    <button class="btn btn-small btn-primary" onclick="callWhisper('${whisper.userId}')">
+                        <i class="fas fa-phone-alt"></i> Call
+                    </button>
+                </div>
+            `;
+        });
+        
+        if (whisperIds.length > 3) {
+            html += `
+                <div style="text-align: center; margin-top: 0.5rem;">
+                    <a href="favorites.html" style="color: #10b981; text-decoration: none;">
+                        + ${whisperIds.length - 3} more favorites
+                    </a>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
         
     } catch (error) {
         console.error('Error loading favorites:', error);
         container.innerHTML = `
-            <div style="text-align: center; padding: 1rem; color: #f97316;">
-                <i class="fas fa-exclamation-triangle"></i>
+            <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                 <p>Error loading favorites</p>
             </div>
         `;
@@ -369,48 +428,47 @@ async function loadRecentActivity() {
     if (!container) return;
     
     try {
-        // Get recent calls (as caller and whisper)
-        const callsAsCaller = await db.collection('callSessions')
-            .where('callerId', '==', user.uid)
-            .orderBy('createdAt', 'desc')
-            .limit(5)
-            .get();
-        
-        const callsAsWhisper = await db.collection('callSessions')
+        // Get recent calls (both as caller and whisper)
+        const recentCalls = await db.collection('callSessions')
             .where('whisperId', '==', user.uid)
             .orderBy('createdAt', 'desc')
-            .limit(5)
+            .limit(3)
             .get();
         
-        const allCalls = [...callsAsCaller.docs, ...callsAsWhisper.docs];
-        allCalls.sort((a, b) => b.data().createdAt - a.data().createdAt);
+        const recentMadeCalls = await db.collection('callSessions')
+            .where('callerId', '==', user.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(3)
+            .get();
+        
+        const allCalls = [
+            ...recentCalls.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'received' })),
+            ...recentMadeCalls.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'made' }))
+        ];
+        
+        allCalls.sort((a, b) => b.createdAt - a.createdAt);
         
         if (allCalls.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 1rem;">
-                    <i class="fas fa-history" style="font-size: 2rem; color: #94a3b8; margin-bottom: 1rem;"></i>
-                    <p style="color: white;">No recent activity</p>
-                    <p style="font-size: 0.9rem; color: #94a3b8;">Start making calls to see activity here</p>
-                    <a href="index.html#available-whispers" class="btn btn-small btn-primary" style="margin-top: 1rem;">
-                        <i class="fas fa-phone-alt"></i> Make a Call
-                    </a>
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-history" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3 style="color: white; margin-bottom: 0.5rem;">No Recent Activity</h3>
+                    <p style="color: #94a3b8;">Start making or receiving calls to see activity here.</p>
                 </div>
             `;
             return;
         }
         
         let html = '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
-        allCalls.slice(0, 5).forEach(doc => {
-            const call = doc.data();
+        allCalls.slice(0, 5).forEach(call => {
             const timeAgo = formatTimeAgo(call.createdAt?.toDate());
-            const isCaller = call.callerId === user.uid;
-            const otherPerson = isCaller ? call.whisperName : call.callerName;
-            const role = isCaller ? 'You called' : 'Called you';
+            const isReceived = call.type === 'received';
+            const otherPerson = isReceived ? call.callerName : call.whisperName;
             const status = call.status || 'unknown';
-            const callPrice = call.callPrice || 1;
             
             let statusColor = '#94a3b8';
             let statusIcon = 'fas fa-clock';
+            let statusText = status.charAt(0).toUpperCase() + status.slice(1);
             
             if (status === 'completed') {
                 statusColor = '#10b981';
@@ -418,24 +476,24 @@ async function loadRecentActivity() {
             } else if (status === 'waiting') {
                 statusColor = '#f59e0b';
                 statusIcon = 'fas fa-hourglass-half';
-            } else if (status === 'timeout') {
+            } else if (status === 'timeout' || status === 'rejected') {
                 statusColor = '#ef4444';
-                statusIcon = 'fas fa-clock';
+                statusIcon = 'fas fa-times-circle';
             }
             
             html += `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="${statusIcon}" style="color: ${statusColor};"></i>
-                        <div>
-                            <div style="font-weight: 600; font-size: 0.9rem; color: white;">${otherPerson}</div>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">
-                                ${role} • ${timeAgo} • ${callPrice} coin${callPrice !== 1 ? 's' : ''}
-                            </div>
+                    <div>
+                        <div style="font-weight: 600; color: white; margin-bottom: 0.25rem;">
+                            ${isReceived ? '📥 ' : '📤 '}${otherPerson}
+                        </div>
+                        <div style="font-size: 0.85rem; color: #94a3b8;">
+                            <i class="fas fa-clock"></i> ${timeAgo} • 
+                            ${isReceived ? 'Received' : 'Made'} call
                         </div>
                     </div>
-                    <span style="font-size: 0.8rem; color: ${statusColor}; font-weight: 600;">
-                        ${status.charAt(0).toUpperCase() + status.slice(1)}
+                    <span style="font-size: 0.85rem; color: ${statusColor}; font-weight: 600;">
+                        <i class="${statusIcon}"></i> ${statusText}
                     </span>
                 </div>
             `;
@@ -447,8 +505,8 @@ async function loadRecentActivity() {
     } catch (error) {
         console.error('Error loading recent activity:', error);
         container.innerHTML = `
-            <div style="text-align: center; padding: 1rem; color: #f97316;">
-                <i class="fas fa-exclamation-triangle"></i>
+            <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                 <p>Error loading activity</p>
             </div>
         `;
@@ -456,32 +514,39 @@ async function loadRecentActivity() {
 }
 
 async function setupProfileLink() {
-    const container = document.getElementById('profileLinkContainer');
+    // Get or create profile link container
+    let container = document.getElementById('profileLinkContainer');
     if (!container) {
-        // Create container if it doesn't exist
         const statsContainer = document.querySelector('.stats-container');
         if (statsContainer) {
-            const linkHTML = `
-                <div class="card" style="margin-top: 1rem;" id="profileLinkContainer">
-                    <h3 style="color: white; margin-bottom: 1rem;">
-                        <i class="fas fa-link"></i> Your Profile Link
-                    </h3>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="text" id="profileLinkInput" class="form-control" readonly value="Loading...">
-                        <button type="button" id="copyLinkBtn" class="btn btn-primary" style="white-space: nowrap;">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                        <button type="button" id="shareLinkBtn" class="btn btn-secondary" style="white-space: nowrap;">
-                            <i class="fas fa-share"></i> Share
-                        </button>
-                    </div>
+            container = document.createElement('div');
+            container.id = 'profileLinkContainer';
+            container.className = 'card';
+            container.style.marginTop = '1rem';
+            container.innerHTML = `
+                <h3 style="color: white; margin-bottom: 1rem;">
+                    <i class="fas fa-link"></i> Your Profile Link
+                </h3>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <input type="text" id="profileLinkInput" class="form-control" readonly value="Loading...">
+                    <button type="button" id="copyLinkBtn" class="btn btn-primary" style="white-space: nowrap;">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <a href="profile-view.html?user=${user.uid}" class="btn btn-secondary" style="flex: 1; text-align: center;">
+                        <i class="fas fa-eye"></i> Preview Profile
+                    </a>
+                    <button type="button" id="shareLinkBtn" class="btn btn-secondary" style="flex: 1;">
+                        <i class="fas fa-share"></i> Share
+                    </button>
                 </div>
             `;
-            statsContainer.insertAdjacentHTML('beforeend', linkHTML);
+            statsContainer.appendChild(container);
         }
     }
     
-    // Now set up the link
+    // Set profile link
     const baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
     const profileUrl = `${baseUrl}profile-view.html?user=${user.uid}`;
     
@@ -507,7 +572,6 @@ async function setupProfileLink() {
                 url: profileUrl
             });
         } else {
-            // Fallback to copying
             navigator.clipboard.writeText(profileUrl);
             this.innerHTML = '<i class="fas fa-check"></i> Copied!';
             setTimeout(() => {
@@ -519,36 +583,54 @@ async function setupProfileLink() {
 
 async function setupAvailabilityToggle() {
     const availabilityBtn = document.getElementById('toggleAvailability');
-    if (!availabilityBtn) return;
+    if (!availabilityBtn) {
+        // Check if button exists elsewhere
+        setTimeout(setupAvailabilityToggle, 500);
+        return;
+    }
     
     try {
         const userDoc = await db.collection('users').doc(user.uid).get();
         const userData = userDoc.data() || {};
-        const isAvailable = userData.available || false;
+        let isAvailable = userData.available || false;
         
         updateAvailabilityButton(isAvailable);
         
-        // Add event listener
+        // Add click event
         availabilityBtn.addEventListener('click', async () => {
             const newStatus = !isAvailable;
             
             try {
-                await db.collection('users').doc(user.uid).update({
-                    available: newStatus,
-                    updatedAt: new Date()
-                });
+                // Update both users and profiles collections
+                await Promise.all([
+                    db.collection('users').doc(user.uid).update({
+                        available: newStatus,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }),
+                    db.collection('profiles').doc(user.uid).update({
+                        available: newStatus,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                ]);
                 
-                await db.collection('profiles').doc(user.uid).update({
-                    available: newStatus,
-                    updatedAt: new Date()
-                });
-                
+                isAvailable = newStatus;
                 updateAvailabilityButton(newStatus);
-                showNotification(newStatus ? '🎉 You are now available for calls!' : '⏸️ You are now unavailable');
+                
+                showNotification(
+                    newStatus 
+                        ? '✅ You are now available for calls!' 
+                        : '⏸️ You are now unavailable',
+                    newStatus ? 'success' : 'warning'
+                );
+                
+                // Refresh calls waiting if available
+                if (newStatus) {
+                    setTimeout(loadCallsWaiting, 1000);
+                }
                 
             } catch (error) {
                 console.error('Error updating availability:', error);
-                showNotification('❌ Error updating availability: ' + error.message, 'error');
+                showNotification('❌ Error updating availability', 'error');
             }
         });
     } catch (error) {
@@ -563,43 +645,13 @@ function updateAvailabilityButton(isAvailable) {
     if (!availabilityBtn) return;
     
     if (isAvailable) {
-        availabilityBtn.innerHTML = '<i class="fas fa-toggle-on"></i> Available for Calls';
-        availabilityBtn.classList.remove('btn-secondary');
-        availabilityBtn.classList.add('btn-primary');
+        availabilityBtn.innerHTML = '<i class="fas fa-toggle-on"></i> Available';
+        availabilityBtn.className = 'btn btn-primary';
         availabilityBtn.style.background = '#10b981';
     } else {
-        availabilityBtn.innerHTML = '<i class="fas fa-toggle-off"></i> Set as Available';
-        availabilityBtn.classList.remove('btn-primary');
-        availabilityBtn.classList.add('btn-secondary');
+        availabilityBtn.innerHTML = '<i class="fas fa-toggle-off"></i> Set Available';
+        availabilityBtn.className = 'btn btn-secondary';
         availabilityBtn.style.background = '';
-    }
-}
-
-async function checkAutoUnavailable() {
-    try {
-        // Check if whisper has more than 5 waiting calls
-        const waitingCallsQuery = await db.collection('callSessions')
-            .where('whisperId', '==', user.uid)
-            .where('status', '==', 'waiting')
-            .get();
-        
-        if (waitingCallsQuery.size >= 5) {
-            // Auto-mark as unavailable
-            await db.collection('users').doc(user.uid).update({
-                available: false,
-                updatedAt: new Date()
-            });
-            
-            await db.collection('profiles').doc(user.uid).update({
-                available: false,
-                updatedAt: new Date()
-            });
-            
-            updateAvailabilityButton(false);
-            showNotification('⚠️ You have 5+ calls waiting. Auto-marked as unavailable.', 'warning');
-        }
-    } catch (error) {
-        console.error('Error checking auto-unavailable:', error);
     }
 }
 
@@ -658,7 +710,7 @@ window.acceptCall = async function(sessionId) {
         
     } catch (error) {
         console.error('Error accepting call:', error);
-        alert('Error accepting call: ' + error.message);
+        showNotification('Error accepting call: ' + error.message, 'error');
     }
 };
 
@@ -684,17 +736,6 @@ window.callWhisper = async function(whisperId) {
         // Check if whisper is available
         if (!whisperData.available) {
             alert('This whisper is currently unavailable. Please try another whisper.');
-            return;
-        }
-        
-        // Check if whisper has more than 5 calls waiting
-        const waitingCallsQuery = await db.collection('callSessions')
-            .where('whisperId', '==', whisperId)
-            .where('status', '==', 'waiting')
-            .get();
-        
-        if (waitingCallsQuery.size >= 5) {
-            alert('This whisper has too many calls waiting. Please try another whisper or check back later.');
             return;
         }
         

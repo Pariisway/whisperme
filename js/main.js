@@ -1,294 +1,367 @@
-// Main JavaScript for Whisper+me
-console.log("Whisper+me Home Page loaded");
+// Main.js - Fixed to show available whispers on homepage
+console.log('Main.js loaded');
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log("DOM loaded, initializing...");
+let db;
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Main page loaded');
     
-    // Check auth state
-    if (typeof auth !== 'undefined') {
-        auth.onAuthStateChanged(async function(user) {
-            console.log("Auth state changed:", user ? "Logged in" : "Logged out");
-            
-            if (user) {
-                // User is signed in
-                updateAuthUI(true, user.email);
-                await loadWhispers();
-            } else {
-                // User is signed out
-                updateAuthUI(false);
-                await loadWhispers();
-            }
-        });
+    // Initialize Firebase if available
+    if (window.firebase && firebase.apps.length > 0) {
+        db = firebase.firestore();
+        loadAvailableWhispers();
     } else {
-        console.log("Firebase not initialized yet, loading whispers anyway");
-        await loadWhispers();
+        // Fallback - show placeholder whispers
+        showPlaceholderWhispers();
     }
     
-    // Setup mobile menu
-    const mobileMenuBtn = document.querySelector('.mobile-menu');
-    const navLinks = document.querySelector('.nav-links');
+    // Setup smooth scrolling for anchor links
+    setupSmoothScrolling();
     
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener('click', function() {
-            navLinks.classList.toggle('show');
-        });
-        
-        // Close menu when clicking a link
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navLinks.classList.remove('show');
-            });
-        });
-    }
-    
-    // Setup filter buttons
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Remove active class from all buttons
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            // Add active class to clicked button
-            this.classList.add('active');
-            
-            const filter = this.getAttribute('data-filter');
-            filterWhispers(filter);
-        });
-    });
+    // Setup call buttons
+    setupCallButtons();
 });
 
-// Update UI based on auth state
-function updateAuthUI(isLoggedIn, email = '') {
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const dashboardBtn = document.getElementById('dashboardBtn');
-    const signupBtn = document.getElementById('signupBtn');
+async function loadAvailableWhispers() {
+    const container = document.getElementById('available-whispers');
+    if (!container) return;
     
-    if (loginBtn) loginBtn.style.display = isLoggedIn ? 'none' : 'block';
-    if (logoutBtn) logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
-    if (dashboardBtn) dashboardBtn.style.display = isLoggedIn ? 'block' : 'none';
-    if (signupBtn) signupBtn.style.display = isLoggedIn ? 'none' : 'block';
-}
-
-// Load whispers from Firestore or show demo
-async function loadWhispers() {
-    const whispersContainer = document.getElementById('whispersContainer');
-    if (!whispersContainer) return;
-    
-    try {
-        // Show loading
-        whispersContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Loading whispers...</p></div>';
-        
-        // If Firebase is available and user is logged in, try to load real data
-        if (typeof db !== 'undefined' && auth && auth.currentUser) {
-            const profilesSnapshot = await db.collection('profiles')
-                .where('available', '==', true)
-                .limit(6)
-                .get();
-            
-            if (!profilesSnapshot.empty) {
-                whispersContainer.innerHTML = '';
-                profilesSnapshot.forEach(doc => {
-                    const profile = doc.data();
-                    whispersContainer.appendChild(createWhisperCard(profile));
-                });
-                return;
-            }
-        }
-        
-        // Fallback: Show demo whispers
-        showDemoWhispers();
-        
-    } catch (error) {
-        console.error("Error loading whispers:", error);
-        showDemoWhispers();
-    }
-}
-
-// Show demo whispers
-function showDemoWhispers() {
-    const whispersContainer = document.getElementById('whispersContainer');
-    if (!whispersContainer) return;
-    
-    whispersContainer.innerHTML = '';
-    
-    // Demo data
-    const demoWhispers = [
-        {
-            displayName: "Oddwilson365",
-            username: "oddwilson.com",
-            bio: "Life coach specializing in career transitions and personal growth.",
-            profilePicture: "https://i.pravatar.cc/150?img=1",
-            calls: 42,
-            rating: 4.8,
-            earnings: 504,
-            available: true
-        },
-        {
-            displayName: "IliGee",
-            username: "iligee",
-            bio: "Mental health advocate and mindfulness practitioner. Let's talk about self-care.",
-            profilePicture: "https://i.pravatar.cc/150?img=2",
-            calls: 28,
-            rating: 4.9,
-            earnings: 336,
-            available: true
-        },
-        {
-            displayName: "Sarah Wisdom",
-            username: "sarahw",
-            bio: "Relationship expert with 10+ years experience helping people connect.",
-            profilePicture: "https://i.pravatar.cc/150?img=3",
-            calls: 65,
-            rating: 4.7,
-            earnings: 780,
-            available: true
-        },
-        {
-            displayName: "Alex Mentor",
-            username: "alexm",
-            bio: "Tech career coach helping developers advance their careers.",
-            profilePicture: "https://i.pravatar.cc/150?img=4",
-            calls: 35,
-            rating: 4.6,
-            earnings: 420,
-            available: true
-        },
-        {
-            displayName: "Maya Guide",
-            username: "mayag",
-            bio: "Wellness coach focused on work-life balance and stress management.",
-            profilePicture: "https://i.pravatar.cc/150?img=5",
-            calls: 52,
-            rating: 4.8,
-            earnings: 624,
-            available: true
-        },
-        {
-            displayName: "Chris Advisor",
-            username: "chrisa",
-            bio: "Financial advisor helping with budgeting and investment strategies.",
-            profilePicture: "https://i.pravatar.cc/150?img=6",
-            calls: 41,
-            rating: 4.7,
-            earnings: 492,
-            available: true
-        }
-    ];
-    
-    demoWhispers.forEach(whisper => {
-        whispersContainer.appendChild(createWhisperCard(whisper));
-    });
-}
-
-// Create whisper card HTML
-function createWhisperCard(profile) {
-    const card = document.createElement('div');
-    card.className = 'profile-card';
-    
-    // Format bio (truncate if too long)
-    const bio = profile.bio || 'No bio provided yet.';
-    const truncatedBio = bio.length > 120 ? bio.substring(0, 120) + '...' : bio;
-    
-    // Determine status
-    const isAvailable = profile.available !== false; // Default to true if not specified
-    const statusText = isAvailable ? 'Available Now' : 'Unavailable';
-    const statusClass = isAvailable ? 'available' : 'unavailable';
-    
-    card.innerHTML = `
-        <div class="profile-header">
-            <img src="${profile.profilePicture || 'https://i.pravatar.cc/400?img=' + Math.floor(Math.random() * 70)}" 
-                 alt="${profile.displayName || 'User'}" class="profile-bg">
-            <div class="profile-avatar">
-                <img src="${profile.profilePicture || 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 70)}" 
-                     alt="${profile.displayName || 'User'}">
-            </div>
-        </div>
-        <div class="profile-body">
-            <h3 class="profile-name">${profile.displayName || 'Anonymous User'}</h3>
-            <p class="profile-username">@${profile.username || 'user'}</p>
-            <div class="status ${statusClass}">
-                <i class="fas fa-circle"></i> ${statusText}
-            </div>
-            <p class="profile-bio">${truncatedBio}</p>
-            
-            <div class="profile-stats">
-                <div class="stat-item">
-                    <div class="stat-value">${profile.calls || 0}</div>
-                    <div class="stat-label">Calls</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${profile.rating || '4.8'}</div>
-                    <div class="stat-label">Rating</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">$${profile.earnings || 0}</div>
-                    <div class="stat-label">Earned</div>
-                </div>
-            </div>
-            
-            <div class="token-price">
-                <i class="fas fa-coins"></i> $15 per 5-min call
-            </div>
-            
-            <button class="call-btn btn-primary" onclick="handleCallButton()" ${!isAvailable ? 'disabled' : ''}>
-                <i class="fas fa-phone-alt"></i> ${isAvailable ? 'Start Call' : 'Unavailable'}
-            </button>
+    container.innerHTML = `
+        <div style="text-align: center; padding: 3rem; color: #94a3b8;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p>Loading available whispers...</p>
         </div>
     `;
     
-    return card;
+    try {
+        // Query for available whispers (users who have profiles and are marked as available)
+        const whispersQuery = await db.collection('profiles')
+            .where('available', '==', true)
+            .limit(12)
+            .get();
+        
+        if (whispersQuery.empty) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem;">
+                    <i class="fas fa-users" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3 style="color: white; margin-bottom: 0.5rem;">No Whispers Available</h3>
+                    <p style="color: #94a3b8; max-width: 500px; margin: 0 auto;">
+                        Check back soon or become a whisper yourself!
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        const whispers = [];
+        whispersQuery.forEach(doc => {
+            whispers.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        // Render whispers
+        renderWhispers(whispers, container);
+        
+    } catch (error) {
+        console.error('Error loading whispers:', error);
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: #ef4444;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>Error loading whispers</p>
+                <button onclick="loadAvailableWhispers()" class="btn btn-primary" style="margin-top: 1rem;">
+                    <i class="fas fa-redo"></i> Try Again
+                </button>
+            </div>
+        `;
+    }
 }
 
-// Handle call button click
-function handleCallButton() {
-    if (typeof auth === 'undefined' || !auth.currentUser) {
-        alert('Please login to start a call');
+function renderWhispers(whispers, container) {
+    if (whispers.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem;">
+                <i class="fas fa-users" style="font-size: 3rem; color: #94a3b8; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p style="color: white;">No whispers available at the moment</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="whispers-grid">';
+    
+    whispers.forEach(whisper => {
+        const displayName = whisper.displayName || 'Anonymous';
+        const bio = whisper.bio || 'No bio available';
+        const callPrice = whisper.callPrice || 1;
+        const photoURL = whisper.photoURL || 'https://i.pravatar.cc/150';
+        const rating = whisper.rating || 0;
+        const totalCalls = whisper.totalCalls || 0;
+        
+        // Check social links
+        const hasSocial = whisper.social && (
+            whisper.social.twitter || 
+            whisper.social.instagram || 
+            whisper.social.linkedin || 
+            whisper.social.website
+        );
+        
+        html += `
+            <div class="whisper-card">
+                <div class="whisper-card-header">
+                    <div class="whisper-avatar">
+                        <img src="${photoURL}" alt="${displayName}">
+                        <div class="availability-dot available"></div>
+                    </div>
+                    <div class="whisper-info">
+                        <h3 class="whisper-name">${displayName}</h3>
+                        <div class="whisper-rating">
+                            <i class="fas fa-star"></i> ${rating.toFixed(1)}
+                            <span class="whisper-calls"> • ${totalCalls} calls</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="whisper-bio">
+                    ${bio.length > 120 ? bio.substring(0, 120) + '...' : bio}
+                </div>
+                
+                ${hasSocial ? `
+                    <div class="whisper-social">
+                        ${whisper.social.twitter ? `<a href="${whisper.social.twitter}" target="_blank"><i class="fab fa-twitter"></i></a>` : ''}
+                        ${whisper.social.instagram ? `<a href="${whisper.social.instagram}" target="_blank"><i class="fab fa-instagram"></i></a>` : ''}
+                        ${whisper.social.linkedin ? `<a href="${whisper.social.linkedin}" target="_blank"><i class="fab fa-linkedin"></i></a>` : ''}
+                        ${whisper.social.website ? `<a href="${whisper.social.website}" target="_blank"><i class="fas fa-globe"></i></a>` : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="whisper-card-footer">
+                    <div class="call-price">
+                        <i class="fas fa-coins"></i> ${callPrice} coin${callPrice !== 1 ? 's' : ''}
+                        <span class="price-note">per 5-min call</span>
+                    </div>
+                    <button class="btn btn-primary call-btn" onclick="callWhisperFromHomepage('${whisper.id}')">
+                        <i class="fas fa-phone-alt"></i> Call Now
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function showPlaceholderWhispers() {
+    const container = document.getElementById('available-whispers');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="whispers-grid">
+            <!-- Placeholder cards for demo -->
+            <div class="whisper-card">
+                <div class="whisper-card-header">
+                    <div class="whisper-avatar">
+                        <img src="https://i.pravatar.cc/150?img=1" alt="Alex Morgan">
+                        <div class="availability-dot available"></div>
+                    </div>
+                    <div class="whisper-info">
+                        <h3 class="whisper-name">Alex Morgan</h3>
+                        <div class="whisper-rating">
+                            <i class="fas fa-star"></i> 4.8
+                            <span class="whisper-calls"> • 124 calls</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="whisper-bio">
+                    Business coach specializing in startup growth and fundraising strategies.
+                </div>
+                <div class="whisper-social">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+                <div class="whisper-card-footer">
+                    <div class="call-price">
+                        <i class="fas fa-coins"></i> 3 coins
+                        <span class="price-note">per 5-min call</span>
+                    </div>
+                    <button class="btn btn-primary call-btn" onclick="requireLogin()">
+                        <i class="fas fa-phone-alt"></i> Call Now
+                    </button>
+                </div>
+            </div>
+            
+            <div class="whisper-card">
+                <div class="whisper-card-header">
+                    <div class="whisper-avatar">
+                        <img src="https://i.pravatar.cc/150?img=2" alt="Sarah Chen">
+                        <div class="availability-dot available"></div>
+                    </div>
+                    <div class="whisper-info">
+                        <h3 class="whisper-name">Sarah Chen</h3>
+                        <div class="whisper-rating">
+                            <i class="fas fa-star"></i> 4.9
+                            <span class="whisper-calls"> • 89 calls</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="whisper-bio">
+                    Tech career advisor with 10+ years at Google and Microsoft.
+                </div>
+                <div class="whisper-social">
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+                <div class="whisper-card-footer">
+                    <div class="call-price">
+                        <i class="fas fa-coins"></i> 2 coins
+                        <span class="price-note">per 5-min call</span>
+                    </div>
+                    <button class="btn btn-primary call-btn" onclick="requireLogin()">
+                        <i class="fas fa-phone-alt"></i> Call Now
+                    </button>
+                </div>
+            </div>
+            
+            <div class="whisper-card">
+                <div class="whisper-card-header">
+                    <div class="whisper-avatar">
+                        <img src="https://i.pravatar.cc/150?img=3" alt="Marcus Johnson">
+                        <div class="availability-dot available"></div>
+                    </div>
+                    <div class="whisper-info">
+                        <h3 class="whisper-name">Marcus Johnson</h3>
+                        <div class="whisper-rating">
+                            <i class="fas fa-star"></i> 4.7
+                            <span class="whisper-calls"> • 67 calls</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="whisper-bio">
+                    Fitness coach and nutrition expert helping people transform their health.
+                </div>
+                <div class="whisper-social">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+                <div class="whisper-card-footer">
+                    <div class="call-price">
+                        <i class="fas fa-coins"></i> 1 coin
+                        <span class="price-note">per 5-min call</span>
+                    </div>
+                    <button class="btn btn-primary call-btn" onclick="requireLogin()">
+                        <i class="fas fa-phone-alt"></i> Call Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function setupSmoothScrolling() {
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+}
+
+function setupCallButtons() {
+    // This will be handled by the call buttons in the whisper cards
+}
+
+// Global functions
+window.callWhisperFromHomepage = async function(whisperId) {
+    // Check if user is logged in
+    if (!firebase.auth().currentUser) {
         window.location.href = 'auth.html?type=login';
         return;
     }
     
-    // Check if user has tokens
-    if (typeof db !== 'undefined') {
-        // In real app, check token balance
-        alert('Call feature requires tokens. Redirecting to purchase page...');
-        window.location.href = 'payment.html';
-    } else {
-        alert('Please login to use call features');
-        window.location.href = 'auth.html?type=login';
-    }
-}
-
-// Filter whispers based on selection
-function filterWhispers(filter) {
-    const cards = document.querySelectorAll('.profile-card');
-    const allButtons = document.querySelectorAll('.filter-btn');
-    
-    // Update active button
-    allButtons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    cards.forEach(card => {
-        switch(filter) {
-            case 'online':
-                const isOnline = card.querySelector('.status').classList.contains('available');
-                card.style.display = isOnline ? 'block' : 'none';
-                break;
-            case 'popular':
-                // Sort by rating (simplified)
-                const rating = parseFloat(card.querySelector('.stat-item:nth-child(2) .stat-value').textContent);
-                card.style.display = rating >= 4.5 ? 'block' : 'none';
-                break;
-            case 'new':
-                // Show all for now (in real app, would filter by date)
-                card.style.display = 'block';
-                break;
-            default:
-                card.style.display = 'block';
+    try {
+        // Get user info
+        const user = firebase.auth().currentUser;
+        
+        // Get whisper info
+        const whisperDoc = await db.collection('profiles').doc(whisperId).get();
+        const whisperData = whisperDoc.data();
+        
+        if (!whisperData || !whisperData.available) {
+            alert('This whisper is currently unavailable. Please try another whisper.');
+            return;
         }
-    });
-}
+        
+        // Get whisper's call price
+        const callPrice = Math.min(Math.max(whisperData.callPrice || 1, 1), 5);
+        
+        // Check user's coin balance
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        const userData = userDoc.data() || {};
+        
+        if (!userData.coins || userData.coins < callPrice) {
+            alert(`You need at least ${callPrice} whisper coin${callPrice !== 1 ? 's' : ''} to make this call. You have ${userData.coins || 0} coins.`);
+            window.location.href = 'payment.html';
+            return;
+        }
+        
+        // Create call session
+        const callSession = {
+            callerId: user.uid,
+            callerName: userData.displayName || user.email.split('@')[0],
+            whisperId: whisperId,
+            whisperName: whisperData.displayName || 'Whisper',
+            callPrice: callPrice,
+            status: 'waiting',
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 2 * 60 * 1000), // 2 minutes to accept
+            refunded: false
+        };
+        
+        // Deduct coins
+        await db.collection('users').doc(user.uid).update({
+            coins: firebase.firestore.FieldValue.increment(-callPrice)
+        });
+        
+        // Record transaction
+        await db.collection('transactions').add({
+            userId: user.uid,
+            type: 'call_held',
+            amount: callPrice * 15,
+            whisperCoins: -callPrice,
+            description: `Call to ${whisperData.displayName}`,
+            status: 'pending',
+            whisperId: whisperId,
+            createdAt: new Date()
+        });
+        
+        // Create call session
+        const sessionRef = await db.collection('callSessions').add(callSession);
+        
+        // Redirect to waiting page
+        window.location.href = `call-waiting.html?session=${sessionRef.id}&role=caller`;
+        
+    } catch (error) {
+        console.error('Error calling whisper:', error);
+        alert('Error: ' + error.message);
+    }
+};
 
-// Make functions available globally
-window.handleCallButton = handleCallButton;
-window.filterWhispers = filterWhispers;
+window.requireLogin = function() {
+    window.location.href = 'auth.html?type=login';
+};
+
+// Export for other scripts
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { loadAvailableWhispers };
+}

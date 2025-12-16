@@ -96,6 +96,8 @@
         .call-price-input input {
             width: 80px;
             text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
         }
         
         .call-price-info {
@@ -125,6 +127,19 @@
             padding: 1.5rem;
             margin-top: 1rem;
         }
+        
+        .email-field {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        .email-field:focus {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -150,11 +165,11 @@
                     </div>
                     <div class="form-group">
                         <label for="photoURL" class="form-label">
-                            <i class="fas fa-link"></i> Profile Image URL
+                            <i class="fas fa-link"></i> Profile Image URL *
                         </label>
-                        <input type="url" id="photoURL" class="form-control" placeholder="https://example.com/your-photo.jpg">
+                        <input type="url" id="photoURL" class="form-control" placeholder="https://example.com/your-photo.jpg" required>
                         <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">
-                            Paste a direct image URL (e.g., from Imgur, Google Photos)
+                            Paste a direct image URL (e.g., from Imgur, Google Photos, iCloud, etc.)
                         </p>
                     </div>
                 </div>
@@ -176,7 +191,7 @@
                         <label for="email" class="form-label">
                             <i class="fas fa-envelope"></i> Email *
                         </label>
-                        <input type="email" id="email" class="form-control" readonly>
+                        <input type="email" id="email" class="form-control email-field" readonly>
                         <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">
                             Your email is used for login and cannot be changed
                         </p>

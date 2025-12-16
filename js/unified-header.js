@@ -1,5 +1,7 @@
-// Unified Header System - Fixed with Dashboard Home button
+// Unified Header System - Fixed
 console.log('Unified header system loaded');
+
+let currentUser = null;
 
 function initUnifiedHeader() {
     console.log('Initializing unified header...');
@@ -27,11 +29,9 @@ function initUnifiedHeader() {
 }
 
 function createHeader() {
-    // Check if Firebase is initialized
-    let isLoggedIn = false;
-    if (window.firebase && firebase.auth) {
-        isLoggedIn = !!firebase.auth().currentUser;
-    }
+    // Check if user is logged in
+    const user = currentUser || (window.firebase && firebase.auth && firebase.auth().currentUser);
+    const isLoggedIn = !!user;
     
     const header = document.createElement('header');
     header.className = 'main-header';
@@ -132,18 +132,14 @@ function setupMobileMenu() {
 
 // Initialize when Firebase is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait for Firebase
-    const checkFirebase = setInterval(() => {
-        if (window.firebase && firebase.auth) {
-            clearInterval(checkFirebase);
-            
-            // Listen for auth state changes
-            firebase.auth().onAuthStateChanged((user) => {
-                initUnifiedHeader();
-            });
-        }
-    }, 100);
-    
-    // Also try to initialize immediately
-    setTimeout(initUnifiedHeader, 500);
+    // Listen for auth state changes
+    if (window.firebase && firebase.auth) {
+        firebase.auth().onAuthStateChanged((user) => {
+            currentUser = user;
+            initUnifiedHeader();
+        });
+    } else {
+        // Initialize without Firebase
+        setTimeout(initUnifiedHeader, 500);
+    }
 });
