@@ -10,92 +10,147 @@
     
     <style>
         .auth-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        }
-        
-        .auth-card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 3rem;
-            width: 100%;
             max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            margin: 4rem auto;
+            padding: 0 1rem;
         }
         
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .auth-logo {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-        }
-        
-        .back-btn {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            cursor: pointer;
+        .auth-tabs {
             display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            font-weight: 500;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
-        @media (max-width: 768px) {
-            .auth-card {
-                padding: 2rem;
-                margin-top: 3rem;
-            }
-            
-            .back-btn {
-                top: 1rem;
-                left: 1rem;
-            }
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .auth-tab.active {
+            color: white;
+            border-bottom-color: #10b981;
+        }
+        
+        .auth-content {
+            display: none;
+        }
+        
+        .auth-content.active {
+            display: block;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #94a3b8;
+        }
+        
+        .auth-footer a {
+            color: #10b981;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <!-- Back Button -->
-    <a href="index.html" class="back-btn">
-        <i class="fas fa-arrow-left"></i> Back to Home
-    </a>
+    <!-- Header will be injected by app.js -->
     
-    <!-- Auth Container -->
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="auth-header">
-                <div class="auth-logo">
-                    <span style="color: #1e3a8a;">Whisper</span>
-                    <span style="color: #10b981;">+</span>
-                    <span style="color: #f59e0b;">Me</span>
-                </div>
-                <p style="color: #94a3b8;">Connect with experts instantly</p>
+    <main class="auth-container">
+        <div class="card">
+            <div class="auth-header" style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">
+                    <i class="fas fa-user" style="color: #10b981;"></i> Welcome
+                </h1>
+                <p style="color: #94a3b8;">Sign in to your account or create a new one</p>
             </div>
             
-            <div id="authContainer">
-                <!-- Auth form will be loaded here -->
-                <div class="loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Loading authentication...</p>
-                </div>
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="loginTab">Sign In</button>
+                <button class="auth-tab" id="signupTab">Sign Up</button>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginContent" class="auth-content active">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail" class="form-label">
+                            <i class="fas fa-envelope"></i> Email
+                        </label>
+                        <input type="email" id="loginEmail" class="form-control" placeholder="your@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loginPassword" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" id="loginPassword" class="form-control" placeholder="Your password" required>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Signup Form -->
+            <div id="signupContent" class="auth-content">
+                <form id="signupForm">
+                    <div class="form-group">
+                        <label for="signupName" class="form-label">
+                            <i class="fas fa-user"></i> Display Name
+                        </label>
+                        <input type="text" id="signupName" class="form-control" placeholder="What people will call you" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signupEmail" class="form-label">
+                            <i class="fas fa-envelope"></i> Email
+                        </label>
+                        <input type="email" id="signupEmail" class="form-control" placeholder="your@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signupPassword" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" id="signupPassword" class="form-control" placeholder="Min 6 characters" minlength="6" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">
+                            <i class="fas fa-lock"></i> Confirm Password
+                        </label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+                            <i class="fas fa-user-plus"></i> Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="auth-footer">
+                <p>By continuing, you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a></p>
             </div>
         </div>
-    </div>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="index.html" style="color: #94a3b8; text-decoration: none;">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </main>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -105,7 +160,111 @@
     <!-- Firebase Configuration -->
     <script src="js/firebase-config.js"></script>
     
-    <!-- Auth Script -->
-    <script src="js/auth.js"></script>
+    <!-- App Script -->
+    <script src="js/app.js"></script>
+    
+    <script>
+        // Tab switching
+        document.getElementById('loginTab').addEventListener('click', () => {
+            document.getElementById('loginTab').classList.add('active');
+            document.getElementById('signupTab').classList.remove('active');
+            document.getElementById('loginContent').classList.add('active');
+            document.getElementById('signupContent').classList.remove('active');
+        });
+        
+        document.getElementById('signupTab').addEventListener('click', () => {
+            document.getElementById('signupTab').classList.add('active');
+            document.getElementById('loginTab').classList.remove('active');
+            document.getElementById('signupContent').classList.add('active');
+            document.getElementById('loginContent').classList.remove('active');
+        });
+        
+        // Login form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.querySelector('#loginForm button');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            
+            try {
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                // Success - app.js will redirect to dashboard
+            } catch (error) {
+                console.error("Login error:", error);
+                alert("Login failed: " + error.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+            }
+        });
+        
+        // Signup form
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const displayName = document.getElementById('signupName').value;
+            const btn = document.querySelector('#signupForm button');
+            
+            if (password !== confirmPassword) {
+                alert("Passwords don't match!");
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+            
+            try {
+                // Create user
+                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Update profile
+                await user.updateProfile({
+                    displayName: displayName
+                });
+                
+                // Create user document
+                await firebase.firestore().collection('users').doc(user.uid).set({
+                    email: email,
+                    displayName: displayName,
+                    coins: 0,
+                    available: false,
+                    createdAt: new Date()
+                });
+                
+                // Create profile document
+                await firebase.firestore().collection('profiles').doc(user.uid).set({
+                    userId: user.uid,
+                    email: email,
+                    displayName: displayName,
+                    callPrice: 1,
+                    available: false,
+                    createdAt: new Date()
+                });
+                
+                // Success - app.js will redirect to dashboard
+                
+            } catch (error) {
+                console.error("Signup error:", error);
+                alert("Signup failed: " + error.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+            }
+        });
+        
+        // Check URL for type parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type');
+        
+        if (type === 'signup') {
+            document.getElementById('signupTab').click();
+        }
+    </script>
 </body>
 </html>

@@ -3,24 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whisper+Me - Connect with Experts Instantly</title>
-    <meta name="description" content="Connect with experts for private 5-minute voice calls. Get advice, coaching, or just a listening ear.">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    
-    <!-- Font Awesome -->
+    <title>Whisper+Me - 5-Minute Private Chats</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Main CSS -->
     <link rel="stylesheet" href="css/style.css">
     
-    <!-- Google AdSense -->
-    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
+    <!-- Google Adsense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1184595877548269" crossorigin="anonymous"></script>
+    <meta name="google-adsense-account" content="ca-pub-1184595877548269">
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4QYRJLTXTT"></script>
@@ -30,317 +20,234 @@
         gtag('js', new Date());
         gtag('config', 'G-4QYRJLTXTT');
     </script>
-    
-    <style>
-        .hero-section {
-            padding: 80px 0;
-            text-align: center;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        }
-        
-        .hero-title {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-        }
-        
-        .hero-subtitle {
-            font-size: 1.25rem;
-            color: #94a3b8;
-            max-width: 600px;
-            margin: 0 auto 2rem;
-            line-height: 1.6;
-        }
-        
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin: 4rem 0;
-        }
-        
-        .feature-card {
-            background: #1e293b;
-            border-radius: 16px;
-            padding: 2rem;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s, border-color 0.3s;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: #10b981;
-        }
-        
-        .feature-icon {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, #10b981, #8b5cf6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-        }
-        
-        .feature-icon i {
-            font-size: 1.8rem;
-            color: white;
-        }
-        
-        .whispers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-        
-        .whisper-card {
-            background: #1e293b;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s, border-color 0.3s;
-            position: relative;
-        }
-        
-        .whisper-card:hover {
-            transform: translateY(-5px);
-            border-color: #10b981;
-        }
-        
-        .whisper-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 3px solid #10b981;
-            margin: 0 auto 1rem;
-        }
-        
-        .whisper-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .online-indicator {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 12px;
-            height: 12px;
-            background: #10b981;
-            border-radius: 50%;
-            border: 2px solid #1e293b;
-        }
-        
-        .offline-indicator {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 12px;
-            height: 12px;
-            background: #ef4444;
-            border-radius: 50%;
-            border: 2px solid #1e293b;
-        }
-        
-        .social-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-        
-        .social-links a {
-            color: #94a3b8;
-            font-size: 1.2rem;
-            transition: color 0.3s;
-        }
-        
-        .social-links a:hover {
-            color: #10b981;
-        }
-        
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 2.5rem;
-            }
-            
-            .hero-subtitle {
-                font-size: 1.1rem;
-                padding: 0 1rem;
-            }
-            
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-                padding: 0 1rem;
-            }
-            
-            .hero-buttons .btn {
-                width: 100%;
-                max-width: 300px;
-            }
-            
-            .whispers-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </head>
 <body>
-    <!-- Header will be injected by unified-header.js -->
+    <!-- Header will be injected by app.js -->
     
     <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
+    <section class="hero">
+        <div class="hero-content">
             <h1 class="hero-title">
-                <span style="color: #1e3a8a;">Whisper</span>
-                <span style="color: #10b981;">+</span>
-                <span style="color: #f59e0b;">Me</span>
+                <span class="whisper">Whisper</span>
+                <span class="plus">+</span>
+                <span class="me">Me</span>
             </h1>
             <p class="hero-subtitle">
-                Connect with verified experts for private 5-minute voice calls. 
-                Get personalized advice, coaching, or just a listening ear.
+                5-minute private chats with experts, coaches, and creators
+            </p>
+            <p class="hero-description">
+                Buy whisper coins, call anyone for advice, and get paid $12 per call answered.
+                Perfect for mobile - share your profile and start earning today!
             </p>
             <div class="hero-buttons">
-                <a href="#available-whispers" class="btn btn-primary btn-large">
-                    <i class="fas fa-headset"></i> Browse Experts
-                </a>
-                <a href="auth.html?type=signup" class="btn btn-secondary btn-large">
+                <a href="auth.html?type=signup" class="btn btn-primary btn-large">
                     <i class="fas fa-user-plus"></i> Start Earning
                 </a>
+                <a href="auth.html?type=login" class="btn btn-secondary btn-large">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-number">$12</div>
+                    <div class="stat-label">Earn per call</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">5-min</div>
+                    <div class="stat-label">Chat duration</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">$15</div>
+                    <div class="stat-label">Per coin</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Available</div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="phone-mockup">
+                <div class="phone-screen">
+                    <div class="call-interface">
+                        <div class="caller-info">
+                            <div class="caller-avatar">
+                                <img src="https://i.pravatar.cc/80" alt="Caller">
+                            </div>
+                            <div class="caller-details">
+                                <div class="caller-name">Alex Morgan</div>
+                                <div class="call-timer">04:32</div>
+                            </div>
+                        </div>
+                        <div class="call-actions">
+                            <button class="call-action-btn">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button class="call-action-btn end-call">
+                                <i class="fas fa-phone-slash"></i>
+                            </button>
+                            <button class="call-action-btn">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Available Whispers Section (NOW FIRST) -->
-    <section id="available-whispers" class="container" style="padding: 4rem 0;">
-        <h2 class="section-title" style="text-align: center; margin-bottom: 1rem;">
-            <i class="fas fa-users" style="color: #10b981;"></i> Available Whispers
-        </h2>
-        <p class="section-subtitle" style="text-align: center; color: #94a3b8; margin-bottom: 3rem;">
-            Connect instantly with our verified experts
-        </p>
-        
-        <div id="whispers-grid" class="whispers-grid">
-            <!-- Whisper cards will be loaded here -->
-            <div class="loading" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                <p>Loading available whispers...</p>
+    <!-- How It Works -->
+    <section class="section" id="how-it-works">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Create Profile</h3>
+                        <p>Set up your profile with photo, bio, and social links. Choose your call price (1-5 coins).</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Buy Coins</h3>
+                        <p>Purchase whisper coins ($15 each). 1 coin = 1 five-minute call with any whisper.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Make Calls</h3>
+                        <p>Browse available whispers, click call, and connect instantly in a private chatroom.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Get Paid</h3>
+                        <p>Earn $12 for every call you answer. Payouts every 3 days to your bank account.</p>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <div style="text-align: center; margin-top: 3rem;">
-            <a href="auth.html?type=signup" class="btn btn-primary btn-large">
-                <i class="fas fa-rocket"></i> Become a Whisper
-            </a>
         </div>
     </section>
 
-    <!-- How It Works Section (NOW SECOND) -->
-    <section id="how-it-works" class="container" style="padding: 4rem 0; background: rgba(255,255,255,0.02); border-radius: 24px; margin: 2rem auto;">
-        <h2 class="section-title" style="text-align: center; margin-bottom: 1rem;">
-            How It Works
-        </h2>
-        <p class="section-subtitle" style="text-align: center; color: #94a3b8; margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-            Start connecting in just three simple steps
-        </p>
-        
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-user-plus"></i>
+    <!-- Available Whispers -->
+    <section class="section dark" id="available-whispers">
+        <div class="container">
+            <h2 class="section-title">Available Whispers</h2>
+            <p class="section-subtitle">Connect with experts, coaches, and creators for 5-minute private chats</p>
+            
+            <div id="availableWhispersContainer">
+                <!-- Whispers will be loaded here by JavaScript -->
+                <div style="text-align: center; padding: 3rem; color: #94a3b8;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                    <p>Loading available whispers...</p>
                 </div>
-                <h3 style="margin-bottom: 1rem; color: white;">1. Create Profile</h3>
-                <p style="color: #94a3b8; line-height: 1.6;">
-                    Sign up as a whisper or caller. Set your call price (1-5 whisper coins) and create your profile.
-                </p>
             </div>
             
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-search"></i>
-                </div>
-                <h3 style="margin-bottom: 1rem; color: white;">2. Find Match</h3>
-                <p style="color: #94a3b8; line-height: 1.6;">
-                    Browse available whispers by expertise. Find the perfect match for your needs.
-                </p>
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="auth.html?type=signup" class="btn btn-primary btn-large">
+                    <i class="fas fa-user-plus"></i> Join Now & Start Earning
+                </a>
             </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-phone-alt"></i>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose Whisper+Me</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <h3>Earn Real Money</h3>
+                    <p>Get paid $12 for every 5-minute call you answer. Direct deposits every 3 days.</p>
                 </div>
-                <h3 style="margin-bottom: 1rem; color: white;">3. Connect & Earn</h3>
-                <p style="color: #94a3b8; line-height: 1.6;">
-                    Start your 5-minute call. Whispers earn $12 per whisper coin, paid every 3 days.
-                </p>
-                <p style="margin-top: 1rem; color: #f59e0b; font-size: 0.9rem; font-weight: 600;">
-                    <i class="fas fa-info-circle"></i> No refunds once call starts. Early hang-ups risk 50%+ loss.
-                </p>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Mobile First</h3>
+                    <p>Designed for mobile devices. Perfect for on-the-go conversations.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Secure & Private</h3>
+                    <p>End-to-end encrypted chats. Your banking info is always protected.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3>Global Reach</h3>
+                    <p>Connect with people worldwide. Share your profile on social media.</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="container" style="padding: 4rem 0; text-align: center;">
-        <div style="background: linear-gradient(135deg, #1e3a8a, #8b5cf6); border-radius: 24px; padding: 4rem 2rem;">
-            <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; color: white;">
-                Ready to Start Your Journey?
-            </h2>
-            <p style="font-size: 1.25rem; color: rgba(255,255,255,0.9); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-                Join thousands of users who are already connecting, growing, and earning together.
-            </p>
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="auth.html?type=signup" class="btn btn-primary btn-large" style="background: white; color: #1e293b; font-weight: 600;">
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Start Earning?</h2>
+            <p>Join thousands of whispers making money sharing their knowledge.</p>
+            <div class="cta-buttons">
+                <a href="auth.html?type=signup" class="btn btn-primary btn-large">
                     <i class="fas fa-user-plus"></i> Sign Up Free
                 </a>
-                <a href="#how-it-works" class="btn btn-secondary btn-large" style="background: rgba(255,255,255,0.1); color: white;">
-                    <i class="fas fa-play-circle"></i> How It Works
+                <a href="#available-whispers" class="btn btn-secondary btn-large">
+                    <i class="fas fa-users"></i> Browse Whispers
                 </a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="footer" style="background: #0f172a; padding: 3rem 0; margin-top: 4rem;">
+    <footer class="footer">
         <div class="container">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
-                <div>
-                    <h2 style="font-size: 1.8rem; font-weight: 800;">
-                        <span style="color: #1e3a8a;">Whisper</span>
-                        <span style="color: #10b981;">+</span>
-                        <span style="color: #f59e0b;">Me</span>
-                    </h2>
-                    <p style="color: #94a3b8; margin-top: 0.5rem;">Connecting voices, creating value.</p>
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <span class="whisper">Whisper</span>
+                        <span class="plus">+</span>
+                        <span class="me">Me</span>
+                    </a>
+                    <p>5-minute private chats. Earn $12 per call answered.</p>
                 </div>
-                
-                <div style="display: flex; gap: 1.5rem;">
-                    <a href="#" style="color: #94a3b8; text-decoration: none;">Privacy Policy</a>
-                    <a href="#" style="color: #94a3b8; text-decoration: none;">Terms of Service</a>
-                    <a href="mailto:support@whisperme.com" style="color: #94a3b8; text-decoration: none;">Contact</a>
-                </div>
-                
-                <div style="display: flex; gap: 1rem;">
-                    <a href="#" style="color: #94a3b8; font-size: 1.2rem;"><i class="fab fa-twitter"></i></a>
-                    <a href="#" style="color: #94a3b8; font-size: 1.2rem;"><i class="fab fa-instagram"></i></a>
-                    <a href="#" style="color: #94a3b8; font-size: 1.2rem;"><i class="fab fa-discord"></i></a>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Platform</h4>
+                        <a href="index.html#how-it-works">How It Works</a>
+                        <a href="index.html#available-whispers">Find Whispers</a>
+                        <a href="index.html#features">Features</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Account</h4>
+                        <a href="auth.html?type=login">Sign In</a>
+                        <a href="auth.html?type=signup">Sign Up</a>
+                        <a href="dashboard.html">Dashboard</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <a href="privacy.html">Privacy Policy</a>
+                        <a href="terms.html">Terms of Service</a>
+                        <a href="support.html">Support</a>
+                    </div>
                 </div>
             </div>
-            
-            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2rem; padding-top: 2rem; text-align: center; color: #64748b; font-size: 0.9rem;">
-                <p>&copy; 2024 Whisper+Me. All rights reserved. Payouts processed every 3 days.</p>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Whisper+Me. All rights reserved.</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                </div>
             </div>
         </div>
     </footer>
@@ -353,13 +260,26 @@
     <!-- Firebase Configuration -->
     <script src="js/firebase-config.js"></script>
     
-    <!-- Unified Header -->
-    <script src="js/unified-header.js"></script>
+    <!-- Unified App Script -->
+    <script src="js/app.js"></script>
     
-    <!-- Home Page Script -->
-    <script src="js/home.js"></script>
-    
-    <!-- Mobile Menu -->
-    <script src="js/mobile-menu.js"></script>
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
